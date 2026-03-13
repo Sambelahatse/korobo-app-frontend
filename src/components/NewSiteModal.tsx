@@ -177,7 +177,7 @@ export default function NewSiteModal({ onClose, site }: Props) {
               <input className={inputCls} value={proprietaire} onChange={e => setProprietaire(e.target.value)} />
             </Field>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Field label="Année d'installation">
                 <div className="relative">
                   <select
@@ -202,21 +202,21 @@ export default function NewSiteModal({ onClose, site }: Props) {
             </div>
 
             <FieldGroup title="Contact 1">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={c1Nom} onChange={e => setC1Nom(e.target.value)} /></Field>
                 <Field label="Contact"><input className={inputCls} value={c1Tel} onChange={e => setC1Tel(e.target.value)} /></Field>
               </div>
             </FieldGroup>
 
             <FieldGroup title="Contact 2">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={c2Nom} onChange={e => setC2Nom(e.target.value)} /></Field>
                 <Field label="Contact"><input className={inputCls} value={c2Tel} onChange={e => setC2Tel(e.target.value)} /></Field>
               </div>
             </FieldGroup>
 
             <FieldGroup title="Installateur">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={instNom} onChange={e => setInstNom(e.target.value)} /></Field>
                 <Field label="Contact"><input className={inputCls} value={instTel} onChange={e => setInstTel(e.target.value)} /></Field>
               </div>
@@ -331,13 +331,13 @@ export default function NewSiteModal({ onClose, site }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-5"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col shadow-2xl">
 
         {/* Header */}
-        <div className="px-8 pt-7 pb-4 flex-shrink-0">
+        <div className="px-5 sm:px-8 pt-5 sm:pt-7 pb-4 flex-shrink-0">
           <h2 className="font-syne font-bold text-xl text-[#3d6b2a]">
             {site ? `Modifier le site (Step ${step}/${TOTAL})` : `Creation d'un nouveau site (Step ${step}/${TOTAL})`}
           </h2>
@@ -362,12 +362,12 @@ export default function NewSiteModal({ onClose, site }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-8 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-8 scrollbar-thin">
           {renderStep()}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-4 px-8 py-5 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-center gap-3 px-5 sm:px-8 py-4 sm:py-5 border-t border-gray-100 flex-shrink-0">
           <button
             onClick={() => step > 1 ? setStep(s => s - 1) : onClose()}
             className="px-9 py-2.5 bg-gray-500 hover:bg-gray-600 text-white text-sm font-semibold rounded-md transition-colors"

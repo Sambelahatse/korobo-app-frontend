@@ -4,70 +4,78 @@ import type { Notification } from '../types'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const typeConfig = {
-  alerte:         { bg: 'bg-red-50 border-red-200',     icon: '🔴', label: 'bg-red-100 text-red-700'    },
-  avertissement:  { bg: 'bg-amber-50 border-amber-200', icon: '🟡', label: 'bg-amber-100 text-amber-700' },
-  info:           { bg: 'bg-blue-50 border-blue-200',   icon: 'ℹ️', label: 'bg-blue-100 text-blue-700'   },
-  succès:         { bg: 'bg-green-50 border-green-200', icon: '✅', label: 'bg-green-100 text-green-700' },
+  alerte:        { bg: 'bg-red-50 border-red-200',     icon: '🔴', label: 'bg-red-100 text-red-700'    },
+  avertissement: { bg: 'bg-amber-50 border-amber-200', icon: '🟡', label: 'bg-amber-100 text-amber-700' },
+  info:          { bg: 'bg-blue-50 border-blue-200',   icon: 'ℹ️', label: 'bg-blue-100 text-blue-700'   },
+  succès:        { bg: 'bg-green-50 border-green-200', icon: '✅', label: 'bg-green-100 text-green-700' },
 } as const
 
 export default function NotificationsPage() {
-  const [notifs, setNotifs] = useState<Notification[]>(mockNotifications)
-  const [filter, setFilter] = useState<string>('toutes')
+  const [notifs,   setNotifs]   = useState<Notification[]>(mockNotifications)
+  const [filter,   setFilter]   = useState('toutes')
   const [clearAll, setClearAll] = useState(false)
 
-  const filtered = notifs.filter(n => filter === 'toutes' || n.type === filter || (filter === 'non-lues' && !n.lu))
-  const nonLues  = notifs.filter(n => !n.lu).length
+  const filtered  = notifs.filter(n => filter === 'toutes' || n.type === filter || (filter === 'non-lues' && !n.lu))
+  const nonLues   = notifs.filter(n => !n.lu).length
 
   const markRead    = (id: string) => setNotifs(p => p.map(n => n.id === id ? { ...n, lu: true } : n))
-  const markAllRead = () => setNotifs(p => p.map(n => ({ ...n, lu: true })))
+  const markAllRead = ()           => setNotifs(p => p.map(n => ({ ...n, lu: true })))
   const deleteNotif = (id: string) => setNotifs(p => p.filter(n => n.id !== id))
-  const clearAllFn  = () => { setNotifs([]); setClearAll(false) }
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime()
     const mins = Math.floor(diff / 60000)
     const hrs  = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
-    if (mins < 60)  return `Il y a ${mins} min`
-    if (hrs  < 24)  return `Il y a ${hrs}h`
-    return `Il y a ${days} jour${days > 1 ? 's' : ''}`
+    if (mins < 60) return `${mins}min`
+    if (hrs  < 24) return `${hrs}h`
+    return `${days}j`
+  }
+
+  const filterLabels: Record<string, string> = {
+    toutes: 'Toutes', 'non-lues': 'Non lues', alerte: 'Alertes',
+    avertissement: 'Avert.', info: 'Infos', succès: 'Succès',
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex items-start sm:items-center justify-between gap-3 mb-5">
         <div>
           <h2 className="font-syne font-bold text-xl text-gray-800">Notifications</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {nonLues > 0 ? <span className="text-[#3d6b2a] font-semibold">{nonLues} non lue{nonLues > 1 ? 's' : ''}</span> : 'Tout est lu ✓'}
+          <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+            {nonLues > 0
+              ? <span className="text-[#3d6b2a] font-semibold">{nonLues} non lue{nonLues > 1 ? 's' : ''}</span>
+              : 'Tout est lu ✓'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {nonLues > 0 && (
-            <button onClick={markAllRead} className="text-sm text-[#3d6b2a] hover:underline font-medium">
-              Tout marquer comme lu
+            <button onClick={markAllRead} className="text-xs sm:text-sm text-[#3d6b2a] hover:underline font-medium whitespace-nowrap">
+              <span className="hidden sm:inline">Tout marquer comme lu</span>
+              <span className="sm:hidden">Tout lire</span>
             </button>
           )}
-          <button onClick={() => setClearAll(true)} className="px-4 py-2 text-sm border border-red-200 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium">
-            Vider tout
+          <button onClick={() => setClearAll(true)} className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-red-200 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium whitespace-nowrap">
+            <span className="hidden sm:inline">Vider tout</span>
+            <span className="sm:hidden">Vider</span>
           </button>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-5 flex-wrap">
-        {(['toutes','non-lues','alerte','avertissement','info','succès'] as const).map(f => (
+      {/* Filter tabs — horizontal scroll on mobile */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-thin">
+        {Object.entries(filterLabels).map(([f, label]) => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-colors ${
-              filter === f ? 'bg-[#3d6b2a] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3d6b2a]'
-            }`}>
-            {f}{f === 'non-lues' && nonLues > 0 ? ` (${nonLues})` : ''}
+            className={'px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold capitalize whitespace-nowrap flex-shrink-0 transition-colors ' +
+              (filter === f ? 'bg-[#3d6b2a] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3d6b2a]')}>
+            {label}{f === 'non-lues' && nonLues > 0 ? ` (${nonLues})` : ''}
           </button>
         ))}
       </div>
 
       {/* List */}
-      <div className="space-y-3">
+      <div className="space-y-3 max-w-3xl">
         {filtered.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <p className="text-4xl mb-3">🔔</p>
@@ -76,20 +84,20 @@ export default function NotificationsPage() {
         ) : filtered.map(n => {
           const cfg = typeConfig[n.type]
           return (
-            <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${cfg.bg} ${!n.lu ? 'shadow-sm' : 'opacity-70'}`}>
-              <span className="text-2xl mt-0.5 flex-shrink-0">{cfg.icon}</span>
+            <div key={n.id} className={'flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all ' + cfg.bg + ' ' + (!n.lu ? 'shadow-sm' : 'opacity-70')}>
+              <span className="text-xl sm:text-2xl mt-0.5 flex-shrink-0">{cfg.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`font-syne font-bold text-sm text-gray-800 ${!n.lu ? '' : 'font-semibold'}`}>{n.titre}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${cfg.label}`}>{n.type}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                    <p className="font-syne font-bold text-sm text-gray-800 leading-tight">{n.titre}</p>
+                    <span className={'text-[10px] font-bold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ' + cfg.label}>{n.type}</span>
                     {!n.lu && <span className="w-2 h-2 bg-[#3d6b2a] rounded-full flex-shrink-0" />}
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">{timeAgo(n.date)}</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">{timeAgo(n.date)}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{n.message}</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">{n.message}</p>
                 {n.siteNom && <p className="text-xs text-gray-400 mt-1">📍 {n.siteNom}</p>}
-                <div className="flex items-center gap-4 mt-2.5">
+                <div className="flex items-center gap-4 mt-2">
                   {!n.lu && (
                     <button onClick={() => markRead(n.id)} className="text-xs text-[#3d6b2a] hover:underline font-medium">
                       Marquer comme lu
@@ -107,9 +115,9 @@ export default function NotificationsPage() {
 
       {clearAll && (
         <ConfirmDialog title="Vider toutes les notifications ?" danger
-          message="Cette action supprimera définitivement toutes les notifications. Impossible d'annuler."
+          message="Toutes les notifications seront supprimées définitivement."
           confirmLabel="Tout supprimer"
-          onConfirm={clearAllFn}
+          onConfirm={() => { setNotifs([]); setClearAll(false) }}
           onCancel={() => setClearAll(false)} />
       )}
     </div>

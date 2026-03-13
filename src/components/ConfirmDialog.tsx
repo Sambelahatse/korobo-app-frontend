@@ -13,9 +13,9 @@ export default function ConfirmDialog({
   danger = false, onConfirm, onCancel,
 }: Props) {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[200] p-0 sm:p-4"
       onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-fade-up">
+      <div className="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-xl shadow-2xl p-6">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${danger ? 'bg-red-100' : 'bg-amber-100'}`}>
           {danger ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={danger ? '#dc2626' : '#d97706'} strokeWidth="2">
