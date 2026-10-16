@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages serves this project from /korobo-app-frontend/.
-export default defineConfig({
-  base: '/korobo-app-frontend/',
+export default defineConfig(({ mode }) => ({
+  // GitHub Pages uses a repository subpath; Render serves from the domain root.
+  base: mode === 'render' ? '/' : '/korobo-app-frontend/',
   plugins: [react()],
-})
+}))
