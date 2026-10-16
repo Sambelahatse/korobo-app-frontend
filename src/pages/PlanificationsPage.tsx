@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Planification } from '../types'
 import { mockPlanifications } from '../data/mockData'
 import ConfirmDialog from '../components/ConfirmDialog'
+import SortableHeader from '../components/SortableHeader'
 
 const statutStyle = {
   planifiée:  'bg-blue-100 text-blue-700',
@@ -137,12 +138,26 @@ export default function PlanificationsPage() {
   const [editItem,     setEditItem]     = useState<Planification | null>(null)
   const [deleteItem,   setDeleteItem]   = useState<Planification | null>(null)
   const [viewMode,     setViewMode]     = useState<'cards'|'list'>('cards')
+  const [sortKey, setSortKey] = useState('date')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const toggleSort = (key: string) => { if (sortKey === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDirection('asc') } }
 
   const filtered = items.filter(p => {
     const q = search.toLowerCase()
     return (p.siteNom.toLowerCase().includes(q) || p.technicien.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)) &&
       (filterStatut === 'tous' || p.statut === filterStatut) &&
       (filterType   === 'tous' || p.type   === filterType)
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const values: Record<string, (item: Planification) => string | number> = {
+      site: item => item.siteNom, type: item => item.type, priorite: item => ({ basse: 1, moyenne: 2, haute: 3 }[item.priorite]),
+      date: item => new Date(item.date).getTime(), technicien: item => item.technicien, statut: item => item.statut,
+    }
+    const get = values[sortKey] || values.date
+    const av = get(a), bv = get(b)
+    const result = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'fr', { numeric: true, sensitivity: 'base' })
+    return sortDirection === 'asc' ? result : -result
   })
 
   const handleSave = (p: Planification) => {
@@ -204,7 +219,7 @@ export default function PlanificationsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.length === 0 ? (
             <div className="col-span-full text-center py-16 text-gray-400"><p className="text-4xl mb-3">📅</p><p className="font-semibold">Aucune planification</p></div>
-          ) : filtered.map(p => (
+          ) : sorted.map(p => (
             <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -235,15 +250,18 @@ export default function PlanificationsPage() {
             <table className="w-full text-sm min-w-[560px]">
               <thead>
                 <tr className="bg-[#5a7a4a] text-white text-[11px] uppercase tracking-wide">
-                  {['Site','Type','Priorité','Date','Technicien','Statut','Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
-                  ))}
+                  {[
+                    { label: 'Site', key: 'site' }, { label: 'Type', key: 'type' },
+                    { label: 'Priorité', key: 'priorite' }, { label: 'Date', key: 'date' },
+                    { label: 'Technicien', key: 'technicien' }, { label: 'Statut', key: 'statut' },
+                  ].map(col => <SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-4 py-3 text-left font-semibold" />)}
+                  <th className="px-4 py-3 text-left font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400">Aucune planification</td></tr>
-                ) : filtered.map((p, i) => (
+                ) : sorted.map((p, i) => (
                   <tr key={p.id} className={'border-b border-gray-50 hover:bg-gray-50/80 transition-colors ' + (i % 2 === 1 ? 'bg-gray-50/40' : '')}>
                     <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-semibold px-2 py-0.5 rounded-md ' + typeStyle[p.type]}>{p.type}</span></td>
