@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
+import { ModernIcon } from '../components/Icons'
 import { mockSites, mockPlanifications, mockNotifications } from '../data/mockData'
 
-function StatCard({ label, value, sub, color, icon }: { label: string; value: string | number; sub: string; color: string; icon: string }) {
+function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
   return (
     <div className="bg-white rounded-2xl p-5 lg:p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md">
       <div className="flex items-start justify-between mb-3">
@@ -8,7 +10,7 @@ function StatCard({ label, value, sub, color, icon }: { label: string; value: st
           <p className="text-xs lg:text-sm text-gray-500 font-medium">{label}</p>
           <p className={`font-sans font-bold text-3xl lg:text-4xl mt-2 tracking-tight ${color}`}>{value}</p>
         </div>
-        <div className="w-9 h-9 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center text-lg lg:text-2xl bg-gray-50 flex-shrink-0">
+        <div className={`w-9 h-9 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center bg-gray-50 flex-shrink-0 ${iconTone}`}>
           {icon}
         </div>
       </div>
@@ -52,12 +54,12 @@ export default function DashboardPage() {
 
       {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon="⚡" />
-        <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon="🔧" />
-        <StatCard label="Inactifs"       value={inactifs}             sub="nécessitent attention"           color="text-red-500"    icon="⚠️" />
-        <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon="🚨" />
-        <StatCard label="Notifications"  value={nonLues}              sub="non lues"                        color="text-blue-600"   icon="🔔" />
-        <StatCard label="Puissance tot." value={`${totalPuissance}kW`} sub="capacité installée"            color="text-[#3d6b2a]"  icon="☀️" />
+        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
+        <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
+        <StatCard label="Inactifs"       value={inactifs}             sub="nécessitent attention"           color="text-red-500"    icon={<ModernIcon name="alert-triangle" size={21} />} iconTone="text-red-500 bg-red-50" />
+        <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon={<ModernIcon name="siren" size={21} />} iconTone="text-red-600 bg-red-50" />
+        <StatCard label="Notifications"  value={nonLues}              sub="non lues"                        color="text-blue-600"   icon={<ModernIcon name="bell" size={21} />} iconTone="text-blue-600 bg-blue-50" />
+        <StatCard label="Puissance tot." value={`${totalPuissance}kW`} sub="capacité installée"            color="text-[#3d6b2a]"  icon={<ModernIcon name="sun" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
       </div>
 
       {/* Middle row — stack on mobile */}
