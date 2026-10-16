@@ -61,7 +61,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
             <span className="flex-shrink-0">{item.icon}</span><span className="text-left text-sm font-semibold">{item.label}</span>
             {item.page === 'notifications' && unreadCount > 0 && <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>)}
-        </nav>
+        </nav></OverlayScrollbarsComponent>
         <div className="py-4 flex items-center px-3 border-t border-white/10"><button onClick={() => { setMobileMenuOpen(false); setConfirmLogout(true) }} className="flex items-center gap-3 w-full h-11 px-3.5 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"><LogoutIcon /><span className="text-sm font-semibold">Déconnexion</span></button></div>
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
