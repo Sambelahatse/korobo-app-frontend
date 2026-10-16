@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { mockRapports } from '../data/mockData'
-import type { Rapport } from '../types'
+import { useEffect, useState } from 'react'
+import { mockPlanifications, mockRapports, mockSites } from '../data/mockData'
+import type { Planification, Rapport, Site } from '../types'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
@@ -20,12 +20,58 @@ export default function RapportsPage() {
   const today = new Date()
   const [year,     setYear]     = useState(today.getFullYear())
   const [month,    setMonth]    = useState(today.getMonth())
-  const [rapports, setRapports] = useState<Rapport[]>(mockRapports)
+  const [rapports, setRapports] = useState<Rapport[]>(() => {
+    try {
+      const saved = localStorage.getItem('korobo.rapports.v1')
+      if (saved !== null) {
+        const parsed: unknown = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed as Rapport[]
+      }
+    } catch { /* Fall back to demo reports. */ }
+    return mockRapports
+  })
+  const [sites, setSites] = useState<Site[]>(() => {
+    try {
+      const saved = localStorage.getItem('korobo.sites.v1')
+      if (saved !== null) {
+        const parsed: unknown = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed as Site[]
+      }
+    } catch { /* Fall back to demo sites. */ }
+    return mockSites
+  })
+  const [interventions, setInterventions] = useState<Planification[]>(() => {
+    try {
+      const saved = localStorage.getItem('korobo.planifications.v1')
+      if (saved !== null) {
+        const parsed: unknown = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed as Planification[]
+      }
+    } catch { /* Fall back to demo interventions. */ }
+    return mockPlanifications
+  })
   const [selected, setSelected] = useState<string | null>(null)
   const [deleteItem, setDeleteItem] = useState<Rapport | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form,     setForm]     = useState<Partial<Rapport>>({})
   const [panelOpen, setPanelOpen] = useState(false) // mobile panel
+
+  useEffect(() => {
+    try { localStorage.setItem('korobo.rapports.v1', JSON.stringify(rapports)) } catch { /* Storage may be unavailable. */ }
+  }, [rapports])
+
+  useEffect(() => {
+    const refreshLocalData = () => {
+      try {
+        const savedSites = localStorage.getItem('korobo.sites.v1')
+        setSites(savedSites === null ? mockSites : JSON.parse(savedSites) as Site[])
+        const savedInterventions = localStorage.getItem('korobo.planifications.v1')
+        setInterventions(savedInterventions === null ? mockPlanifications : JSON.parse(savedInterventions) as Planification[])
+      } catch { setSites(mockSites); setInterventions(mockPlanifications) }
+    }
+    window.addEventListener('storage', refreshLocalData)
+    return () => window.removeEventListener('storage', refreshLocalData)
+  }, [])
 
   // Calendar
   const firstDay    = new Date(year, month, 1)
@@ -55,9 +101,38 @@ export default function RapportsPage() {
   const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y+1) } else setMonth(m => m+1) }
 
   const handleSaveForm = () => {
-    if (!form.siteNom || !form.date || !form.technicien) return
-    setRapports(prev => [{ id: 'R'+Date.now(), siteId: '00', statut: 'brouillon', notes: '', ...form } as Rapport, ...prev])
+    if (!form.siteNom?.trim() || !form.date || !form.technicien?.trim()) return
+    const site = sites.find(item => item.id === form.siteId || item.nom === form.siteNom)
+    setRapports(prev => [{
+      id: 'R' + Date.now(),
+      siteId: site?.id || form.siteId || '',
+      siteNom: site?.nom || form.siteNom!.trim(),
+      statut: 'brouillon',
+      notes: '',
+      ...form,
+      technicien: form.technicien!.trim(),
+    } as Rapport, ...prev])
     setShowForm(false); setForm({})
+  }
+
+  const toggleReportStatus = (report: Rapport) => {
+    setRapports(prev => prev.map(item => item.id === report.id
+      ? { ...item, statut: item.statut === 'validé' ? 'brouillon' : 'validé' }
+      : item))
+  }
+
+  const linkIntervention = (id: string) => {
+    const intervention = interventions.find(item => item.id === id)
+    if (!intervention) return
+    setForm(current => ({
+      ...current,
+      siteId: intervention.siteId,
+      siteNom: intervention.siteNom,
+      date: intervention.date,
+      technicien: intervention.technicien,
+      type: 'intervention',
+      notes: current.notes || intervention.description,
+    }))
   }
 
   return (
@@ -188,7 +263,12 @@ export default function RapportsPage() {
                 <p className="text-xs font-semibold text-gray-800">{r.siteNom}</p>
                 <p className="text-[11px] text-gray-500 mt-0.5">{r.technicien} · {new Date(r.date).toLocaleDateString('fr-FR')}</p>
                 {r.notes && <p className="text-[11px] text-gray-400 mt-1.5 line-clamp-2">{r.notes}</p>}
-                <button onClick={() => setDeleteItem(r)} className="mt-2 text-[10px] text-red-400 hover:text-red-600 transition-colors">Supprimer</button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={() => toggleReportStatus(r)} className="rounded-md border border-[#4A7A3B]/30 px-2.5 py-1.5 text-[10px] font-semibold text-[#4A7A3B] hover:bg-[#edf4e9]">
+                    {r.statut === 'validé' ? 'Repasser en brouillon' : 'Valider le rapport'}
+                  </button>
+                  <button onClick={() => setDeleteItem(r)} className="rounded-md border border-red-100 px-2.5 py-1.5 text-[10px] text-red-500 hover:bg-red-50 transition-colors">Supprimer</button>
+                </div>
               </div>
             ))}
           </div>
@@ -210,9 +290,17 @@ export default function RapportsPage() {
               <h2 className="font-sans font-bold text-lg text-[#4A7A3B]">Nouveau rapport</h2>
             </div>
             <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+              {interventions.length > 0 && <div><label className="text-xs font-semibold text-gray-600">Partir d’une intervention existante (facultatif)</label>
+                <select className={inputCls} defaultValue="" onChange={e => linkIntervention(e.target.value)}>
+                  <option value="">Sélectionner une intervention…</option>
+                  {interventions.map(item => <option key={item.id} value={item.id}>{item.date} · {item.siteNom} · {item.description || item.type}</option>)}
+                </select>
+              </div>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="text-xs font-semibold text-gray-600">Site *</label>
-                  <input className={inputCls} value={form.siteNom||''} onChange={e => setForm(f=>({...f,siteNom:e.target.value}))} placeholder="Nom du site" /></div>
+                  {sites.length ? <select className={inputCls} value={form.siteId || sites.find(site => site.nom === form.siteNom)?.id || ''} onChange={e => { const site = sites.find(item => item.id === e.target.value); setForm(f => ({ ...f, siteId: site?.id || '', siteNom: site?.nom || '' })) }}>
+                    <option value="">Sélectionner un site</option>{sites.map(site => <option key={site.id} value={site.id}>{site.nom}</option>)}
+                  </select> : <input className={inputCls} value={form.siteNom||''} onChange={e => setForm(f=>({...f,siteNom:e.target.value}))} placeholder="Nom du site" />}</div>
                 <div><label className="text-xs font-semibold text-gray-600">Date *</label>
                   <input type="date" className={inputCls} value={form.date||''} onChange={e => setForm(f=>({...f,date:e.target.value}))} /></div>
               </div>
