@@ -14,7 +14,7 @@ function typeStyle(t: string) {
   return 'bg-gray-100 text-gray-600'
 }
 
-const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#3d6b2a] transition-colors'
+const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10 transition-all'
 
 export default function RapportsPage() {
   const today = new Date()
@@ -65,18 +65,18 @@ export default function RapportsPage() {
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-syne font-bold text-xl text-gray-800">Rapports</h2>
+          <h2 className="font-sans font-bold text-xl text-gray-800">Rapports</h2>
           <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Vue calendrier</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {selected && (
             <button onClick={() => { setSelected(null); setPanelOpen(false) }}
-              className="hidden sm:block text-sm text-[#3d6b2a] hover:underline">
+              className="hidden sm:block text-sm text-[#4A7A3B] hover:underline">
               ← Tous
             </button>
           )}
           <button onClick={() => setShowForm(true)}
-            className="px-3 sm:px-5 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors">
+            className="px-3 sm:px-5 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors">
             + <span className="hidden sm:inline">Nouveau rapport</span><span className="sm:hidden">Nouveau</span>
           </button>
         </div>
@@ -86,11 +86,11 @@ export default function RapportsPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
 
         {/* Calendar */}
-        <div className="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+        <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md p-4 sm:p-5">
           {/* Nav */}
           <div className="flex items-center justify-between mb-4">
             <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors text-lg">‹</button>
-            <h3 className="font-syne font-bold text-sm sm:text-base text-gray-800">{MONTHS[month]} {year}</h3>
+            <h3 className="font-sans font-bold text-sm sm:text-base text-gray-800">{MONTHS[month]} {year}</h3>
             <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors text-lg">›</button>
           </div>
 
@@ -116,11 +116,11 @@ export default function RapportsPage() {
                 <button key={i} onClick={() => handleDayClick(key, isSel)}
                   className={
                     'relative p-1 sm:p-1.5 rounded-md sm:rounded-lg text-left transition-all min-h-[38px] sm:min-h-[52px] ' +
-                    (isSel   ? 'bg-[#3d6b2a] text-white ring-2 ring-[#3d6b2a]' :
+                    (isSel   ? 'bg-[#4A7A3B] text-white ring-2 ring-[#4A7A3B]' :
                      isToday ? 'bg-[#e8f2e3] ring-1 ring-[#6aad46]' :
                      rList.length ? 'hover:bg-gray-50 cursor-pointer' : 'hover:bg-gray-50/50 cursor-default')
                   }>
-                  <span className={'text-xs font-bold ' + (isSel ? 'text-white' : isToday ? 'text-[#3d6b2a]' : 'text-gray-700')}>
+                  <span className={'text-xs font-bold ' + (isSel ? 'text-white' : isToday ? 'text-[#4A7A3B]' : 'text-gray-700')}>
                     {day}
                   </span>
                   {/* Event dots on mobile, labels on sm+ */}
@@ -157,7 +157,7 @@ export default function RapportsPage() {
 
         {/* Panel — inline on xl, bottom sheet on mobile when day selected */}
         <div className={
-          'bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 ' +
+          'bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md p-4 sm:p-5 ' +
           'xl:block ' +
           (panelOpen ? 'fixed inset-x-0 bottom-0 z-40 rounded-b-none rounded-t-2xl max-h-[60vh] shadow-2xl xl:static xl:rounded-xl xl:max-h-none xl:shadow-sm xl:z-auto' : 'hidden xl:block')
         }>
@@ -166,7 +166,7 @@ export default function RapportsPage() {
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto" />
           </div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-syne font-bold text-sm text-gray-800">
+            <h3 className="font-sans font-bold text-sm text-gray-800">
               {selected ? `${new Date(selected).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}` : 'Tous les rapports'}
               <span className="ml-2 text-gray-400 font-normal text-xs">({selectedRapports.length})</span>
             </h3>
@@ -207,7 +207,7 @@ export default function RapportsPage() {
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl">
             <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-syne font-bold text-lg text-[#3d6b2a]">Nouveau rapport</h2>
+              <h2 className="font-sans font-bold text-lg text-[#4A7A3B]">Nouveau rapport</h2>
             </div>
             <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -231,7 +231,7 @@ export default function RapportsPage() {
             </div>
             <div className="flex gap-3 p-5 border-t border-gray-100">
               <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Annuler</button>
-              <button onClick={handleSaveForm} className="flex-1 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white rounded-lg text-sm font-semibold">Enregistrer</button>
+              <button onClick={handleSaveForm} className="flex-1 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white rounded-lg text-sm font-semibold">Enregistrer</button>
             </div>
           </div>
         </div>
