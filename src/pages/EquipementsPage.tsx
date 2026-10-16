@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
+import SortableHeader from '../components/SortableHeader'
 
 type EquipmentStatus = 'Opérationnel' | 'À surveiller' | 'En panne'
 type Equipment = { id: string; name: string; category: string; site: string; serial: string; power: string; status: EquipmentStatus; updated: string }
@@ -22,6 +23,9 @@ export default function EquipementsPage() {
   const [items, setItems] = useState(initialEquipment)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('Tous')
+  const [sortKey, setSortKey] = useState('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const toggleSort = (key: string) => { if (sortKey === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDirection('asc') } }
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [site, setSite] = useState('Site Andohalo A')
@@ -34,6 +38,17 @@ export default function EquipementsPage() {
     (status === 'Tous' || item.status === status) &&
     [item.name, item.site, item.serial, item.category].some(v => v.toLowerCase().includes(query.toLowerCase()))
   ), [items, query, status])
+  const sorted = useMemo(() => [...filtered].sort((a, b) => {
+    const values: Record<string, (item: Equipment) => string | number> = {
+      name: item => item.name, site: item => item.site, serial: item => item.serial,
+      power: item => Number.parseFloat(item.power) || 0, status: item => item.status,
+      updated: item => { const [day, month, year] = item.updated.split('/').map(Number); return new Date(year, month - 1, day).getTime() },
+    }
+    const get = values[sortKey] || values.name
+    const av = get(a), bv = get(b)
+    const result = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'fr', { numeric: true, sensitivity: 'base' })
+    return sortDirection === 'asc' ? result : -result
+  }), [filtered, sortKey, sortDirection])
   const operational = items.filter(i => i.status === 'Opérationnel').length
   const watch = items.filter(i => i.status === 'À surveiller').length
   const broken = items.filter(i => i.status === 'En panne').length
@@ -67,7 +82,7 @@ export default function EquipementsPage() {
     </div>
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-bold text-gray-900">Inventaire des équipements</h2><p className="mt-1 text-xs text-gray-500">{filtered.length} résultat(s)</p></div><div className="flex flex-col gap-2 sm:flex-row"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher un équipement…" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42] sm:w-64"/><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]"><option>Tous</option><option>Opérationnel</option><option>À surveiller</option><option>En panne</option></select></div></div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-gray-50/80 text-xs uppercase tracking-wide text-gray-500"><tr>{['Équipement','Site','Référence','Puissance','État','Dernière mise à jour',''].map(h=><th key={h} className="px-5 py-3.5 font-semibold">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{filtered.map(item=><tr key={item.id} className="transition hover:bg-gray-50/70"><td className="px-5 py-4"><div className="font-semibold text-gray-900">{item.name}</div><div className="mt-1 text-xs text-gray-500">{item.category}</div></td><td className="px-5 py-4 text-gray-600">{item.site}</td><td className="px-5 py-4 font-mono text-xs text-gray-500">{item.serial}</td><td className="px-5 py-4 text-gray-700">{item.power}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{item.status}</span></td><td className="px-5 py-4 text-gray-500">{item.updated}</td><td className="px-5 py-4"><button onClick={()=>setItems(prev=>prev.map(i=>i.id===item.id?{...i,status:i.status==='Opérationnel'?'À surveiller':i.status==='À surveiller'?'En panne':'Opérationnel'}:i))} title="Changer l’état" className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier l’état</button></td></tr>)}</tbody></table></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-gray-50/80 text-xs uppercase tracking-wide text-gray-500"><tr>{[{label:'Équipement',key:'name'},{label:'Site',key:'site'},{label:'Référence',key:'serial'},{label:'Puissance',key:'power'},{label:'État',key:'status'},{label:'Dernière mise à jour',key:'updated'}].map(col=><SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-5 py-3.5 font-semibold"/>) }<th className="px-5 py-3.5 font-semibold"></th></tr></thead><tbody className="divide-y divide-gray-100">{sorted.map(item=><tr key={item.id} className="transition hover:bg-gray-50/70"><td className="px-5 py-4"><div className="font-semibold text-gray-900">{item.name}</div><div className="mt-1 text-xs text-gray-500">{item.category}</div></td><td className="px-5 py-4 text-gray-600">{item.site}</td><td className="px-5 py-4 font-mono text-xs text-gray-500">{item.serial}</td><td className="px-5 py-4 text-gray-700">{item.power}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{item.status}</span></td><td className="px-5 py-4 text-gray-500">{item.updated}</td><td className="px-5 py-4"><button onClick={()=>setItems(prev=>prev.map(i=>i.id===item.id?{...i,status:i.status==='Opérationnel'?'À surveiller':i.status==='À surveiller'?'En panne':'Opérationnel'}:i))} title="Changer l’état" className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier l’état</button></td></tr>)}</tbody></table></div>
       {filtered.length===0 && <div className="p-10 text-center text-sm text-gray-500">Aucun équipement ne correspond à votre recherche.</div>}
     </div>
     <p className="text-xs text-gray-400">Données de démonstration : les changements sont conservés uniquement dans l’état de cette page et ne sont pas encore synchronisés avec une API.</p>
