@@ -5,6 +5,7 @@ import { SearchIcon, FilterIcon, PlusIcon, EyeIcon } from '../components/Icons'
 import NewSiteModal from '../components/NewSiteModal'
 import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import SortableHeader from '../components/SortableHeader'
 
 const ITEMS_PER_PAGE = 8
 const STORAGE_KEY = 'korobo.sites.v1'
@@ -48,6 +49,9 @@ export default function SitesPage() {
   const [filterType,   setFilterType]   = useState('tous')
   const [showFilter,   setShowFilter]   = useState(false)
   const [page,         setPage]         = useState(1)
+  const [sortKey, setSortKey] = useState('nom')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const toggleSort = (key: string) => { if (sortKey === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDirection('asc') } setPage(1) }
   const [showNewModal, setShowNewModal] = useState(false)
   const [viewSite,     setViewSite]     = useState<Site | null>(null)
   const [editSite,     setEditSite]     = useState<Site | null>(null)
@@ -62,9 +66,19 @@ export default function SitesPage() {
     )
   })
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const sorted = [...filtered].sort((a, b) => {
+    const values: Record<string, (site: Site) => string | number> = {
+      id: site => site.id, nom: site => site.nom, localisation: site => site.localisation,
+      type: site => site.typeInstallation, puissance: site => site.puissance, statut: site => site.statut,
+    }
+    const get = values[sortKey] || values.nom
+    const av = get(a), bv = get(b)
+    const result = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'fr', { numeric: true, sensitivity: 'base' })
+    return sortDirection === 'asc' ? result : -result
+  })
+  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
   const currentPage = Math.min(page, Math.max(1, totalPages))
-  const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const paginated  = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
   const types      = Array.from(new Set(sites.map(s => s.typeInstallation)))
 
   return (
@@ -134,11 +148,12 @@ export default function SitesPage() {
           <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-[#5a7a4a]">
-                {['#ID', 'Nom du site', 'Localisation', 'Type', 'kW', 'Statut', 'Actions'].map(col => (
-                  <th key={col} className="px-3 lg:px-4 py-3 text-left text-white font-sans font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap">
-                    {col}
-                  </th>
-                ))}
+                {[
+                  { label: '#ID', key: 'id' }, { label: 'Nom du site', key: 'nom' },
+                  { label: 'Localisation', key: 'localisation' }, { label: 'Type', key: 'type' },
+                  { label: 'kW', key: 'puissance' }, { label: 'Statut', key: 'statut' },
+                ].map(col => <SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-3 lg:px-4 py-3 text-left text-white font-sans font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap" />)}
+                <th className="px-3 lg:px-4 py-3 text-left text-white font-sans font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
