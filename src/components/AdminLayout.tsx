@@ -69,7 +69,31 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
           <div className="flex items-center gap-2 text-[#4A7A3B] min-w-0"><span className="flex-shrink-0">{icon}</span><span className="font-sans font-bold text-sm lg:text-base tracking-wide text-gray-800 truncate">{title}</span></div>
           <button onClick={() => handleNavigate('notifications')} aria-label="Ouvrir les notifications" className="lg:hidden ml-auto relative p-2 text-gray-500 hover:text-[#4A7A3B]"><BellIcon size={20} />{unreadCount > 0 && <span className="absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">{unreadCount}</span>}</button>
         </header>
-        <main className="flex-1 overflow-y-auto bg-[#f6f8f4]">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#f6f8f4]">
+          {children}
+          <footer className="border-t border-gray-200/80 bg-white/70 px-4 py-5 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf4e9] text-[#4A7A3B]">
+                  <span className="text-xl font-bold">ϟ</span>
+                </div>
+                <div>
+                  <p className="font-sans text-sm font-bold tracking-wide text-[#202720]">KOROBO<span className="text-[#5C8A42]">.</span></p>
+                  <p className="mt-0.5 text-xs text-gray-500">La maintenance solaire, en toute simplicité.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />Interface opérationnelle</span>
+                <span className="text-gray-300">•</span>
+                <span>Version 1.0</span>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col gap-1 border-t border-gray-100 pt-3 text-[11px] text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+              <p>© {new Date().getFullYear()} KOROBO. Tous droits réservés.</p>
+              <p>Suivi et entretien des installations photovoltaïques</p>
+            </div>
+          </footer>
+        </main>
         <div className="h-1 flex-shrink-0 bg-gradient-to-r from-[#28402a] via-[#4A7A3B] to-[#8eb86f]" />
       </div>
       {confirmLogout && <ConfirmDialog title="Déconnexion" message="Êtes-vous sûr de vouloir vous déconnecter de KOROBO ?" confirmLabel="Se déconnecter" cancelLabel="Rester connecté" danger={false} onConfirm={() => { setConfirmLogout(false); onNavigate('landing') }} onCancel={() => setConfirmLogout(false)} />}
