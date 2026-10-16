@@ -229,7 +229,9 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             </button>
           </form>
 
-          <div className="mt-5 mb-4 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
+
+          <div className="mt-4 mb-4 flex flex-col items-center gap-2">
             <div ref={googleButtonRef} aria-label="Se connecter avec Google" className="flex min-h-10 w-full justify-center" />
             {!googleReady && !import.meta.env.VITE_GOOGLE_CLIENT_ID && (
               <p className="text-center text-xs text-amber-700">Connexion Google à configurer par l’administrateur.</p>
@@ -239,8 +241,6 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             )}
             {googleError && <p role="alert" className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-600">{googleError}</p>}
           </div>
-
-          <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
 
           <p className="text-center text-sm text-gray-500">
             Pas encore de compte ?{' '}
