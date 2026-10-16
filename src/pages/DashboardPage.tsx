@@ -4,7 +4,7 @@ import { mockSites, mockPlanifications, mockNotifications } from '../data/mockDa
 
 function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
   return (
-    <div className="bg-white rounded-2xl p-5 lg:p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 lg:p-6 shadow-sm border border-gray-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs lg:text-sm text-gray-500 font-medium">{label}</p>
@@ -44,15 +44,19 @@ export default function DashboardPage() {
   } as const
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-5 lg:space-y-7">
-      <div>
-        <h2 className="font-sans font-bold text-2xl lg:text-3xl tracking-tight text-[#171a18]">Tableau de bord</h2>
+    <div className="min-h-full bg-[#f7f8f6] p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-7">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <div className="mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#5C8A42]" /><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#5C8A42]">Dashboard</p></div>
+          <h2 className="font-sans font-bold text-2xl lg:text-3xl tracking-tight text-[#202720]">Tableau de bord</h2>
         <p className="text-sm text-gray-500 mt-2">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
+        </div>
+        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-100 bg-white px-3.5 py-2 text-xs font-medium text-gray-600 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-500" />Vue d’ensemble des installations</div>
       </div>
 
-      {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
+      {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */>
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
         <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
         <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
@@ -63,10 +67,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Middle row — stack on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
         {/* Répartition */}
-        <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
-          <h3 className="font-sans font-bold text-sm lg:text-base text-gray-800 mb-4">Répartition des sites</h3>
+        <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-200/80">
+          <div className="mb-5 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="building" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Répartition des sites</h3><p className="mt-0.5 text-xs text-gray-400">État actuel du parc</p></div></div>
           <div className="space-y-3">
             {[
               { label: 'Actifs',      count: actifs,      color: 'bg-[#8eb86f]', pct: Math.round(actifs/mockSites.length*100) },
@@ -106,13 +110,11 @@ export default function DashboardPage() {
 
         {/* Alertes */}
         <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 md:col-span-2 lg:col-span-1">
-          <h3 className="font-syne font-bold text-sm lg:text-base text-gray-800 mb-4">Alertes actives</h3>
+          <div className="mb-5 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="bell" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Alertes actives</h3><p className="mt-0.5 text-xs text-gray-400">{nonLues} notifications non lues</p></div></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
             {mockNotifications.filter(n => !n.lu).slice(0, 4).map(n => (
               <div key={n.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-gray-50">
-                <span className="text-base mt-0.5 flex-shrink-0">
-                  {n.type === 'alerte' ? '🔴' : n.type === 'avertissement' ? '🟡' : n.type === 'succès' ? '🟢' : 'ℹ️'}
-                </span>
+                <span className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border ${n.type === 'alerte' ? 'border-red-100 bg-red-50 text-red-600' : n.type === 'avertissement' ? 'border-amber-100 bg-amber-50 text-amber-600' : n.type === 'succès' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-blue-100 bg-blue-50 text-blue-600'}`}><ModernIcon name={n.type === 'alerte' ? 'alert-triangle' : n.type === 'avertissement' ? 'siren' : n.type === 'succès' ? 'check-circle' : 'info'} size={18} /></span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{n.titre}</p>
                   <p className="text-xs text-gray-400 mt-0.5 truncate">{n.siteNom || 'Système'}</p>
@@ -124,9 +126,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Interventions table — scrollable on mobile */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
         <div className="px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="font-syne font-bold text-sm lg:text-base text-gray-800">Interventions en cours / planifiées</h3>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="calendar-check" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Interventions en cours / planifiées</h3><p className="mt-0.5 text-xs text-gray-400">Suivi des opérations de maintenance</p></div></div>
           <span className="text-xs text-gray-400">{recent.length}</span>
         </div>
         <div className="overflow-x-auto">
