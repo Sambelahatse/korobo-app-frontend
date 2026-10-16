@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { ModernIcon, type ModernIconName } from '../components/Icons'
 import { mockNotifications } from '../data/mockData'
 import type { Notification } from '../types'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const typeConfig = {
-  alerte:        { bg: 'bg-red-50 border-red-200',     icon: '🔴', label: 'bg-red-100 text-red-700'    },
-  avertissement: { bg: 'bg-amber-50 border-amber-200', icon: '🟡', label: 'bg-amber-100 text-amber-700' },
-  info:          { bg: 'bg-blue-50 border-blue-200',   icon: 'ℹ️', label: 'bg-blue-100 text-blue-700'   },
-  succès:        { bg: 'bg-green-50 border-green-200', icon: '✅', label: 'bg-green-100 text-green-700' },
+  alerte:        { bg: 'bg-red-50 border-red-200',     icon: 'alert-triangle' as ModernIconName, label: 'bg-red-100 text-red-700'    },
+  avertissement: { bg: 'bg-amber-50 border-amber-200', icon: 'siren' as ModernIconName,          label: 'bg-amber-100 text-amber-700' },
+  info:          { bg: 'bg-blue-50 border-blue-200',   icon: 'info' as ModernIconName,          label: 'bg-blue-100 text-blue-700'   },
+  succès:        { bg: 'bg-green-50 border-green-200', icon: 'check-circle' as ModernIconName,   label: 'bg-green-100 text-green-700' },
 } as const
 
 export default function NotificationsPage() {
@@ -85,7 +86,7 @@ export default function NotificationsPage() {
           const cfg = typeConfig[n.type]
           return (
             <div key={n.id} className={'flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all ' + cfg.bg + ' ' + (!n.lu ? 'shadow-sm' : 'opacity-70')}>
-              <span className="text-xl sm:text-2xl mt-0.5 flex-shrink-0">{cfg.icon}</span>
+              <span className="w-9 h-9 rounded-xl bg-white/80 border border-black/5 flex items-center justify-center mt-0.5 flex-shrink-0 text-gray-600"><ModernIcon name={cfg.icon} size={19} /></span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
