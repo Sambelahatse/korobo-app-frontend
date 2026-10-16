@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { Planification } from '../types'
-import { mockPlanifications } from '../data/mockData'
+import { useEffect, useState } from 'react'
+import type { Planification, Site } from '../types'
+import { mockPlanifications, mockSites } from '../data/mockData'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
 
@@ -21,9 +21,10 @@ const prioStyle = { haute: 'text-red-500', moyenne: 'text-amber-500', basse: 'te
 const prioIcon  = { haute: '▲▲', moyenne: '▲', basse: '▼' } as const
 
 function PlanifModal({
-  planif, onClose, onSave,
+  planif, sites, onClose, onSave,
 }: {
   planif: Partial<Planification>
+  sites: Site[]
   onClose: () => void
   onSave: (p: Planification) => void
 }) {
@@ -48,7 +49,8 @@ function PlanifModal({
     if (!form.date)               e.date       = 'Champ obligatoire'
     if (!form.technicien?.trim()) e.technicien = 'Champ obligatoire'
     if (Object.keys(e).length) { setErrors(e); return }
-    onSave({ ...form, id: (form as Planification).id || 'P' + Date.now() } as Planification)
+    const selectedSite = sites.find(site => site.id === form.siteId || site.nom === form.siteNom)
+    onSave({ ...form, siteId: selectedSite?.id || form.siteId || '', siteNom: selectedSite?.nom || form.siteNom?.trim() || '', id: (form as Planification).id || 'P' + Date.now() } as Planification)
   }
 
   const inputCls = (err?: string) =>
@@ -74,7 +76,14 @@ function PlanifModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-600">Site *</label>
-              <input className={inputCls(errors.siteNom)} value={form.siteNom || ''} onChange={e => set('siteNom', e.target.value)} placeholder="Nom du site" />
+              {sites.length > 0 ? (
+                <select className={inputCls(errors.siteNom) + ' bg-white'} value={form.siteId || sites.find(site => site.nom === form.siteNom)?.id || ''} onChange={e => { const site = sites.find(item => item.id === e.target.value); setForm(f => ({ ...f, siteId: site?.id || '', siteNom: site?.nom || '' })); setErrors(errors => ({ ...errors, siteNom: '' })) }}>
+                  <option value="">Sélectionner un site</option>
+                  {sites.map(site => <option key={site.id} value={site.id}>{site.nom}</option>)}
+                </select>
+              ) : (
+                <input className={inputCls(errors.siteNom)} value={form.siteNom || ''} onChange={e => set('siteNom', e.target.value)} placeholder="Nom du site" />
+              )}
               {errors.siteNom && <p className="text-xs text-red-500">{errors.siteNom}</p>}
             </div>
             <div className="flex flex-col gap-1.5">
@@ -130,7 +139,41 @@ function PlanifModal({
 }
 
 export default function PlanificationsPage() {
-  const [items,        setItems]        = useState<Planification[]>(mockPlanifications)
+  const [items, setItems] = useState<Planification[]>(() => {
+    try {
+      const saved = localStorage.getItem('korobo.planifications.v1')
+      if (saved !== null) {
+        const parsed: unknown = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed as Planification[]
+      }
+    } catch { /* Use demo data if local storage is unavailable or invalid. */ }
+    return mockPlanifications
+  })
+  const [sites, setSites] = useState<Site[]>(() => {
+    try {
+      const saved = localStorage.getItem('korobo.sites.v1')
+      if (saved !== null) {
+        const parsed: unknown = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed as Site[]
+      }
+    } catch { /* Fall back to demo sites. */ }
+    return mockSites
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem('korobo.planifications.v1', JSON.stringify(items)) } catch { /* Storage may be unavailable. */ }
+  }, [items])
+
+  useEffect(() => {
+    const refreshSites = () => {
+      try {
+        const saved = localStorage.getItem('korobo.sites.v1')
+        setSites(saved === null ? mockSites : JSON.parse(saved) as Site[])
+      } catch { setSites(mockSites) }
+    }
+    window.addEventListener('storage', refreshSites)
+    return () => window.removeEventListener('storage', refreshSites)
+  }, [])
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
   const [search,       setSearch]       = useState('')
@@ -284,7 +327,7 @@ export default function PlanificationsPage() {
       )}
 
       {(showModal || editItem) && (
-        <PlanifModal planif={editItem ?? {}} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
+        <PlanifModal planif={editItem ?? {}} sites={sites} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
       )}
       {deleteItem && (
         <ConfirmDialog title="Supprimer cette planification ?" danger
