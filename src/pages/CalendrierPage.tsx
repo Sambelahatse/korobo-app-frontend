@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import type { Planification } from '../types'
 import { mockPlanifications } from '../data/mockData'
@@ -41,7 +41,7 @@ export default function CalendrierPage() {
   const [kind, setKind] = useState('Tous')
 
   // Keep the calendar in sync with edits made on the planifications page in another tab.
-  useMemo(() => {
+  useEffect(() => {
     const sync = () => setItems(readPlanifications())
     window.addEventListener('storage', sync)
     return () => window.removeEventListener('storage', sync)
