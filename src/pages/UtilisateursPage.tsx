@@ -65,7 +65,7 @@ export default function UtilisateursPage() {
     {!editing&&<label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#4A7A3B]/20 bg-[#f4f8f1] p-4">
       <input type="checkbox" checked={notifyByEmail} onChange={e=>setNotifyByEmail(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#4A7A3B]"/>
       <span><span className="block text-sm font-semibold text-gray-800">Envoyer une invitation par e-mail</span><span className="mt-1 block text-xs leading-5 text-gray-500">Permettre à l’utilisateur d’activer son compte. L’envoi effectif sera disponible une fois le backend de messagerie connecté.</span></span>
-    </label>
+    </label>}
     {error&&<p role="alert" className="text-sm text-rose-600">{error}</p>}
     <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={closeForm} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button><button type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3d672f]">{editing?'Enregistrer les modifications':'Ajouter l’utilisateur'}</button></div>
    </form>
