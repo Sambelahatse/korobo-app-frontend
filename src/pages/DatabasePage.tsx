@@ -67,7 +67,7 @@ export default function DatabasePage() {
           { label: 'Notifications',  count: mockNotifications.length,  icon: 'bell',            color: 'bg-purple-50 text-purple-700' },
         ].map(({ label, count, icon, color }) => (
           <div key={label} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3">
-            <div className={'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ' + color}><ModernIcon name={icon} size={20} /></div>
+            <div className={'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ' + color}><ModernIcon name={icon as ModernIconName} size={20} /></div>
             <div className="min-w-0">
               <p className="font-sans font-bold text-lg sm:text-xl text-gray-800">{count}</p>
               <p className="text-xs text-gray-400 truncate">{label}</p>
