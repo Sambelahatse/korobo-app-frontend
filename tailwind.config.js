@@ -23,8 +23,9 @@ export default {
         sidebar: '#f5f7f3',
       },
       fontFamily: {
-        syne: ['Syne', 'sans-serif'],
-        dm:   ['DM Sans', 'sans-serif'],
+        syne: ['Inter', 'Open Sans', 'Lato', 'sans-serif'],
+        dm:   ['Inter', 'Open Sans', 'Lato', 'sans-serif'],
+        sans: ['Inter', 'Open Sans', 'Lato', 'sans-serif'],
       },
       keyframes: {
         fadeUp: {
