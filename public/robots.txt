@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sambelahatse.github.io/korobo-app-frontend/sitemap.xml
