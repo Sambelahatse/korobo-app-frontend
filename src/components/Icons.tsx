@@ -139,11 +139,18 @@ export type ModernIconName =
   | 'zap' | 'wrench' | 'alert-triangle' | 'siren' | 'bell' | 'sun'
   | 'building' | 'calendar-check' | 'file-text' | 'database' | 'check-circle'
   | 'info' | 'shield-check' | 'user-round' | 'palette' | 'sliders-horizontal'
+  | 'layout-dashboard' | 'map-pin' | 'calendar-clock' | 'calendar-days' | 'clipboard-check' | 'users-round'
 
 export function ModernIcon({ name, size = 22, className = '' }: IconProps & { name: ModernIconName }) {
   const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className={className} {...common}>
+      {name === 'layout-dashboard' && <><rect x="3" y="3" width="8" height="8" rx="2" /><rect x="13" y="3" width="8" height="5" rx="2" /><rect x="13" y="10" width="8" height="11" rx="2" /><rect x="3" y="13" width="8" height="8" rx="2" /></>}
+      {name === 'map-pin' && <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}
+      {name === 'calendar-clock' && <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /><circle cx="15.5" cy="15.5" r="3.5" /><path d="M15.5 13.5v2l1.3.8" /></>}
+      {name === 'calendar-days' && <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" /></>}
+      {name === 'clipboard-check' && <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4.5V3h6v1.5M8.5 13l2.2 2.2 4.8-4.8" /></>}
+      {name === 'users-round' && <><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>}
       {name === 'zap' && <path d="M13 2 4.5 13h6L10 22l9.5-12h-6L13 2Z" />}
       {name === 'wrench' && <><path d="M14.7 6.3a5 5 0 0 0-6.9 6.9L3 18a2.1 2.1 0 0 0 3 3l4.8-4.8a5 5 0 0 0 6.9-6.9l-3.1 3.1-3-3 3.1-3.1Z" /><path d="m15 5 4-2 2 2-2 4" /></>}
       {name === 'alert-triangle' && <><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></>}
