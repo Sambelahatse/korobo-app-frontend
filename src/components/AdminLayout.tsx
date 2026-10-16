@@ -74,7 +74,19 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
             {item.page === 'notifications' && unreadCount > 0 && <span className={`${sidebarCollapsed ? "lg:absolute lg:right-1 lg:top-1" : "ml-auto"} flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>)}
         </nav></OverlayScrollbarsComponent>
-        <div className={`py-4 flex items-center border-t border-white/10 ${sidebarCollapsed ? "lg:px-2 px-3" : "px-3"}`}><button onClick={() => { setMobileMenuOpen(false); setConfirmLogout(true) }} title={sidebarCollapsed ? "Déconnexion" : undefined} className={`flex items-center gap-3 w-full h-11 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-300 transition-colors ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3.5" : "px-3.5"}`}><LogoutIcon /><span className={`text-sm font-semibold ${sidebarCollapsed ? "lg:hidden" : ""}`}>Déconnexion</span></button></div>
+        <div className={`py-4 flex items-center border-t border-white/10 ${sidebarCollapsed ? 'lg:px-2 px-3' : 'px-3'}`}>
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false)
+              setConfirmLogout(true)
+            }}
+            title={sidebarCollapsed ? 'Déconnexion' : undefined}
+            className={`flex items-center gap-3 w-full h-11 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-300 transition-colors ${sidebarCollapsed ? 'lg:justify-center lg:px-0 px-3.5' : 'px-3.5'}`}
+          >
+            <LogoutIcon />
+            <span className={`text-sm font-semibold ${sidebarCollapsed ? 'lg:hidden' : ''}`}>Déconnexion</span>
+          </button>
+        </div>
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="h-[64px] lg:h-[76px] flex-shrink-0 bg-white/95 border-b border-gray-100 flex items-center px-4 lg:px-8 gap-4">
