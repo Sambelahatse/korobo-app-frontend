@@ -400,15 +400,25 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-5"
-      onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col shadow-2xl">
 
         {/* Header */}
         <div className="px-5 sm:px-8 pt-5 sm:pt-7 pb-4 flex-shrink-0">
-          <h2 className="font-syne font-bold text-xl text-[#3d6b2a]">
-            {site ? `Modifier le site (Step ${step}/${TOTAL})` : `Creation d'un nouveau site (Step ${step}/${TOTAL})`}
-          </h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="font-syne font-bold text-xl text-[#3d6b2a]">
+              {site ? `Modifier le site (Step ${step}/${TOTAL})` : `Creation d'un nouveau site (Step ${step}/${TOTAL})`}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer la fenêtre"
+              title="Fermer"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d6b2a] transition-colors"
+            >
+              <XIcon size={18} />
+            </button>
+          </div>
 
           {/* Progress dots */}
           <div className="flex items-center gap-2 mt-4">
