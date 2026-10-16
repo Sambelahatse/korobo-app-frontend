@@ -98,7 +98,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
         </main>
         <div className="h-1 flex-shrink-0 bg-gradient-to-r from-[#28402a] via-[#4A7A3B] to-[#8eb86f]" />
       </div>
-      {confirmLogout && <ConfirmDialog title="Déconnexion" message="Êtes-vous sûr de vouloir vous déconnecter de KOROBO ?" confirmLabel="Se déconnecter" cancelLabel="Rester connecté" danger={false} onConfirm={() => { setConfirmLogout(false); onNavigate('landing') }} onCancel={() => setConfirmLogout(false)} />}
+      {confirmLogout && <ConfirmDialog title="Déconnexion" message="Êtes-vous sûr de vouloir vous déconnecter de KOROBO ?" confirmLabel="Se déconnecter" cancelLabel="Rester connecté" danger={false} onConfirm={() => { setConfirmLogout(false); sessionStorage.removeItem('korobo.auth.idToken'); sessionStorage.removeItem('korobo.auth.refreshToken'); sessionStorage.removeItem('korobo.auth.user'); onNavigate('landing') }} onCancel={() => setConfirmLogout(false)} />}
     </div>
   )
 }
