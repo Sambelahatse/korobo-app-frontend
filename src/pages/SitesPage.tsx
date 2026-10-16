@@ -186,7 +186,7 @@ export default function SitesPage() {
             </p>
             <div className="flex items-center gap-1 order-1 sm:order-2">
               <button onClick={() => setPage(1)} disabled={currentPage===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">«</button>
-              <button onClick={() => setPage(currentPage-1)} disabled={page===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">‹</button>
+              <button onClick={() => setPage(currentPage-1)} disabled={currentPage===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">‹</button>
               {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>Math.abs(p-currentPage)<=1).map(p=>(
                 <button key={p} onClick={()=>setPage(p)}
                   className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${p===currentPage?'bg-[#3d6b2a] text-white':'text-gray-600 hover:bg-gray-200'}`}>
@@ -194,7 +194,7 @@ export default function SitesPage() {
                 </button>
               ))}
               <button onClick={() => setPage(currentPage+1)} disabled={currentPage===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">›</button>
-              <button onClick={() => setPage(totalPages)} disabled={page===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">»</button>
+              <button onClick={() => setPage(totalPages)} disabled={currentPage===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">»</button>
             </div>
           </div>
         )}
