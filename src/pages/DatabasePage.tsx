@@ -1,10 +1,20 @@
+import { useMemo, useState } from 'react'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
+import SortableHeader from '../components/SortableHeader'
 import { mockSites, mockPlanifications, mockRapports, mockNotifications } from '../data/mockData'
 
 function TablePreview({ title, count, icon, headers, rows }: {
   title: string; count: number; icon: ModernIconName
   headers: string[]; rows: (string | number)[][]
 }) {
+  const [sortColumn, setSortColumn] = useState('0')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const toggleSort = (key: string) => { if (sortColumn === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortColumn(key); setSortDirection('asc') } }
+  const sortedRows = useMemo(() => [...rows].sort((a, b) => {
+    const av = String(a[Number(sortColumn)] ?? ''), bv = String(b[Number(sortColumn)] ?? '')
+    const result = av.localeCompare(bv, 'fr', { numeric: true, sensitivity: 'base' })
+    return sortDirection === 'asc' ? result : -result
+  }), [rows, sortColumn, sortDirection])
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
       <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-50 flex items-center justify-between">
@@ -21,13 +31,13 @@ function TablePreview({ title, count, icon, headers, rows }: {
         <table className="w-full text-xs min-w-[360px]">
           <thead>
             <tr className="bg-gray-50">
-              {headers.map(h => (
-                <th key={h} className="px-3 sm:px-4 py-2 sm:py-2.5 text-left text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">{h}</th>
+              {headers.map((h, index) => (
+                <SortableHeader key={h} label={h} sortKey={String(index)} activeKey={sortColumn} direction={sortDirection} onSort={toggleSort} className="px-3 sm:px-4 py-2 sm:py-2.5 text-left text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap" />
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0,4).map((row, i) => (
+            {sortedRows.slice(0,4).map((row, i) => (
               <tr key={i} className={'border-t border-gray-50 ' + (i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40')}>
                 {row.map((cell, j) => (
                   <td key={j} className="px-3 sm:px-4 py-2 sm:py-2.5 text-gray-700 truncate max-w-[140px]">{cell}</td>
