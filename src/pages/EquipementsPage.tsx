@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import SortableHeader from '../components/SortableHeader'
 import Modal from '../components/Modal'
+import ConfirmDialog from '../components/ConfirmDialog'
+import { mockSites } from '../data/mockData'
+import type { Site } from '../types'
 
 type EquipmentStatus = 'Opérationnel' | 'À surveiller' | 'En panne'
 type Equipment = { id: string; name: string; category: string; site: string; serial: string; power: string; status: EquipmentStatus; updated: string }
@@ -14,6 +17,34 @@ const initialEquipment: Equipment[] = [
   { id: 'EQ-005', name: 'Onduleur réseau', category: 'Onduleur', site: 'Site Ankorondrano', serial: 'INV-ANK-012', power: '25 kW', status: 'Opérationnel', updated: '08/10/2026' },
   { id: 'EQ-006', name: 'Capteur de température', category: 'Capteur', site: 'Site Tsimbazaza', serial: 'TMP-TSI-008', power: '12 V', status: 'À surveiller', updated: '14/10/2026' },
 ]
+const STORAGE_KEY = 'korobo.equipment.v1'
+
+function loadEquipment(): Equipment[] {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (!stored) return initialEquipment
+    const parsed: unknown = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed as Equipment[] : initialEquipment
+  } catch {
+    return initialEquipment
+  }
+}
+
+function loadSiteNames(): string[] {
+  try {
+    const stored = window.localStorage.getItem('korobo.sites.v1')
+    if (stored) {
+      const parsed: unknown = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        const names = (parsed as Site[]).map(item => item.nom).filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
+        if (names.length) return names
+      }
+    }
+  } catch {
+    // Use demonstration sites when local storage is unavailable or invalid.
+  }
+  return mockSites.map(item => item.nom)
+}
 const statusStyle: Record<EquipmentStatus, string> = {
   'Opérationnel': 'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
   'À surveiller': 'bg-amber-50 text-amber-700 ring-amber-600/15',
@@ -22,8 +53,18 @@ const statusStyle: Record<EquipmentStatus, string> = {
 const inputCls = 'mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-normal outline-none transition focus:border-[#5C8A42] focus:ring-2 focus:ring-[#5C8A42]/15'
 
 export default function EquipementsPage() {
-  const [items, setItems] = useState(initialEquipment)
+  const [items, setItems] = useState<Equipment[]>(loadEquipment)
+  const [siteOptions] = useState<string[]>(loadSiteNames)
+  const [deleteTarget, setDeleteTarget] = useState<Equipment | null>(null)
   const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    } catch (error) {
+      console.error('Impossible de sauvegarder les équipements localement.', error)
+    }
+  }, [items])
   const [status, setStatus] = useState('Tous')
   const [sortKey, setSortKey] = useState('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -86,16 +127,17 @@ export default function EquipementsPage() {
     </div>
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-bold text-gray-900">Inventaire des équipements</h2><p className="mt-1 text-xs text-gray-500">{filtered.length} résultat(s)</p></div><div className="flex flex-col gap-2 sm:flex-row"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher un équipement…" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42] sm:w-64"/><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]"><option>Tous</option><option>Opérationnel</option><option>À surveiller</option><option>En panne</option></select></div></div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-gray-50/80 text-xs uppercase tracking-wide text-gray-500"><tr>{[{label:'Équipement',key:'name'},{label:'Site',key:'site'},{label:'Référence',key:'serial'},{label:'Puissance',key:'power'},{label:'État',key:'status'},{label:'Dernière mise à jour',key:'updated'}].map(col=><SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-5 py-3.5 font-semibold"/>) }<th className="px-5 py-3.5 font-semibold">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">{sorted.map(item=><tr key={item.id} className="transition hover:bg-gray-50/70"><td className="px-5 py-4"><div className="font-semibold text-gray-900">{item.name}</div><div className="mt-1 text-xs text-gray-500">{item.category}</div></td><td className="px-5 py-4 text-gray-600">{item.site}</td><td className="px-5 py-4 font-mono text-xs text-gray-500">{item.serial}</td><td className="px-5 py-4 text-gray-700">{item.power}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{item.status}</span></td><td className="px-5 py-4 text-gray-500">{item.updated}</td><td className="px-5 py-4"><button onClick={()=>openEdit(item)} title="Modifier l’équipement" className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button></td></tr>)}</tbody></table></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-gray-50/80 text-xs uppercase tracking-wide text-gray-500"><tr>{[{label:'Équipement',key:'name'},{label:'Site',key:'site'},{label:'Référence',key:'serial'},{label:'Puissance',key:'power'},{label:'État',key:'status'},{label:'Dernière mise à jour',key:'updated'}].map(col=><SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-5 py-3.5 font-semibold"/>) }<th className="px-5 py-3.5 font-semibold">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">{sorted.map(item=><tr key={item.id} className="transition hover:bg-gray-50/70"><td className="px-5 py-4"><div className="font-semibold text-gray-900">{item.name}</div><div className="mt-1 text-xs text-gray-500">{item.category}</div></td><td className="px-5 py-4 text-gray-600">{item.site}</td><td className="px-5 py-4 font-mono text-xs text-gray-500">{item.serial}</td><td className="px-5 py-4 text-gray-700">{item.power}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{item.status}</span></td><td className="px-5 py-4 text-gray-500">{item.updated}</td><td className="px-5 py-4"><div className="flex items-center gap-2"><button onClick={()=>openEdit(item)} title="Modifier l’équipement" className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button><button onClick={()=>setDeleteTarget(item)} title="Supprimer l’équipement" className="rounded-lg border border-rose-100 px-2.5 py-1.5 text-xs font-medium text-rose-600 transition hover:border-rose-300 hover:bg-rose-50">Supprimer</button></div></td></tr>)}</tbody></table></div>
       {filtered.length===0 && <div className="p-10 text-center text-sm text-gray-500">Aucun équipement ne correspond à votre recherche.</div>}
     </div>
-    <p className="text-xs text-gray-400">Données de démonstration : les changements sont conservés uniquement dans l’état de cette page et ne sont pas encore synchronisés avec une API.</p>
+    <p className="text-xs text-gray-400">Données de démonstration : les modifications sont conservées sur cet appareil et ne sont pas synchronisées avec une API.</p>
+    {deleteTarget && <ConfirmDialog title="Supprimer cet équipement ?" message={`Voulez-vous vraiment supprimer « ${deleteTarget.name} » ? Cette action est irréversible sur cet appareil.`} confirmLabel="Supprimer" danger onConfirm={() => { setItems(prev => prev.filter(item => item.id !== deleteTarget.id)); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} />}
     {showForm && <Modal title={editing ? 'Modifier un équipement' : 'Ajouter un équipement'} description="Renseignez les informations de l’équipement." onClose={closeForm} size="lg">
       <form onSubmit={saveEquipment} className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-semibold text-gray-700">Nom de l’équipement<input required value={name} onChange={e=>setName(e.target.value)} className={inputCls} placeholder="Ex. Onduleur hybride"/></label>
           <label className="text-sm font-semibold text-gray-700">Catégorie<select value={category} onChange={e=>setCategory(e.target.value)} className={inputCls}>{['Onduleur','Batterie','Panneau solaire','Contrôleur','Capteur','Autre'].map(v=><option key={v}>{v}</option>)}</select></label>
-          <label className="text-sm font-semibold text-gray-700">Site<select value={site} onChange={e=>setSite(e.target.value)} className={inputCls}>{['Site Andohalo A','Site Analakely B','Site Ampitatafika','Site Mahamasina','Site Ankorondrano','Site Tsimbazaza'].map(v=><option key={v}>{v}</option>)}</select></label>
+          <label className="text-sm font-semibold text-gray-700">Site<select value={site} onChange={e=>setSite(e.target.value)} className={inputCls}>{Array.from(new Set([...siteOptions, site])).filter(Boolean).map(v=><option key={v}>{v}</option>)}</select></label>
           <label className="text-sm font-semibold text-gray-700">Référence / numéro de série<input required value={serial} onChange={e=>setSerial(e.target.value)} className={inputCls} placeholder="EQ-XXX"/></label>
           <label className="text-sm font-semibold text-gray-700">Puissance / capacité<input required value={power} onChange={e=>setPower(e.target.value)} className={inputCls} placeholder="Ex. 10 kW"/></label>
           <label className="text-sm font-semibold text-gray-700">État<select value={formStatus} onChange={e=>setFormStatus(e.target.value as EquipmentStatus)} className={inputCls}><option>Opérationnel</option><option>À surveiller</option><option>En panne</option></select></label>
