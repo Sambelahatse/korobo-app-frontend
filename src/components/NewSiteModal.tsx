@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { FilePond } from 'react-filepond'
+import type { FilePondFile } from 'filepond'
+import 'filepond/dist/filepond.min.css'
 import type { ListItem } from '../types'
 import { XIcon, PlusIcon, FolderIcon, LocationIcon } from './Icons'
 
@@ -168,6 +171,9 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
 
   // Step 6
   const [contratSav, setContratSav]           = useState(site?.contratSav ?? '')
+  const handleContractFiles = (files: FilePondFile[]) => {
+    setContratSav(files[0]?.file instanceof File ? files[0].file.name : '')
+  }
 
   const validateStep = (targetStep: number) => {
     setFormError('')
@@ -386,17 +392,48 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
       /* ── Step 6 : Contrat SAV ── */
       case 6:
         return (
-          <div className="flex flex-col items-center justify-center gap-5 py-12">
-            <p className="text-[15px] font-semibold text-gray-800">Contrat SAV</p>
-            <div className="relative w-80">
-              <input
-                className={`${inputCls} pr-12`}
-                value={contratSav}
-                onChange={e => setContratSav(e.target.value)}
-                placeholder="Sélectionner un fichier..."
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"><FolderIcon size={18} /></span>
+          <div className="flex flex-col gap-5 py-8">
+            <div>
+              <p className="text-[15px] font-semibold text-gray-800">Contrat SAV</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Ajoutez le contrat SAV au format PDF, Word ou image. Vous pouvez le remplacer ou le retirer avant d’enregistrer.
+              </p>
             </div>
+            {site?.contratSav && (
+              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                Contrat enregistré : <span className="font-medium text-gray-800">{site.contratSav}</span>
+              </div>
+            )}
+            <FilePond
+              allowMultiple={false}
+              maxFiles={1}
+              instantUpload={false}
+              onupdatefiles={handleContractFiles}
+              labelIdle='Glissez-déposez votre contrat ou <span class="filepond--label-action">parcourez vos fichiers</span>'
+              labelFileWaitingForSize="Calcul de la taille"
+              labelFileSizeNotAvailable="Taille indisponible"
+              labelFileLoading="Chargement"
+              labelFileLoadError="Erreur pendant le chargement"
+              labelFileProcessing="Traitement"
+              labelFileProcessingComplete="Terminé"
+              labelFileProcessingAborted="Traitement annulé"
+              labelFileProcessingError="Erreur pendant le traitement"
+              labelFileProcessingRevertError="Erreur pendant la suppression"
+              labelFileRemoveError="Erreur pendant la suppression"
+              labelTapToCancel="Appuyez pour annuler"
+              labelTapToRetry="Appuyez pour réessayer"
+              labelTapToUndo="Appuyez pour annuler"
+              labelButtonRemoveItem="Retirer"
+              labelButtonAbortItemLoad="Annuler"
+              labelButtonRetryItemLoad="Réessayer"
+              labelButtonAbortItemProcessing="Annuler"
+              labelButtonUndoItemProcessing="Annuler"
+              labelButtonRetryItemProcessing="Réessayer"
+              labelButtonProcessItem="Traiter"
+            />
+            <p className="text-xs text-gray-500">
+              Le formulaire mémorise actuellement le nom du fichier sélectionné. L’envoi et le stockage du document nécessiteront une intégration backend.
+            </p>
           </div>
         )
 
