@@ -35,3 +35,48 @@
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-gray-200 rounded-full; }
 }
+
+
+/* Contrat SAV — FilePond, styles intégrés à l’interface KOROBO */
+.sav-contract-uploader .filepond--credits {
+  display: none !important;
+  visibility: hidden !important;
+}
+.sav-contract-uploader .filepond--root {
+  margin-bottom: 0;
+  font-family: inherit;
+}
+.sav-contract-uploader .filepond--panel-root {
+  border: 1.5px dashed #b7c9ad;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f8fbf6 0%, #f1f7ed 100%);
+  box-shadow: none;
+}
+.sav-contract-uploader .filepond--drop-label {
+  min-height: 150px;
+  color: #4b5563;
+}
+.sav-contract-uploader .filepond--drop-label label {
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.sav-contract-uploader .filepond--label-action {
+  color: #3d6b2a;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid #a7c49a;
+}
+.sav-contract-uploader .filepond--panel-root:hover {
+  border-color: #3d6b2a;
+}
+.sav-contract-uploader .filepond--item-panel {
+  background: #3d6b2a;
+  border-radius: 10px;
+}
+.sav-contract-uploader .filepond--file-action-button {
+  cursor: pointer;
+}
+.sav-contract-uploader .filepond--file {
+  font-size: 13px;
+}
