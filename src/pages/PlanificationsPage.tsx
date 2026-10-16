@@ -179,6 +179,18 @@ export default function PlanificationsPage() {
   const [search,       setSearch]       = useState('')
   const [showModal,    setShowModal]    = useState(false)
   const [editItem,     setEditItem]     = useState<Planification | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const editId = params.get('edit')
+    if (!editId) return
+    const target = items.find(item => item.id === editId)
+    if (target) {
+      setEditItem(target)
+      setShowModal(false)
+    }
+    window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/planifications')
+  }, [items])
   const [deleteItem,   setDeleteItem]   = useState<Planification | null>(null)
   const [viewMode,     setViewMode]     = useState<'cards'|'list'>('cards')
   const [sortKey, setSortKey] = useState('date')
