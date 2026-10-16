@@ -78,20 +78,33 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             }))
             onLogin()
           } catch (err) {
-            const message = err instanceof Error ? err.message : ''
-            setGoogleError(message.includes('OPERATION_NOT_ALLOWED')
-              ? 'Google n’est pas activé dans les fournisseurs de connexion Firebase.'
-              : message.includes('API_KEY')
-                ? 'La clé API Firebase est invalide. Vérifiez la configuration.'
-                : 'Impossible de se connecter avec Google. Vérifiez la configuration Firebase et réessayez.')
+            const message = err instanceof Error ? err.message : 'Erreur inconnue'
+            const code = message.toUpperCase()
+            const friendlyMessage =
+              code.includes('OPERATION_NOT_ALLOWED')
+                ? 'La connexion Google n’est pas activée dans Firebase Authentication.'
+                : code.includes('API_KEY_INVALID') || code.includes('INVALID_API_KEY') || code.includes('API_KEY')
+                  ? 'La clé API Firebase est invalide. Vérifiez VITE_FIREBASE_API_KEY.'
+                  : code.includes('CONFIGURATION_NOT_FOUND')
+                    ? 'La configuration du fournisseur Google est introuvable dans Firebase.'
+                    : code.includes('UNAUTHORIZED_DOMAIN') || code.includes('INVALID_ORIGIN')
+                      ? 'Ce domaine n’est pas autorisé. Ajoutez sambelahatse.github.io aux domaines autorisés dans Firebase Authentication.'
+                      : code.includes('INVALID_IDP_RESPONSE') || code.includes('INVALID_ID_TOKEN')
+                        ? 'Google a renvoyé un jeton invalide. Vérifiez que le Client ID Google correspond au projet Firebase.'
+                        : code.includes('PROJECT_NOT_FOUND')
+                          ? 'Projet Firebase introuvable. Vérifiez que la clé API appartient au bon projet.'
+                          : code.includes('TOO_MANY_ATTEMPTS_TRY_LATER')
+                            ? 'Trop de tentatives. Attendez quelques minutes avant de réessayer.'
+                            : `Échec Firebase : ${message}`
+            setGoogleError(friendlyMessage)
           } finally {
             setLoading(false)
           }
         },
       })
       window.google.accounts.id.renderButton(googleButtonRef.current, {
-        type: 'standard', theme: 'outline', size: 'large', text: 'continue_with',
-        shape: 'rectangular', logo_alignment: 'left', width: 360,
+        type: 'icon', theme: 'outline', size: 'large', shape: 'circle',
+        logo_alignment: 'center',
       })
       setGoogleReady(true)
     }
@@ -158,8 +171,8 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex items-center justify-center px-5 sm:px-8 py-10 bg-[#f7f9f5] min-h-screen">
-        <div className="w-full max-w-[440px] rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl shadow-[#171a18]/5 sm:p-9">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-10 bg-[#f7f9f5] min-h-screen">
+        <div className="w-full max-w-[440px] rounded-3xl border border-gray-100 bg-white p-5 sm:p-8 shadow-xl shadow-[#171a18]/5">
 
           {/* Mobile logo + back */}
           <div className="lg:hidden flex items-center justify-between mb-8">
@@ -167,7 +180,7 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             <button onClick={onBack} className="text-sm text-gray-400 hover:text-gray-600">← Accueil</button>
           </div>
 
-          <div className="mb-7">
+          <div className="mb-6">
             <h1 className="font-syne font-bold text-2xl sm:text-3xl text-gray-900 mb-2">Bon retour 👋</h1>
             <p className="text-gray-500 text-sm">Connectez-vous à votre compte KOROBO</p>
           </div>
@@ -216,8 +229,8 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             </button>
           </form>
 
-          <div className="mb-5 flex flex-col items-center gap-2">
-            <div ref={googleButtonRef} className="flex min-h-10 w-full justify-center" />
+          <div className="mt-5 mb-4 flex flex-col items-center gap-2">
+            <div ref={googleButtonRef} aria-label="Se connecter avec Google" className="flex min-h-10 w-full justify-center" />
             {!googleReady && !import.meta.env.VITE_GOOGLE_CLIENT_ID && (
               <p className="text-center text-xs text-amber-700">Connexion Google à configurer par l’administrateur.</p>
             )}
@@ -227,7 +240,7 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             {googleError && <p role="alert" className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-600">{googleError}</p>}
           </div>
 
-          <div className="flex items-center gap-3 my-6"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
+          <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
 
           <p className="text-center text-sm text-gray-500">
             Pas encore de compte ?{' '}
