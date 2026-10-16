@@ -396,7 +396,7 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
             <div>
               <p className="text-[15px] font-semibold text-gray-800">Contrat SAV</p>
               <p className="mt-1 text-sm text-gray-500">
-                Ajoutez le contrat SAV au format PDF, Word ou image. Vous pouvez le remplacer ou le retirer avant d’enregistrer.
+                Ajoutez le fichier du contrat SAV. Vous pouvez le remplacer ou le retirer avant d’enregistrer.
               </p>
             </div>
             {site?.contratSav && (
