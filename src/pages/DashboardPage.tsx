@@ -2,11 +2,11 @@ import { mockSites, mockPlanifications, mockNotifications } from '../data/mockDa
 
 function StatCard({ label, value, sub, color, icon }: { label: string; value: string | number; sub: string; color: string; icon: string }) {
   return (
-    <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-5 lg:p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md">
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs lg:text-sm text-gray-500 font-medium">{label}</p>
-          <p className={`font-syne font-bold text-2xl lg:text-3xl mt-1 ${color}`}>{value}</p>
+          <p className={`font-sans font-bold text-3xl lg:text-4xl mt-2 tracking-tight ${color}`}>{value}</p>
         </div>
         <div className="w-9 h-9 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center text-lg lg:text-2xl bg-gray-50 flex-shrink-0">
           {icon}
@@ -42,17 +42,17 @@ export default function DashboardPage() {
   } as const
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 lg:space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 lg:space-y-7">
       <div>
-        <h2 className="font-syne font-bold text-xl lg:text-2xl text-gray-800">Tableau de bord</h2>
-        <p className="text-xs lg:text-sm text-gray-400 mt-1">
+        <h2 className="font-sans font-bold text-2xl lg:text-3xl tracking-tight text-[#171a18]">Tableau de bord</h2>
+        <p className="text-sm text-gray-500 mt-2">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
       {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#3d6b2a]" icon="⚡" />
+        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon="⚡" />
         <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon="🔧" />
         <StatCard label="Inactifs"       value={inactifs}             sub="nécessitent attention"           color="text-red-500"    icon="⚠️" />
         <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon="🚨" />
@@ -64,10 +64,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Répartition */}
         <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
-          <h3 className="font-syne font-bold text-sm lg:text-base text-gray-800 mb-4">Répartition des sites</h3>
+          <h3 className="font-sans font-bold text-sm lg:text-base text-gray-800 mb-4">Répartition des sites</h3>
           <div className="space-y-3">
             {[
-              { label: 'Actifs',      count: actifs,      color: 'bg-[#6aad46]', pct: Math.round(actifs/mockSites.length*100) },
+              { label: 'Actifs',      count: actifs,      color: 'bg-[#8eb86f]', pct: Math.round(actifs/mockSites.length*100) },
               { label: 'Maintenance', count: maintenance, color: 'bg-amber-400', pct: Math.round(maintenance/mockSites.length*100) },
               { label: 'Inactifs',    count: inactifs,    color: 'bg-red-400',   pct: Math.round(inactifs/mockSites.length*100) },
             ].map(({ label, count, color, pct }) => (
@@ -91,7 +91,7 @@ export default function DashboardPage() {
           {(() => {
             const counts: Record<string, number> = {}
             mockSites.forEach(s => { counts[s.typeInstallation] = (counts[s.typeInstallation] || 0) + 1 })
-            const colors = ['bg-[#3d6b2a]', 'bg-[#6aad46]', 'bg-[#d4e8cb]']
+            const colors = ['bg-[#4A7A3B]', 'bg-[#6aad46]', 'bg-[#d4e8cb]']
             return Object.entries(counts).map(([type, count], i) => (
               <div key={type} className="flex items-center gap-3 mb-3">
                 <div className={`w-3 h-3 rounded-full ${colors[i]} flex-shrink-0`} />
@@ -130,7 +130,7 @@ export default function DashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs lg:text-sm min-w-[540px]">
             <thead>
-              <tr className="bg-gray-50 text-[10px] lg:text-xs text-gray-500 uppercase tracking-wide">
+              <tr className="bg-[#f6f8f4] text-[10px] lg:text-xs text-gray-500 uppercase tracking-wide">
                 {['Site', 'Type', 'Priorité', 'Date', 'Technicien', 'Statut'].map(h => (
                   <th key={h} className="px-4 lg:px-6 py-2.5 lg:py-3 text-left font-semibold">{h}</th>
                 ))}
@@ -140,11 +140,11 @@ export default function DashboardPage() {
               {recent.map((p, i) => (
                 <tr key={p.id} className={`border-t border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
-                  <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${typeColor[p.type]}`}>{p.type}</span></td>
+                  <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`px-2 py-0.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${typeColor[p.type]}`}>{p.type}</span></td>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`text-[10px] font-bold uppercase ${prioColor[p.priorite]}`}>{p.priorite}</span></td>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3 text-gray-500 whitespace-nowrap">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3 text-gray-600 whitespace-nowrap">{p.technicien}</td>
-                  <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statutColor[p.statut]}`}>{p.statut}</span></td>
+                  <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`px-2 py-0.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${statutColor[p.statut]}`}>{p.statut}</span></td>
                 </tr>
               ))}
             </tbody>
