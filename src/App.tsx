@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -17,16 +17,43 @@ import SettingsPage from './pages/SettingsPage'
 
 type AppPage = Page | 'login' | 'register'
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState<AppPage>('landing')
+const validPages: AppPage[] = [
+  'landing', 'login', 'register', 'dashboard', 'sites', 'equipements',
+  'planifications', 'calendrier', 'rapports', 'utilisateurs',
+  'notifications', 'database', 'settings',
+]
 
-  if (currentPage === 'landing') return <LandingPage onEnter={() => setCurrentPage('login')} onRegister={() => setCurrentPage('register')} />
-  if (currentPage === 'login') return <LoginPage onLogin={() => setCurrentPage('dashboard')} onGoRegister={() => setCurrentPage('register')} onBack={() => setCurrentPage('landing')} />
-  if (currentPage === 'register') return <RegisterPage onRegister={() => setCurrentPage('login')} onGoLogin={() => setCurrentPage('login')} onBack={() => setCurrentPage('landing')} />
+function getPageFromUrl(): AppPage {
+  const route = window.location.hash.slice(2).split('?')[0]
+  return validPages.includes(route as AppPage) ? route as AppPage : 'landing'
+}
+
+function updateUrl(page: AppPage) {
+  const hash = page === 'landing' ? '#/' : `#/${page}`
+  if (window.location.hash !== hash) window.location.hash = hash
+}
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<AppPage>(getPageFromUrl)
+
+  useEffect(() => {
+    const syncWithUrl = () => setCurrentPage(getPageFromUrl())
+    window.addEventListener('hashchange', syncWithUrl)
+    return () => window.removeEventListener('hashchange', syncWithUrl)
+  }, [])
+
+  const goTo = (page: AppPage) => {
+    setCurrentPage(page)
+    updateUrl(page)
+  }
+
+  if (currentPage === 'landing') return <LandingPage onEnter={() => goTo('login')} onRegister={() => goTo('register')} />
+  if (currentPage === 'login') return <LoginPage onLogin={() => goTo('dashboard')} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
+  if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('login')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
 
   const adminPage = currentPage as Page
   return (
-    <AdminLayout currentPage={adminPage} onNavigate={(p) => setCurrentPage(p)}>
+    <AdminLayout currentPage={adminPage} onNavigate={(page) => goTo(page)}>
       {adminPage === 'dashboard' && <DashboardPage />}
       {adminPage === 'sites' && <SitesPage />}
       {adminPage === 'equipements' && <EquipementsPage />}
