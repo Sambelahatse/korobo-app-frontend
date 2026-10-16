@@ -25,6 +25,16 @@ export interface Site {
   typeInstallation: string
   puissance: number
   gps: string
+  numAffaire?: string
+  installateurNom?: string
+  installateurTel?: string
+  installationElectrique?: string
+  batteries?: ListItem[]
+  pvTypes?: ListItem[]
+  mttpTypes?: ListItem[]
+  controllers?: ListItem[]
+  groupeInfo?: string
+  contratSav?: string
 }
 
 export interface ListItem {
