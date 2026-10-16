@@ -38,6 +38,7 @@
 
 
 /* Contrat SAV — FilePond, styles intégrés à l’interface KOROBO */
+.filepond--credits,
 .sav-contract-uploader .filepond--credits {
   display: none !important;
   visibility: hidden !important;
