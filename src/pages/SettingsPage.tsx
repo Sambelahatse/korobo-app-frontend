@@ -16,10 +16,10 @@ interface ToggleProps {
 }
 function Toggle({ label, desc, value, onChange, disabled = false }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-gray-800">{label}</p>
-        {desc && <p className="mt-0.5 text-xs leading-snug text-gray-400">{desc}</p>}
+    <div className="flex items-center justify-between gap-4 py-3.5">
+      <div className="min-w-0 flex-1">
+        <p className={'text-sm font-semibold ' + (disabled ? 'text-gray-400' : 'text-gray-800')}>{label}</p>
+        {desc && <p className="mt-1 text-xs leading-relaxed text-gray-500">{desc}</p>}
       </div>
       <button
         type="button"
@@ -28,9 +28,23 @@ function Toggle({ label, desc, value, onChange, disabled = false }: ToggleProps)
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!value)}
-        className={'relative h-6 w-11 flex-shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ' + (value ? 'bg-[#4A7A3B]' : 'bg-gray-200')}
+        className={[
+          'group relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full border-2 border-transparent',
+          'transition-colors duration-200 ease-in-out',
+          'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4A7A3B]/20',
+          'disabled:cursor-not-allowed disabled:opacity-45',
+          value ? 'bg-[#4A7A3B]' : 'bg-gray-300 hover:bg-gray-400',
+        ].join(' ')}
       >
-        <span className={'absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ' + (value ? 'translate-x-6' : 'translate-x-1')} />
+        <span
+          aria-hidden="true"
+          className={[
+            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white',
+            'shadow-[0_1px_3px_rgba(0,0,0,0.25)] ring-0',
+            'transition-transform duration-200 ease-in-out',
+            value ? 'translate-x-5' : 'translate-x-0',
+          ].join(' ')}
+        />
       </button>
     </div>
   )
