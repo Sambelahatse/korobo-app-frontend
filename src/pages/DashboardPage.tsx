@@ -19,17 +19,15 @@ function readLocalArray<T>(key: string, fallback: T[]): T[] {
 
 function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 lg:p-6 shadow-sm border border-gray-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <p className="text-xs lg:text-sm text-gray-500 font-medium">{label}</p>
-          <p className={`font-sans font-bold text-3xl lg:text-4xl mt-2 tracking-tight ${color}`}>{value}</p>
-        </div>
-        <div className={`w-9 h-9 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center bg-gray-50 flex-shrink-0 ${iconTone}`}>
+    <div className="flex min-w-0 min-h-[142px] flex-col rounded-2xl border border-gray-200/80 bg-white p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:min-h-[150px] sm:p-4 xl:p-4 2xl:p-5">
+      <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
+        <p className="min-w-0 flex-1 text-xs font-medium leading-4 text-gray-500 sm:text-sm">{label}</p>
+        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 sm:h-9 sm:w-9 ${iconTone}`}>
           {icon}
         </div>
       </div>
-      <p className="text-xs text-gray-400">{sub}</p>
+      <p className={`mt-auto min-w-0 break-words font-sans text-2xl font-bold leading-tight tracking-tight sm:text-3xl 2xl:text-4xl ${color}`}>{value}</p>
+      <p className="mt-2 min-w-0 text-[11px] leading-4 text-gray-400 sm:text-xs">{sub}</p>
     </div>
   )
 }
