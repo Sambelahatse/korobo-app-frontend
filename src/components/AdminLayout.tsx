@@ -69,7 +69,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
         </div>
         <OverlayScrollbarsComponent className="min-h-0 flex-1" options={{ scrollbars: { theme: 'os-theme-korobo', autoHide: 'scroll', autoHideDelay: 700, clickScroll: true } }} defer><nav className="flex flex-col items-stretch gap-1.5 py-5 px-3">
           {navItems.map(item => <button key={item.page} onClick={() => handleNavigate(item.page)} className={['group relative flex items-center gap-3 justify-start w-full min-h-12 rounded-xl px-3 py-2 transition-all duration-200', currentPage === item.page ? 'bg-[#3f5d39] text-white shadow-sm ring-1 ring-inset ring-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white'].join(' ')}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-current transition-colors group-hover:bg-white/[0.08] group-[.bg-\[#3f5d39\]]:bg-white/10"><ModernIcon name={pageIcons[item.page]!} size={19} /></span><span className="text-left text-sm font-semibold">{item.label}</span>
+            <span className={["flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-current transition-colors", currentPage === item.page ? "bg-white/10" : "bg-white/[0.04] group-hover:bg-white/[0.08]"].join(" ")}><ModernIcon name={pageIcons[item.page]!} size={19} /></span><span className="text-left text-sm font-semibold">{item.label}</span>
             {item.page === 'notifications' && unreadCount > 0 && <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>)}
         </nav></OverlayScrollbarsComponent>
