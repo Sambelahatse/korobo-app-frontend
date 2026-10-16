@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
 import Modal from '../components/Modal'
 import {
-  defaultProfile,
   settingsService,
   type AccountPreferences,
   type AccountProfile,
