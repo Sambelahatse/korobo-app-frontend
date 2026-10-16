@@ -6,6 +6,7 @@ import {
 } from './Icons'
 import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 
 interface Props {
   children: ReactNode
@@ -55,7 +56,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
           <button onClick={() => handleNavigate('dashboard')} className="bg-white/5 border border-white/10 text-white text-sm font-bold tracking-[0.16em] px-4 py-2 rounded-lg transition-colors hover:bg-white/10">KOROBO</button>
           <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden text-gray-400 hover:text-white" aria-label="Fermer le menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
-        <nav className="flex-1 flex flex-col items-stretch gap-1.5 py-5 px-3 overflow-y-auto">
+        <OverlayScrollbarsComponent className="min-h-0 flex-1" options={{ scrollbars: { theme: 'os-theme-korobo', autoHide: 'scroll', autoHideDelay: 700, clickScroll: true } }} defer><nav className="flex flex-col items-stretch gap-1.5 py-5 px-3">
           {navItems.map(item => <button key={item.page} onClick={() => handleNavigate(item.page)} className={['relative flex items-center gap-3 justify-start w-full min-h-11 rounded-lg px-3.5 py-2 transition-colors', currentPage === item.page ? 'bg-[#3f5d39] text-white shadow-sm ring-1 ring-inset ring-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white'].join(' ')}>
             <span className="flex-shrink-0">{item.icon}</span><span className="text-left text-sm font-semibold">{item.label}</span>
             {item.page === 'notifications' && unreadCount > 0 && <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
@@ -69,7 +70,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
           <div className="flex items-center gap-2 text-[#4A7A3B] min-w-0"><span className="flex-shrink-0">{icon}</span><span className="font-sans font-bold text-sm lg:text-base tracking-wide text-gray-800 truncate">{title}</span></div>
           <button onClick={() => handleNavigate('notifications')} aria-label="Ouvrir les notifications" className="lg:hidden ml-auto relative p-2 text-gray-500 hover:text-[#4A7A3B]"><BellIcon size={20} />{unreadCount > 0 && <span className="absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">{unreadCount}</span>}</button>
         </header>
-        <main className="flex-1 overflow-y-auto bg-[#f6f8f4]">
+        <main className="flex-1 min-h-0 overflow-hidden bg-[#f6f8f4]"><OverlayScrollbarsComponent className="h-full" options={{ scrollbars: { theme: 'os-theme-korobo', autoHide: 'scroll', autoHideDelay: 700, clickScroll: true } }} defer><div className="min-h-full">
           {children}
           <footer className="border-t border-gray-200/80 bg-white/70 px-4 py-5 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -93,6 +94,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
               <p>Suivi et entretien des installations photovoltaïques</p>
             </div>
           </footer>
+          </div></OverlayScrollbarsComponent>
         </main>
         <div className="h-1 flex-shrink-0 bg-gradient-to-r from-[#28402a] via-[#4A7A3B] to-[#8eb86f]" />
       </div>
