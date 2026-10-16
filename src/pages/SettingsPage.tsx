@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
 import Modal from '../components/Modal'
 import {
-  defaultPreferences,
   defaultProfile,
   settingsService,
   type AccountPreferences,
@@ -60,7 +59,6 @@ export default function SettingsPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [saved, setSaved] = useState(false)
   const [message, setMessage] = useState('')
-  const [passwordNotice, setPasswordNotice] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme.toLowerCase()
