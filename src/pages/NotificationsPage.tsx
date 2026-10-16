@@ -42,16 +42,16 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-syne font-bold text-xl text-gray-800">Notifications</h2>
+          <h2 className="font-sans font-bold text-xl text-gray-800">Notifications</h2>
           <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
             {nonLues > 0
-              ? <span className="text-[#3d6b2a] font-semibold">{nonLues} non lue{nonLues > 1 ? 's' : ''}</span>
+              ? <span className="text-[#4A7A3B] font-semibold">{nonLues} non lue{nonLues > 1 ? 's' : ''}</span>
               : 'Tout est lu ✓'}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {nonLues > 0 && (
-            <button onClick={markAllRead} className="text-xs sm:text-sm text-[#3d6b2a] hover:underline font-medium whitespace-nowrap">
+            <button onClick={markAllRead} className="text-xs sm:text-sm text-[#4A7A3B] hover:underline font-medium whitespace-nowrap">
               <span className="hidden sm:inline">Tout marquer comme lu</span>
               <span className="sm:hidden">Tout lire</span>
             </button>
@@ -68,7 +68,7 @@ export default function NotificationsPage() {
         {Object.entries(filterLabels).map(([f, label]) => (
           <button key={f} onClick={() => setFilter(f)}
             className={'px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold capitalize whitespace-nowrap flex-shrink-0 transition-colors ' +
-              (filter === f ? 'bg-[#3d6b2a] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3d6b2a]')}>
+              (filter === f ? 'bg-[#4A7A3B] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#4A7A3B]')}>
             {label}{f === 'non-lues' && nonLues > 0 ? ` (${nonLues})` : ''}
           </button>
         ))}
@@ -89,9 +89,9 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                    <p className="font-syne font-bold text-sm text-gray-800 leading-tight">{n.titre}</p>
+                    <p className="font-sans font-bold text-sm text-gray-800 leading-tight">{n.titre}</p>
                     <span className={'text-[10px] font-bold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ' + cfg.label}>{n.type}</span>
-                    {!n.lu && <span className="w-2 h-2 bg-[#3d6b2a] rounded-full flex-shrink-0" />}
+                    {!n.lu && <span className="w-2 h-2 bg-[#4A7A3B] rounded-full flex-shrink-0" />}
                   </div>
                   <span className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">{timeAgo(n.date)}</span>
                 </div>
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
                 {n.siteNom && <p className="text-xs text-gray-400 mt-1">📍 {n.siteNom}</p>}
                 <div className="flex items-center gap-4 mt-2">
                   {!n.lu && (
-                    <button onClick={() => markRead(n.id)} className="text-xs text-[#3d6b2a] hover:underline font-medium">
+                    <button onClick={() => markRead(n.id)} className="text-xs text-[#4A7A3B] hover:underline font-medium">
                       Marquer comme lu
                     </button>
                   )}
