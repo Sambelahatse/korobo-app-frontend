@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { Page } from '../types'
 import {
   ClockIcon, GridIcon, SunCogIcon, CalendarIcon,
-  BellIcon, DatabaseIcon, SettingsIcon, LogoutIcon,
+  BellIcon, DatabaseIcon, SettingsIcon, LogoutIcon, ModernIcon,
 } from './Icons'
 import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
@@ -75,7 +75,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf4e9] text-[#4A7A3B]">
-                  <span className="text-xl font-bold">ϟ</span>
+                  <ModernIcon name="zap" size={21} />
                 </div>
                 <div>
                   <p className="font-sans text-sm font-bold tracking-wide text-[#202720]">KOROBO<span className="text-[#5C8A42]">.</span></p>
