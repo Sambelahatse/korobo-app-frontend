@@ -1,7 +1,21 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { ModernIcon } from '../components/Icons'
 import { mockSites, mockPlanifications, mockNotifications } from '../data/mockData'
 import SortableHeader from '../components/SortableHeader'
+import type { Site, Planification, Notification } from '../types'
+
+type DashboardEquipment = { id: string; name: string; status: 'Opérationnel' | 'À surveiller' | 'En panne' }
+
+function readLocalArray<T>(key: string, fallback: T[]): T[] {
+  try {
+    const stored = window.localStorage.getItem(key)
+    if (!stored) return fallback
+    const parsed: unknown = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed as T[] : fallback
+  } catch {
+    return fallback
+  }
+}
 
 function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
   return (
@@ -21,14 +35,20 @@ function StatCard({ label, value, sub, color, icon, iconTone }: { label: string;
 }
 
 export default function DashboardPage() {
-  const actifs      = mockSites.filter(s => s.statut === 'actif').length
-  const maintenance = mockSites.filter(s => s.statut === 'maintenance').length
-  const inactifs    = mockSites.filter(s => s.statut === 'inactif').length
-  const urgences    = mockPlanifications.filter(p => p.type === 'urgence' && p.statut !== 'terminée').length
-  const nonLues     = mockNotifications.filter(n => !n.lu).length
-  const totalPuissance = mockSites.reduce((acc, s) => acc + s.puissance, 0)
+  const sites = useMemo(() => readLocalArray<Site>('korobo.sites.v1', mockSites), [])
+  const equipment = useMemo(() => readLocalArray<DashboardEquipment>('korobo.equipment.v1', []), [])
+  const planifications = mockPlanifications as Planification[]
+  const notifications = mockNotifications as Notification[]
+  const actifs      = sites.filter(s => s.statut === 'actif').length
+  const maintenance = sites.filter(s => s.statut === 'maintenance').length
+  const inactifs    = sites.filter(s => s.statut === 'inactif').length
+  const urgences    = planifications.filter(p => p.type === 'urgence' && p.statut !== 'terminée' && p.statut !== 'annulée').length
+  const nonLues     = notifications.filter(n => !n.lu).length
+  const totalPuissance = sites.reduce((acc, s) => acc + s.puissance, 0)
+  const equipmentDown = equipment.filter(item => item.status === 'En panne').length
+  const equipmentWatch = equipment.filter(item => item.status === 'À surveiller').length
 
-  const recent = mockPlanifications.filter(p => p.statut === 'en cours' || p.statut === 'planifiée').slice(0, 5)
+  const recent = planifications.filter(p => p.statut === 'en cours' || p.statut === 'planifiée').slice(0, 5)
   const [sortKey, setSortKey] = useState('date')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const toggleSort = (key: string) => { if (sortKey === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDirection('asc') } }
@@ -72,13 +92,31 @@ export default function DashboardPage() {
 
       {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
-        <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
-        <StatCard label="Inactifs"       value={inactifs}             sub="nécessitent attention"           color="text-red-500"    icon={<ModernIcon name="alert-triangle" size={21} />} iconTone="text-red-500 bg-red-50" />
+        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${sites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
+        <StatCard label="Maintenance"    value={maintenance}          sub="sites à maintenir"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
+        <StatCard label="Inactifs"       value={inactifs}             sub="sites à réactiver"           color="text-red-500"    icon={<ModernIcon name="alert-triangle" size={21} />} iconTone="text-red-500 bg-red-50" />
         <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon={<ModernIcon name="siren" size={21} />} iconTone="text-red-600 bg-red-50" />
         <StatCard label="Notifications"  value={nonLues}              sub="non lues"                        color="text-blue-600"   icon={<ModernIcon name="bell" size={21} />} iconTone="text-blue-600 bg-blue-50" />
         <StatCard label="Puissance tot." value={`${totalPuissance}kW`} sub="capacité installée"            color="text-[#3d6b2a]"  icon={<ModernIcon name="sun" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
       </div>
+
+      {/* État du parc matériel */}
+      {equipment.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium text-gray-500">Équipements suivis</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{equipment.length}</p>
+          </div>
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 shadow-sm">
+            <p className="text-xs font-medium text-amber-700">À surveiller</p>
+            <p className="mt-2 text-2xl font-bold text-amber-700">{equipmentWatch}</p>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4 shadow-sm">
+            <p className="text-xs font-medium text-rose-700">En panne</p>
+            <p className="mt-2 text-2xl font-bold text-rose-700">{equipmentDown}</p>
+          </div>
+        </div>
+      )}
 
       {/* Middle row — stack on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
@@ -87,9 +125,9 @@ export default function DashboardPage() {
           <div className="mb-5 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="building" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Répartition des sites</h3><p className="mt-0.5 text-xs text-gray-400">État actuel du parc</p></div></div>
           <div className="space-y-3">
             {[
-              { label: 'Actifs',      count: actifs,      color: 'bg-[#8eb86f]', pct: Math.round(actifs/mockSites.length*100) },
-              { label: 'Maintenance', count: maintenance, color: 'bg-amber-400', pct: Math.round(maintenance/mockSites.length*100) },
-              { label: 'Inactifs',    count: inactifs,    color: 'bg-red-400',   pct: Math.round(inactifs/mockSites.length*100) },
+              { label: 'Actifs',      count: actifs,      color: 'bg-[#8eb86f]', pct: sites.length ? Math.round(actifs/sites.length*100) : 0 },
+              { label: 'Maintenance', count: maintenance, color: 'bg-amber-400', pct: sites.length ? Math.round(maintenance/sites.length*100) : 0 },
+              { label: 'Inactifs',    count: inactifs,    color: 'bg-red-400',   pct: sites.length ? Math.round(inactifs/sites.length*100) : 0 },
             ].map(({ label, count, color, pct }) => (
               <div key={label}>
                 <div className="flex justify-between text-xs lg:text-sm mb-1">
@@ -102,7 +140,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-50">{mockSites.length} sites total</p>
+          <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-50">{sites.length} sites total</p>
         </div>
 
         {/* Types */}
@@ -110,7 +148,7 @@ export default function DashboardPage() {
           <h3 className="font-sans font-bold text-sm lg:text-base text-[#202720] mb-4">Types d'installation</h3>
           {(() => {
             const counts: Record<string, number> = {}
-            mockSites.forEach(s => { counts[s.typeInstallation] = (counts[s.typeInstallation] || 0) + 1 })
+            sites.forEach(s => { counts[s.typeInstallation] = (counts[s.typeInstallation] || 0) + 1 })
             const colors = ['bg-[#4A7A3B]', 'bg-[#6aad46]', 'bg-[#d4e8cb]']
             return Object.entries(counts).map(([type, count], i) => (
               <div key={type} className="flex items-center gap-3 mb-3">
@@ -126,7 +164,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-200/80 md:col-span-2 lg:col-span-1">
           <div className="mb-5 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="bell" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Alertes actives</h3><p className="mt-0.5 text-xs text-gray-400">{nonLues} notifications non lues</p></div></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
-            {mockNotifications.filter(n => !n.lu).slice(0, 4).map(n => (
+            {notifications.filter(n => !n.lu).slice(0, 4).map(n => (
               <div key={n.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-gray-50">
                 <span className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border ${n.type === 'alerte' ? 'border-red-100 bg-red-50 text-red-600' : n.type === 'avertissement' ? 'border-amber-100 bg-amber-50 text-amber-600' : n.type === 'succès' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-blue-100 bg-blue-50 text-blue-600'}`}><ModernIcon name={n.type === 'alerte' ? 'alert-triangle' : n.type === 'avertissement' ? 'siren' : n.type === 'succès' ? 'check-circle' : 'info'} size={18} /></span>
                 <div className="min-w-0">
@@ -138,6 +176,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <p className="text-xs text-gray-400">Les indicateurs des sites et équipements reflètent les données enregistrées dans ce navigateur. Les interventions et notifications utilisent encore les données de démonstration.</p>
 
       {/* Interventions table — scrollable on mobile */}
       <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
