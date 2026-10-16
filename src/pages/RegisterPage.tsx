@@ -53,7 +53,6 @@ function PasswordStrength({ password }: { password: string }) {
   )
 }
 
-const roles = ['Technicien','Responsable site','Administrateur','Superviseur']
 
 export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   const [step,      setStep]      = useState<1|2>(1)
@@ -61,7 +60,6 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   const [prenom,    setPrenom]    = useState('')
   const [email,     setEmail]     = useState('')
   const [telephone, setTelephone] = useState('')
-  const [role,      setRole]      = useState('')
   const [password,  setPassword]  = useState('')
   const [confirm,   setConfirm]   = useState('')
   const [showPw,    setShowPw]    = useState(false)
@@ -76,7 +74,6 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
     if (!prenom.trim()) e.prenom = 'Requis'
     if (!email.trim())  e.email  = 'Requis'
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Email invalide'
-    if (!role)          e.role   = 'Choisir un rôle'
     setErrors(e); return !Object.keys(e).length
   }
   const validate2 = () => {
@@ -114,7 +111,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
         <div className="relative z-10">
           <p className="text-white/60 text-sm font-medium uppercase tracking-[3px] mb-8">Inscription</p>
           <div className="flex flex-col gap-5">
-            {[{n:1,title:'Informations personnelles',desc:'Nom, email, rôle'},{n:2,title:'Sécurité du compte',desc:'Mot de passe sécurisé'}].map(({n,title,desc}) => (
+            {[{n:1,title:'Informations personnelles',desc:'Vos informations personnelles'},{n:2,title:'Sécurité du compte',desc:'Mot de passe sécurisé'}].map(({n,title,desc}) => (
               <div key={n} className={'flex items-start gap-4 transition-all ' + (step === n ? 'opacity-100' : 'opacity-40')}>
                 <div className={'w-8 h-8 rounded-full flex items-center justify-center font-syne font-bold text-sm flex-shrink-0 ' +
                   (step > n ? 'bg-[#6aad46] text-white' : step === n ? 'bg-white text-[#3d6b2a]' : 'border-2 border-white/30 text-white')}>
@@ -182,16 +179,14 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 <label className="text-sm font-semibold text-gray-700">Téléphone <span className="text-gray-400 font-normal">(optionnel)</span></label>
                 <input type="tel" placeholder="+261 34 00 000 00" value={telephone} onChange={e => setTelephone(e.target.value)} className={inputCls('telephone')} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700">Rôle</label>
-                <div className="relative">
-                  <select value={role} onChange={e => setRole(e.target.value)} className={inputCls('role') + ' appearance-none pr-10 cursor-pointer'}>
-                    <option value="">Sélectionner un rôle...</option>
-                    {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#3d6b2a] pointer-events-none">▾</span>
+              <div className="flex items-start gap-3 rounded-xl border border-[#dce8d5] bg-[#f4f8f1] p-4">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#e3eedc] text-[#4A7A3B]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 19 6v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Vous serez propriétaire de votre espace</p>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-500">Votre compte sera créé avec les droits du propriétaire. Vous pourrez ensuite ajouter des utilisateurs et leur attribuer leurs rôles depuis votre espace KOROBO.</p>
                 </div>
-                {errors.role && <p className="text-xs text-red-500">{errors.role}</p>}
               </div>
               <button onClick={() => validate1() && setStep(2)}
                 className="mt-2 w-full py-3 sm:py-3.5 bg-[#3d6b2a] hover:bg-[#3d6b2a] text-white rounded-lg font-syne font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#4A7A3B]/20">
