@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ModernIcon, type ModernIconName } from '../components/Icons'
 
 interface ToggleProps { label: string; desc?: string; value: boolean; onChange: (v: boolean) => void }
 function Toggle({ label, desc, value, onChange }: ToggleProps) {
@@ -16,11 +17,11 @@ function Toggle({ label, desc, value, onChange }: ToggleProps) {
   )
 }
 
-function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title: string; icon: ModernIconName; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-50 flex items-center gap-2.5">
-        <span className="text-xl">{icon}</span>
+        <span className="w-9 h-9 rounded-xl bg-[#edf5e8] text-[#4A7A3B] flex items-center justify-center"><ModernIcon name={icon} size={19} /></span>
         <h3 className="font-sans font-bold text-sm text-gray-800">{title}</h3>
       </div>
       <div className="px-4 sm:px-6 divide-y divide-gray-50">{children}</div>
@@ -67,7 +68,7 @@ export default function SettingsPage() {
 
         <div className="space-y-4 sm:space-y-5">
           {/* Profil */}
-          <Section title="Profil utilisateur" icon="👤">
+          <Section title="Profil utilisateur" icon="user-round">
             <div className="py-4">
               {/* Avatar + name */}
               <div className="flex items-center gap-3 sm:gap-4 mb-5">
@@ -106,7 +107,7 @@ export default function SettingsPage() {
           </Section>
 
           {/* Préférences */}
-          <Section title="Préférences d'affichage" icon="🎨">
+          <Section title="Préférences d'affichage" icon="palette">
             <div className="py-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="flex flex-col gap-1.5">
@@ -126,7 +127,7 @@ export default function SettingsPage() {
           </Section>
 
           {/* Notifications */}
-          <Section title="Notifications" icon="🔔">
+          <Section title="Notifications" icon="bell">
             <Toggle label="Notifications par email"    desc="Alertes sur votre boîte mail"          value={notifEmail}   onChange={setNotifEmail}   />
             <Toggle label="Notifications push"         desc="Alertes en temps réel"                  value={notifPush}    onChange={setNotifPush}    />
             <Toggle label="Alertes de panne"           desc="Notification immédiate en cas de panne" value={notifAlerte}  onChange={setNotifAlerte}  />
@@ -135,7 +136,7 @@ export default function SettingsPage() {
           </Section>
 
           {/* Sécurité */}
-          <Section title="Sécurité" icon="🔒">
+          <Section title="Sécurité" icon="shield-check">
             <Toggle label="Authentification 2 facteurs" desc="Code SMS à chaque connexion"         value={twoFactor}      onChange={setTwoFactor}      />
             <Toggle label="Déconnexion automatique"     desc="Après 30 min d'inactivité"           value={sessionTimeout} onChange={setSessionTimeout} />
             <div className="flex items-center justify-between py-3 gap-4">
