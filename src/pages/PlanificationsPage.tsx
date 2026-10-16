@@ -52,7 +52,7 @@ function PlanifModal({
 
   const inputCls = (err?: string) =>
     'w-full px-3 py-2.5 border rounded-lg text-sm outline-none transition-colors ' +
-    (err ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-[#3d6b2a]')
+    (err ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-[#4A7A3B]')
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-5"
@@ -62,7 +62,7 @@ function PlanifModal({
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
         <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-          <h2 className="font-syne font-bold text-base sm:text-lg text-[#3d6b2a]">
+          <h2 className="font-sans font-bold text-base sm:text-lg text-[#4A7A3B]">
             {isEdit ? 'Modifier' : 'Nouvelle planification'}
           </h2>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400">
@@ -121,7 +121,7 @@ function PlanifModal({
         </div>
         <div className="flex gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 flex-shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
-          <button onClick={handleSave} className="flex-1 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white rounded-lg text-sm font-semibold transition-colors">{isEdit ? 'Enregistrer' : 'Créer'}</button>
+          <button onClick={handleSave} className="flex-1 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white rounded-lg text-sm font-semibold transition-colors">{isEdit ? 'Enregistrer' : 'Créer'}</button>
         </div>
       </div>
     </div>
@@ -155,10 +155,10 @@ export default function PlanificationsPage() {
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-syne font-bold text-xl text-gray-800">Planifications</h2>
+          <h2 className="font-sans font-bold text-xl text-gray-800">Planifications</h2>
           <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{items.length} interventions</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors flex-shrink-0">
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors flex-shrink-0">
           <span>+</span>
           <span className="hidden sm:inline">Nouvelle planification</span>
           <span className="sm:hidden">Nouvelle</span>
@@ -169,9 +169,9 @@ export default function PlanificationsPage() {
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-2">
           <input type="text" placeholder="Rechercher…" value={search} onChange={e => setSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#3d6b2a] flex-1 sm:w-48 sm:flex-none" />
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#4A7A3B] flex-1 sm:w-48 sm:flex-none" />
           <select value={filterType} onChange={e => setFilterType(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#3d6b2a] bg-white">
+            className="border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#4A7A3B] bg-white">
             <option value="tous">Tous types</option>
             <option value="préventive">Préventive</option>
             <option value="corrective">Corrective</option>
@@ -179,10 +179,10 @@ export default function PlanificationsPage() {
           </select>
           {/* View toggle */}
           <div className="flex border border-gray-200 rounded-lg overflow-hidden ml-auto sm:ml-0">
-            <button onClick={() => setViewMode('cards')} className={`px-2.5 py-2 transition-colors ${viewMode === 'cards' ? 'bg-[#3d6b2a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            <button onClick={() => setViewMode('cards')} className={`px-2.5 py-2 transition-colors ${viewMode === 'cards' ? 'bg-[#4A7A3B] text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 transition-colors ${viewMode === 'list' ? 'bg-[#3d6b2a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 transition-colors ${viewMode === 'list' ? 'bg-[#4A7A3B] text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
           </div>
@@ -192,7 +192,7 @@ export default function PlanificationsPage() {
           {(['tous','planifiée','en cours','terminée','annulée'] as const).map(s => (
             <button key={s} onClick={() => setFilterStatut(s)}
               className={'px-3 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition-colors flex-shrink-0 ' +
-                (filterStatut === s ? 'bg-[#3d6b2a] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3d6b2a]')}>
+                (filterStatut === s ? 'bg-[#4A7A3B] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#4A7A3B]')}>
               {s === 'tous' ? 'Tous' : s}
             </button>
           ))}
@@ -213,14 +213,14 @@ export default function PlanificationsPage() {
                 </div>
                 <span className={'px-2 py-1 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span>
               </div>
-              <h3 className="font-syne font-bold text-sm text-gray-800 mb-1">{p.siteNom}</h3>
+              <h3 className="font-sans font-bold text-sm text-gray-800 mb-1">{p.siteNom}</h3>
               <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>
               <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-50">
                 <span>📅 {new Date(p.date).toLocaleDateString('fr-FR')}</span>
                 <span className="truncate max-w-[120px]">👷 {p.technicien}</span>
               </div>
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setEditItem(p)} className="flex-1 py-1.5 text-xs font-medium border border-gray-200 rounded-md text-gray-600 hover:border-[#3d6b2a] hover:text-[#3d6b2a] transition-colors">Modifier</button>
+                <button onClick={() => setEditItem(p)} className="flex-1 py-1.5 text-xs font-medium border border-gray-200 rounded-md text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
                 <button onClick={() => setDeleteItem(p)} className="flex-1 py-1.5 text-xs font-medium border border-red-100 rounded-md text-red-500 hover:bg-red-50 transition-colors">Supprimer</button>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function PlanificationsPage() {
 
       {/* List */}
       {viewMode === 'list' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
               <thead>
@@ -253,7 +253,7 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        <button onClick={() => setEditItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#3d6b2a] hover:text-[#3d6b2a] transition-colors">Modifier</button>
+                        <button onClick={() => setEditItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
                         <button onClick={() => setDeleteItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-red-100 rounded text-red-500 hover:bg-red-50 transition-colors">Suppr.</button>
                       </div>
                     </td>
