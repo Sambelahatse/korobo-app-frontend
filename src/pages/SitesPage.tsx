@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Site } from '../types'
 import { mockSites } from '../data/mockData'
 import { SearchIcon, FilterIcon, PlusIcon, EyeIcon } from '../components/Icons'
@@ -7,6 +7,18 @@ import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const ITEMS_PER_PAGE = 8
+const STORAGE_KEY = 'korobo.sites.v1'
+
+function loadSites(): Site[] {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (!stored) return mockSites
+    const parsed: unknown = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed as Site[] : mockSites
+  } catch {
+    return mockSites
+  }
+}
 
 const statutStyle = {
   actif:       'bg-green-100 text-green-700',
@@ -22,7 +34,15 @@ function TrashIcon() {
 }
 
 export default function SitesPage() {
-  const [sites, setSites]         = useState<Site[]>(mockSites)
+  const [sites, setSites]         = useState<Site[]>(loadSites)
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sites))
+    } catch (error) {
+      console.error('Impossible de sauvegarder les sites localement.', error)
+    }
+  }, [sites])
   const [search, setSearch]       = useState('')
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
@@ -43,7 +63,8 @@ export default function SitesPage() {
   })
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+  const currentPage = Math.min(page, Math.max(1, totalPages))
+  const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
   const types      = Array.from(new Set(sites.map(s => s.typeInstallation)))
 
   return (
@@ -161,32 +182,32 @@ export default function SitesPage() {
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:justify-between px-4 lg:px-6 py-3 border-t border-gray-100 bg-gray-50/50">
             <p className="text-xs text-gray-400 order-2 sm:order-1">
-              {(page-1)*ITEMS_PER_PAGE+1}–{Math.min(page*ITEMS_PER_PAGE, filtered.length)} / {filtered.length}
+              {(currentPage-1)*ITEMS_PER_PAGE+1}–{Math.min(currentPage*ITEMS_PER_PAGE, filtered.length)} / {filtered.length}
             </p>
             <div className="flex items-center gap-1 order-1 sm:order-2">
-              <button onClick={() => setPage(1)} disabled={page===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">«</button>
-              <button onClick={() => setPage(p=>p-1)} disabled={page===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">‹</button>
-              {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>Math.abs(p-page)<=1).map(p=>(
+              <button onClick={() => setPage(1)} disabled={currentPage===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">«</button>
+              <button onClick={() => setPage(currentPage-1)} disabled={currentPage===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">‹</button>
+              {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>Math.abs(p-currentPage)<=1).map(p=>(
                 <button key={p} onClick={()=>setPage(p)}
-                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${p===page?'bg-[#3d6b2a] text-white':'text-gray-600 hover:bg-gray-200'}`}>
+                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${p===currentPage?'bg-[#3d6b2a] text-white':'text-gray-600 hover:bg-gray-200'}`}>
                   {p}
                 </button>
               ))}
-              <button onClick={() => setPage(p=>p+1)} disabled={page===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">›</button>
-              <button onClick={() => setPage(totalPages)} disabled={page===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">»</button>
+              <button onClick={() => setPage(currentPage+1)} disabled={currentPage===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">›</button>
+              <button onClick={() => setPage(totalPages)} disabled={currentPage===totalPages} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">»</button>
             </div>
           </div>
         )}
       </div>
 
-      {showNewModal  && <NewSiteModal onClose={() => setShowNewModal(false)} />}
+      {showNewModal && <NewSiteModal onClose={() => setShowNewModal(false)} onSave={site => { setSites(current => [site, ...current]); setPage(1) }} />}
       {viewSite      && <SiteDetailModal site={viewSite} onClose={() => setViewSite(null)} onEdit={() => { setEditSite(viewSite); setViewSite(null) }} />}
-      {editSite      && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} />}
+      {editSite && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} onSave={updated => setSites(current => current.map(item => item.id === updated.id ? updated : item))} />}
       {deleteSite && (
         <ConfirmDialog title="Supprimer ce site ?" danger
           message={`Supprimer "${deleteSite.nom}" ? Cette action est irréversible.`}
           confirmLabel="Supprimer"
-          onConfirm={() => { setSites(p => p.filter(s => s.id !== deleteSite.id)); setDeleteSite(null) }}
+          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); setPage(1); setDeleteSite(null) }}
           onCancel={() => setDeleteSite(null)} />
       )}
     </div>
