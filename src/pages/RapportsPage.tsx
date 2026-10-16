@@ -53,6 +53,7 @@ export default function RapportsPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [deleteItem, setDeleteItem] = useState<Rapport | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingReport, setEditingReport] = useState<Rapport | null>(null)
   const [form,     setForm]     = useState<Partial<Rapport>>({})
   const [panelOpen, setPanelOpen] = useState(false) // mobile panel
 
@@ -107,16 +108,32 @@ export default function RapportsPage() {
   const handleSaveForm = () => {
     if (!form.siteNom?.trim() || !form.date || !form.technicien?.trim()) return
     const site = sites.find(item => item.id === form.siteId || item.nom === form.siteNom)
-    setRapports(prev => [{
-      id: 'R' + Date.now(),
+    const values: Rapport = {
+      id: editingReport?.id || 'R' + Date.now(),
       siteId: site?.id || form.siteId || '',
       siteNom: site?.nom || form.siteNom!.trim(),
-      statut: 'brouillon',
-      notes: '',
-      ...form,
+      date: form.date,
+      type: form.type || 'mensuel',
       technicien: form.technicien!.trim(),
-    } as Rapport, ...prev])
-    setShowForm(false); setForm({})
+      statut: editingReport?.statut || 'brouillon',
+      notes: form.notes || '',
+    }
+    setRapports(prev => editingReport
+      ? prev.map(item => item.id === editingReport.id ? values : item)
+      : [values, ...prev])
+    setShowForm(false); setEditingReport(null); setForm({})
+  }
+
+  const openEditForm = (report: Rapport) => {
+    setEditingReport(report)
+    setForm({ ...report })
+    setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingReport(null)
+    setForm({})
   }
 
   const toggleReportStatus = (report: Rapport) => {
@@ -268,6 +285,7 @@ export default function RapportsPage() {
                 <p className="text-[11px] text-gray-500 mt-0.5">{r.technicien} · {new Date(r.date).toLocaleDateString('fr-FR')}</p>
                 {r.notes && <p className="text-[11px] text-gray-400 mt-1.5 line-clamp-2">{r.notes}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={() => openEditForm(r)} className="rounded-md border border-gray-200 px-2.5 py-1.5 text-[10px] font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
                   <button onClick={() => toggleReportStatus(r)} className="rounded-md border border-[#4A7A3B]/30 px-2.5 py-1.5 text-[10px] font-semibold text-[#4A7A3B] hover:bg-[#edf4e9]">
                     {r.statut === 'validé' ? 'Repasser en brouillon' : 'Valider le rapport'}
                   </button>
@@ -287,11 +305,11 @@ export default function RapportsPage() {
       {/* Nouveau rapport modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-5"
-          onClick={e => e.target === e.currentTarget && setShowForm(false)}>
+          onClick={e => e.target === e.currentTarget && closeForm()}>
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl">
             <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-sans font-bold text-lg text-[#4A7A3B]">Nouveau rapport</h2>
+              <h2 className="font-sans font-bold text-lg text-[#4A7A3B]">{editingReport ? 'Modifier le rapport' : 'Nouveau rapport'}</h2>
             </div>
             <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
               {interventions.length > 0 && <div><label className="text-xs font-semibold text-gray-600">Partir d’une intervention existante (facultatif)</label>
@@ -322,8 +340,8 @@ export default function RapportsPage() {
                 <textarea className={inputCls+' resize-none'} rows={3} value={form.notes||''} onChange={e => setForm(f=>({...f,notes:e.target.value}))} placeholder="Observations..." /></div>
             </div>
             <div className="flex gap-3 p-5 border-t border-gray-100">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Annuler</button>
-              <button onClick={handleSaveForm} className="flex-1 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white rounded-lg text-sm font-semibold">Enregistrer</button>
+              <button onClick={closeForm} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Annuler</button>
+              <button onClick={handleSaveForm} className="flex-1 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white rounded-lg text-sm font-semibold">{editingReport ? 'Enregistrer les modifications' : 'Enregistrer'}</button>
             </div>
           </div>
         </div>
