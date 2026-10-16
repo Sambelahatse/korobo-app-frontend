@@ -28,7 +28,7 @@ function PasswordStrength({ password }: { password: string }) {
     { label: 'Char. spécial',      ok: /[^A-Za-z0-9]/.test(password) },
   ]
   const score = checks.filter(c => c.ok).length
-  const barColor = score <= 1 ? 'bg-red-400' : score === 2 ? 'bg-orange-400' : score === 3 ? 'bg-yellow-400' : 'bg-[#6aad46]'
+  const barColor = score <= 1 ? 'bg-red-400' : score === 2 ? 'bg-orange-400' : score === 3 ? 'bg-yellow-400' : 'bg-[#8eb86f]'
   const lbl      = score <= 1 ? 'Faible' : score === 2 ? 'Moyen' : score === 3 ? 'Bien' : 'Fort'
   if (!password) return null
   return (
@@ -37,12 +37,12 @@ function PasswordStrength({ password }: { password: string }) {
         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div className={'h-full rounded-full transition-all duration-300 ' + barColor} style={{ width: `${(score/4)*100}%` }} />
         </div>
-        <span className={'text-xs font-semibold ' + (score <= 1 ? 'text-red-400' : score === 2 ? 'text-orange-400' : score === 3 ? 'text-yellow-500' : 'text-[#6aad46]')}>{lbl}</span>
+        <span className={'text-xs font-semibold ' + (score <= 1 ? 'text-red-400' : score === 2 ? 'text-orange-400' : score === 3 ? 'text-yellow-500' : 'text-[#8eb86f]')}>{lbl}</span>
       </div>
       <div className="grid grid-cols-2 gap-1">
         {checks.map(({ label, ok }) => (
-          <div key={label} className={'flex items-center gap-1.5 text-xs transition-colors ' + (ok ? 'text-[#3d6b2a]' : 'text-gray-400')}>
-            <span className={'w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ' + (ok ? 'bg-[#3d6b2a] text-white' : 'bg-gray-100')}>
+          <div key={label} className={'flex items-center gap-1.5 text-xs transition-colors ' + (ok ? 'text-[#4A7A3B]' : 'text-gray-400')}>
+            <span className={'w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ' + (ok ? 'bg-[#4A7A3B] text-white' : 'bg-gray-100')}>
               {ok && <CheckIcon />}
             </span>
             {label}
@@ -88,8 +88,8 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   }
 
   const inputCls = (f: string) =>
-    'w-full px-4 py-3 border rounded-lg text-sm outline-none transition-all placeholder-gray-300 ' +
-    (errors[f] ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100' : 'border-gray-200 focus:border-[#3d6b2a] focus:ring-2 focus:ring-[#3d6b2a]/10')
+    'w-full px-4 py-3 border rounded-xl text-sm outline-none transition-all placeholder-gray-300 ' +
+    (errors[f] ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100' : 'border-gray-200 focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,16 +101,16 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex font-dm">
+    <div className="min-h-screen flex font-sans bg-[#f3f6f1]">
 
       {/* ── Left panel — hidden below lg ── */}
-      <div className="hidden lg:flex w-[42%] xl:w-[45%] bg-[#3d6b2a] flex-col justify-between p-10 xl:p-12 relative overflow-hidden flex-shrink-0">
+      <div className="hidden lg:flex w-[42%] xl:w-[45%] bg-gradient-to-br from-[#171a18] via-[#28402a] to-[#4A7A3B] flex-col justify-between p-10 xl:p-12 relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 opacity-[0.07]"
           style={{ backgroundImage: `repeating-linear-gradient(0deg,#fff,#fff 1px,transparent 1px,transparent 48px), repeating-linear-gradient(90deg,#fff,#fff 1px,transparent 1px,transparent 48px)` }} />
         <div className="absolute top-[-80px] left-[-80px] w-64 h-64 rounded-full border border-white/10" />
         <div className="absolute top-[-40px] left-[-40px] w-64 h-64 rounded-full border border-white/10" />
         <div className="absolute bottom-20 right-[-60px] w-48 h-48 rounded-full bg-[#4e8a35]/50" />
-        <button onClick={onBack} className="font-syne font-extrabold text-2xl text-white tracking-widest hover:text-[#6aad46] transition-colors relative z-10">KOROBO</button>
+        <button onClick={onBack} className="font-sans font-extrabold text-2xl text-white tracking-widest hover:text-[#6aad46] transition-colors relative z-10">KOROBO</button>
         <div className="relative z-10">
           <p className="text-white/60 text-sm font-medium uppercase tracking-[3px] mb-8">Inscription</p>
           <div className="flex flex-col gap-5">
@@ -132,8 +132,8 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex items-center justify-center px-5 sm:px-8 py-10 bg-white overflow-y-auto">
-        <div className="w-full max-w-[420px]">
+      <div className="flex-1 flex items-center justify-center px-5 sm:px-8 py-10 bg-[#f7f9f5] overflow-y-auto">
+        <div className="w-full max-w-[460px] rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl shadow-[#171a18]/5 sm:p-9">
 
           {/* Mobile header */}
           <div className="lg:hidden flex items-center justify-between mb-6">
@@ -194,7 +194,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 {errors.role && <p className="text-xs text-red-500">{errors.role}</p>}
               </div>
               <button onClick={() => validate1() && setStep(2)}
-                className="mt-2 w-full py-3 sm:py-3.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white rounded-lg font-syne font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#3d6b2a]/20">
+                className="mt-2 w-full py-3 sm:py-3.5 bg-[#3d6b2a] hover:bg-[#3d6b2a] text-white rounded-lg font-syne font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#4A7A3B]/20">
                 Continuer →
               </button>
             </div>
@@ -227,7 +227,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 {errors.confirm && <p className="text-xs text-red-500">{errors.confirm}</p>}
               </div>
               <label className="flex items-start gap-2.5 cursor-pointer mt-1">
-                <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#3d6b2a] flex-shrink-0" />
+                <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#4A7A3B] flex-shrink-0" />
                 <span className="text-sm text-gray-600 leading-relaxed">
                   J'accepte les <button type="button" className="text-[#3d6b2a] font-semibold hover:underline">conditions d'utilisation</button> et la <button type="button" className="text-[#3d6b2a] font-semibold hover:underline">politique de confidentialité</button>
                 </span>
