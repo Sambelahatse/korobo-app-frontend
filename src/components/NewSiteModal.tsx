@@ -110,6 +110,37 @@ function makeQtyChanger(setter: React.Dispatch<React.SetStateAction<ListItem[]>>
     setter(prev => prev.map(i => i.id === id ? { ...i, quantity: qty } : i))
 }
 
+function ContractFileIcon({ filename }: { filename: string }) {
+  const extension = filename.split('.').pop()?.toLowerCase() ?? ''
+  const type = ['pdf'].includes(extension)
+    ? { label: 'PDF', color: '#dc2626', background: '#fef2f2' }
+    : ['doc', 'docx', 'odt', 'rtf'].includes(extension)
+    ? { label: 'DOC', color: '#2563eb', background: '#eff6ff' }
+    : ['xls', 'xlsx', 'csv', 'ods'].includes(extension)
+    ? { label: 'XLS', color: '#15803d', background: '#f0fdf4' }
+    : ['ppt', 'pptx', 'odp'].includes(extension)
+    ? { label: 'PPT', color: '#c2410c', background: '#fff7ed' }
+    : ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extension)
+    ? { label: 'IMG', color: '#7c3aed', background: '#f5f3ff' }
+    : { label: extension ? extension.slice(0, 4).toUpperCase() : 'FILE', color: '#3d6b2a', background: '#f5faf2' }
+
+  return (
+    <div
+      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg shadow-sm"
+      style={{ color: type.color, backgroundColor: type.background }}
+      aria-label={`Fichier ${type.label}`}
+      title={`Type de fichier : ${type.label}`}
+    >
+      <svg viewBox="0 0 32 36" width="25" height="28" fill="none" aria-hidden="true">
+        <path d="M5 1.5h14l8 8V32a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 7 32V4A2.5 2.5 0 0 1 9.5 1.5Z" fill="white" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M19 2v7.5h7.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <rect x="2" y="19" width="28" height="11" rx="2.5" fill="currentColor" />
+        <text x="16" y="26.5" textAnchor="middle" fontSize={type.label.length > 3 ? '5.5' : '7'} fontWeight="700" fill="white">{type.label}</text>
+      </svg>
+    </div>
+  )
+}
+
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i))
 
@@ -413,9 +444,7 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
 
             {site?.contratSav && (
               <div className="flex items-center gap-3 rounded-xl border border-[#d8e7d0] bg-[#f5faf2] p-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#3d6b2a] shadow-sm">
-                  <FolderIcon size={19} />
-                </div>
+                <ContractFileIcon filename={site.contratSav} />
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[#648458]">Contrat actuel</p>
                   <p className="mt-0.5 truncate text-sm font-semibold text-gray-800" title={site.contratSav}>{site.contratSav}</p>
