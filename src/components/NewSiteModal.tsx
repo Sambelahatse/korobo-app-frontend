@@ -392,48 +392,84 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
       /* ── Step 6 : Contrat SAV ── */
       case 6:
         return (
-          <div className="flex flex-col gap-5 py-8">
-            <div>
-              <p className="text-[15px] font-semibold text-gray-800">Contrat SAV</p>
-              <p className="mt-1 text-sm text-gray-500">
-                Ajoutez le fichier du contrat SAV. Vous pouvez le remplacer ou le retirer avant d’enregistrer.
-              </p>
+          <div className="mx-auto flex w-full max-w-xl flex-col gap-5 py-6 sm:py-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#e8f2e3] text-[#3d6b2a]">
+                <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6M8 13h8M8 17h5" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-bold text-gray-900">Contrat SAV</p>
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Document</span>
+                </div>
+                <p className="mt-1.5 text-sm leading-5 text-gray-500">
+                  Ajoutez le contrat de service après-vente associé à ce site. Vous pourrez le remplacer avant d’enregistrer.
+                </p>
+              </div>
             </div>
+
             {site?.contratSav && (
-              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                Contrat enregistré : <span className="font-medium text-gray-800">{site.contratSav}</span>
+              <div className="flex items-center gap-3 rounded-xl border border-[#d8e7d0] bg-[#f5faf2] p-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#3d6b2a] shadow-sm">
+                  <FolderIcon size={19} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#648458]">Contrat actuel</p>
+                  <p className="mt-0.5 truncate text-sm font-semibold text-gray-800" title={site.contratSav}>{site.contratSav}</p>
+                </div>
+                <span className="rounded-full bg-[#e2f0d9] px-2.5 py-1 text-xs font-semibold text-[#3d6b2a]">Enregistré</span>
               </div>
             )}
-            <FilePond
-              allowMultiple={false}
-              maxFiles={1}
-              instantUpload={false}
-              onupdatefiles={handleContractFiles}
-              labelIdle='Glissez-déposez votre contrat ou <span class="filepond--label-action">parcourez vos fichiers</span>'
-              labelFileWaitingForSize="Calcul de la taille"
-              labelFileSizeNotAvailable="Taille indisponible"
-              labelFileLoading="Chargement"
-              labelFileLoadError="Erreur pendant le chargement"
-              labelFileProcessing="Traitement"
-              labelFileProcessingComplete="Terminé"
-              labelFileProcessingAborted="Traitement annulé"
-              labelFileProcessingError="Erreur pendant le traitement"
-              labelFileProcessingRevertError="Erreur pendant la suppression"
-              labelFileRemoveError="Erreur pendant la suppression"
-              labelTapToCancel="Appuyez pour annuler"
-              labelTapToRetry="Appuyez pour réessayer"
-              labelTapToUndo="Appuyez pour annuler"
-              labelButtonRemoveItem="Retirer"
-              labelButtonAbortItemLoad="Annuler"
-              labelButtonRetryItemLoad="Réessayer"
-              labelButtonAbortItemProcessing="Annuler"
-              labelButtonUndoItemProcessing="Annuler"
-              labelButtonRetryItemProcessing="Réessayer"
-              labelButtonProcessItem="Traiter"
-            />
-            <p className="text-xs text-gray-500">
-              Le formulaire mémorise actuellement le nom du fichier sélectionné. L’envoi et le stockage du document nécessiteront une intégration backend.
-            </p>
+
+            <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+              <FilePond
+                className="sav-contract-uploader"
+                allowMultiple={false}
+                maxFiles={1}
+                instantUpload={false}
+                onupdatefiles={handleContractFiles}
+                labelIdle='<span style="display:block;margin-bottom:10px;color:#3d6b2a"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M12 16V4m-5 5 5-5 5 5"/><path d="M20 16.5v2A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-2"/></svg></span><span style="font-weight:600;color:#374151">Déposez votre fichier ici</span><br><span style="font-size:12px;color:#6b7280">ou <span class="filepond--label-action">parcourez vos fichiers</span></span>'
+                labelFileWaitingForSize="Calcul de la taille"
+                labelFileSizeNotAvailable="Taille indisponible"
+                labelFileLoading="Chargement"
+                labelFileLoadError="Erreur pendant le chargement"
+                labelFileProcessing="Traitement"
+                labelFileProcessingComplete="Terminé"
+                labelFileProcessingAborted="Traitement annulé"
+                labelFileProcessingError="Erreur pendant le traitement"
+                labelFileProcessingRevertError="Erreur pendant la suppression"
+                labelFileRemoveError="Erreur pendant la suppression"
+                labelTapToCancel="Appuyez pour annuler"
+                labelTapToRetry="Appuyez pour réessayer"
+                labelTapToUndo="Appuyez pour annuler"
+                labelButtonRemoveItem="Retirer"
+                labelButtonAbortItemLoad="Annuler"
+                labelButtonRetryItemLoad="Réessayer"
+                labelButtonAbortItemProcessing="Annuler"
+                labelButtonUndoItemProcessing="Annuler"
+                labelButtonRetryItemProcessing="Réessayer"
+                labelButtonProcessItem="Traiter"
+              />
+              <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-2 pt-3">
+                <span className="text-xs text-gray-400">Sélectionnez un seul fichier</span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                  <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                    <rect x="4" y="8" width="12" height="9" rx="2" /><path d="M7 8V5a3 3 0 0 1 6 0v3" />
+                  </svg>
+                  Sélection locale
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-800">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" className="mt-0.5 flex-shrink-0" aria-hidden="true">
+                <circle cx="10" cy="10" r="7.5" /><path d="M10 9v4M10 6.5h.01" />
+              </svg>
+              <p>Pour le moment, seul le nom du fichier est mémorisé. L’envoi et le stockage du document seront disponibles après l’intégration du backend.</p>
+            </div>
           </div>
         )
 
