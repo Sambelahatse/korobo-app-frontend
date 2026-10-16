@@ -9,7 +9,7 @@ function TablePreview({ title, count, icon, headers, rows }: {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
       <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-50 flex items-center justify-between">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="flex-shrink-0 text-[#4A7A3B]"><ModernIcon name={icon} size={20} /></span>
+          <span className="flex-shrink-0 text-[#4A7A3B]"><ModernIcon name={icon as ModernIconName} size={20} /></span>
           <div className="min-w-0">
             <h3 className="font-sans font-bold text-xs sm:text-sm text-gray-800 truncate">{title}</h3>
             <p className="text-xs text-gray-400">{count} enreg.</p>
