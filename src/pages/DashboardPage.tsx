@@ -56,7 +56,7 @@ export default function DashboardPage() {
         <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-100 bg-white px-3.5 py-2 text-xs font-medium text-gray-600 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-500" />Vue d’ensemble des installations</div>
       </div>
 
-      {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */>
+      {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
         <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${mockSites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
         <StatCard label="Maintenance"    value={maintenance}          sub="en cours"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
@@ -92,8 +92,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Types */}
-        <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
-          <h3 className="font-syne font-bold text-sm lg:text-base text-gray-800 mb-4">Types d'installation</h3>
+        <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-200/80">
+          <h3 className="font-sans font-bold text-sm lg:text-base text-[#202720] mb-4">Types d'installation</h3>
           {(() => {
             const counts: Record<string, number> = {}
             mockSites.forEach(s => { counts[s.typeInstallation] = (counts[s.typeInstallation] || 0) + 1 })
@@ -109,7 +109,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Alertes */}
-        <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 md:col-span-2 lg:col-span-1">
+        <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-200/80 md:col-span-2 lg:col-span-1">
           <div className="mb-5 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f0f5ed] text-[#4A7A3B]"><ModernIcon name="bell" size={19} /></span><div><h3 className="font-sans font-bold text-sm lg:text-base text-[#202720]">Alertes actives</h3><p className="mt-0.5 text-xs text-gray-400">{nonLues} notifications non lues</p></div></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
             {mockNotifications.filter(n => !n.lu).slice(0, 4).map(n => (
