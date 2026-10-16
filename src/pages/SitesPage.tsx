@@ -74,8 +74,8 @@ export default function SitesPage() {
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Search */}
-          <div className="flex items-center border-2 border-[#3d6b2a] rounded-md overflow-hidden flex-1 sm:flex-none sm:w-72 lg:w-80 bg-white min-w-0">
-            <span className="flex items-center justify-center w-10 h-10 bg-[#3d6b2a] text-white flex-shrink-0">
+          <div className="flex items-center border-2 border-[#4A7A3B] rounded-md overflow-hidden flex-1 sm:flex-none sm:w-72 lg:w-80 bg-white min-w-0">
+            <span className="flex items-center justify-center w-10 h-10 bg-[#4A7A3B] text-white flex-shrink-0">
               <SearchIcon size={16} />
             </span>
             <input type="text" placeholder="Rechercher..." value={search}
@@ -86,7 +86,7 @@ export default function SitesPage() {
 
           {/* Filter toggle */}
           <button onClick={() => setShowFilter(v => !v)}
-            className={`flex items-center gap-1.5 px-3 lg:px-5 py-2.5 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${showFilter ? 'bg-[#3d6b2a] text-white' : 'bg-white border border-gray-300 text-gray-700 hover:border-[#3d6b2a]'}`}>
+            className={`flex items-center gap-1.5 px-3 lg:px-5 py-2.5 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${showFilter ? 'bg-[#4A7A3B] text-white' : 'bg-white border border-gray-300 text-gray-700 hover:border-[#4A7A3B]'}`}>
             <FilterIcon size={14} />
             <span className="hidden sm:inline">Filtres</span>
             {(filterStatut !== 'tous' || filterType !== 'tous') && <span className="text-xs">●</span>}
@@ -94,7 +94,7 @@ export default function SitesPage() {
 
           {/* New site */}
           <button onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-1.5 px-3 lg:px-5 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-sm font-medium rounded-md transition-colors flex-shrink-0">
+            className="flex items-center gap-1.5 px-3 lg:px-5 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white text-sm font-medium rounded-md transition-colors flex-shrink-0">
             <PlusIcon size={14} />
             <span className="hidden sm:inline">New site</span>
           </button>
@@ -106,7 +106,7 @@ export default function SitesPage() {
             <div className="flex flex-col gap-1 w-full sm:w-auto">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</label>
               <select value={filterStatut} onChange={e => { setFilterStatut(e.target.value); setPage(1) }}
-                className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#3d6b2a] bg-white w-full sm:w-40">
+                className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#4A7A3B] bg-white w-full sm:w-40">
                 <option value="tous">Tous</option>
                 <option value="actif">Actif</option>
                 <option value="maintenance">Maintenance</option>
@@ -116,13 +116,13 @@ export default function SitesPage() {
             <div className="flex flex-col gap-1 w-full sm:w-auto">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</label>
               <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1) }}
-                className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#3d6b2a] bg-white w-full sm:w-52">
+                className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#4A7A3B] bg-white w-full sm:w-52">
                 <option value="tous">Tous les types</option>
                 {types.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <button onClick={() => { setFilterStatut('tous'); setFilterType('tous'); setPage(1) }}
-              className="text-sm text-[#3d6b2a] hover:underline font-medium">Réinitialiser</button>
+              className="text-sm text-[#4A7A3B] hover:underline font-medium">Réinitialiser</button>
             <span className="sm:ml-auto text-xs text-gray-400">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</span>
           </div>
         )}
@@ -135,7 +135,7 @@ export default function SitesPage() {
             <thead>
               <tr className="bg-[#5a7a4a]">
                 {['#ID', 'Nom du site', 'Localisation', 'Type', 'kW', 'Statut', 'Actions'].map(col => (
-                  <th key={col} className="px-3 lg:px-4 py-3 text-left text-white font-syne font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap">
+                  <th key={col} className="px-3 lg:px-4 py-3 text-left text-white font-sans font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap">
                     {col}
                   </th>
                 ))}
@@ -189,7 +189,7 @@ export default function SitesPage() {
               <button onClick={() => setPage(currentPage-1)} disabled={currentPage===1} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-200 disabled:opacity-30">‹</button>
               {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>Math.abs(p-currentPage)<=1).map(p=>(
                 <button key={p} onClick={()=>setPage(p)}
-                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${p===currentPage?'bg-[#3d6b2a] text-white':'text-gray-600 hover:bg-gray-200'}`}>
+                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${p===currentPage?'bg-[#4A7A3B] text-white':'text-gray-600 hover:bg-gray-200'}`}>
                   {p}
                 </button>
               ))}
