@@ -9,7 +9,7 @@ function Toggle({ label, desc, value, onChange }: ToggleProps) {
         {desc && <p className="text-xs text-gray-400 mt-0.5 leading-snug">{desc}</p>}
       </div>
       <button onClick={() => onChange(!value)}
-        className={'relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ' + (value ? 'bg-[#3d6b2a]' : 'bg-gray-200')}>
+        className={'relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ' + (value ? 'bg-[#4A7A3B]' : 'bg-gray-200')}>
         <div className={'absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ' + (value ? 'translate-x-6' : 'translate-x-1')} />
       </button>
     </div>
@@ -18,17 +18,17 @@ function Toggle({ label, desc, value, onChange }: ToggleProps) {
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-50 flex items-center gap-2.5">
         <span className="text-xl">{icon}</span>
-        <h3 className="font-syne font-bold text-sm text-gray-800">{title}</h3>
+        <h3 className="font-sans font-bold text-sm text-gray-800">{title}</h3>
       </div>
       <div className="px-4 sm:px-6 divide-y divide-gray-50">{children}</div>
     </div>
   )
 }
 
-const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#3d6b2a] transition-colors'
+const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10 transition-all'
 
 export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
@@ -55,7 +55,7 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5 sm:mb-6">
           <div>
-            <h2 className="font-syne font-bold text-xl text-gray-800">Paramètres</h2>
+            <h2 className="font-sans font-bold text-xl text-gray-800">Paramètres</h2>
             <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Compte et préférences</p>
           </div>
           {saved && (
@@ -71,13 +71,13 @@ export default function SettingsPage() {
             <div className="py-4">
               {/* Avatar + name */}
               <div className="flex items-center gap-3 sm:gap-4 mb-5">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#3d6b2a] flex items-center justify-center text-white font-syne font-bold text-xl sm:text-2xl flex-shrink-0">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#4A7A3B] flex items-center justify-center text-white font-sans font-bold text-xl sm:text-2xl flex-shrink-0">
                   {nom.split(' ').map(n => n[0]).join('').slice(0,2)}
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-800 truncate">{nom}</p>
                   <p className="text-sm text-gray-400">{role}</p>
-                  <button className="text-xs text-[#3d6b2a] hover:underline mt-0.5">Changer la photo</button>
+                  <button className="text-xs text-[#4A7A3B] hover:underline mt-0.5">Changer la photo</button>
                 </div>
               </div>
 
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-gray-800">Changer le mot de passe</p>
                 <p className="text-xs text-gray-400 mt-0.5">Modifié il y a 3 mois</p>
               </div>
-              <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm font-medium text-gray-600 hover:border-[#3d6b2a] hover:text-[#3d6b2a] transition-colors flex-shrink-0">
+              <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm font-medium text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors flex-shrink-0">
                 Modifier
               </button>
             </div>
@@ -151,13 +151,13 @@ export default function SettingsPage() {
 
           {/* Save */}
           <button onClick={handleSave}
-            className="w-full py-3 sm:py-3.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white rounded-xl font-syne font-bold text-sm tracking-wide transition-colors shadow-lg shadow-[#3d6b2a]/20 active:scale-[0.99]">
+            className="w-full py-3 sm:py-3.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white rounded-xl font-sans font-bold text-sm tracking-wide transition-colors shadow-lg shadow-[#4A7A3B]/20 active:scale-[0.99]">
             Enregistrer les modifications
           </button>
 
           {/* Danger zone */}
           <div className="bg-red-50 border border-red-100 rounded-xl p-4 sm:p-5">
-            <h3 className="font-syne font-bold text-sm text-red-700 mb-1">Zone dangereuse</h3>
+            <h3 className="font-sans font-bold text-sm text-red-700 mb-1">Zone dangereuse</h3>
             <p className="text-xs text-red-400 mb-3">Ces actions sont irréversibles.</p>
             <button className="px-3 sm:px-4 py-2 border border-red-200 rounded-lg text-xs sm:text-sm font-medium text-red-500 hover:bg-red-100 transition-colors">
               Supprimer mon compte
