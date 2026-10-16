@@ -121,59 +121,81 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
   const [lieuSite, setLieuSite]               = useState(site?.localisation ?? '')
   const [proprietaire, setProprietaire]       = useState(site?.proprietaire ?? '')
   const [annee, setAnnee]                     = useState(site?.annee ?? String(currentYear))
-  const [numAffaire, setNumAffaire]           = useState('')
+  const [numAffaire, setNumAffaire]           = useState(site?.numAffaire ?? '')
   const [gps, setGps]                         = useState(site?.gps ?? '')
   const [c1Nom, setC1Nom]                     = useState(site?.contact1Nom ?? '')
   const [c1Tel, setC1Tel]                     = useState(site?.contact1Tel ?? '')
   const [c2Nom, setC2Nom]                     = useState(site?.contact2Nom ?? '')
   const [c2Tel, setC2Tel]                     = useState(site?.contact2Tel ?? '')
-  const [instNom, setInstNom]                 = useState('')
-  const [instTel, setInstTel]                 = useState('')
+  const [instNom, setInstNom]                 = useState(site?.installateurNom ?? '')
+  const [instTel, setInstTel]                 = useState(site?.installateurTel ?? '')
 
   // Step 2
   const [typeInstall, setTypeInstall]         = useState(site?.typeInstallation ?? '')
-  const [installElec, setInstallElec]         = useState('')
+  const [installElec, setInstallElec]         = useState(site?.installationElectrique ?? '')
   const [puissance, setPuissance]             = useState(String(site?.puissance ?? ''))
   const [formError, setFormError]             = useState('')
-  const [batteries, setBatteries]             = useState<ListItem[]>([
+  const [batteries, setBatteries]             = useState<ListItem[]>(site?.batteries ?? [
     { id: '1', quantity: '01', name: 'Battterie type 1' },
     { id: '2', quantity: '01', name: 'Battterie type 2' },
   ])
 
   // Step 3
-  const [pvTypes, setPvTypes]                 = useState<ListItem[]>([
+  const [pvTypes, setPvTypes]                 = useState<ListItem[]>(site?.pvTypes ?? [
     { id: '1', quantity: '01', name: 'PV type 1' },
     { id: '2', quantity: '01', name: 'PV type 2' },
   ])
-  const [mttpTypes, setMttpTypes]             = useState<ListItem[]>([
+  const [mttpTypes, setMttpTypes]             = useState<ListItem[]>(site?.mttpTypes ?? [
     { id: '1', quantity: '01', name: 'MTTP type 1' },
     { id: '2', quantity: '01', name: 'MTTP type 2' },
   ])
 
   // Step 4
-  const [controllers, setControllers]         = useState<ListItem[]>([
+  const [controllers, setControllers]         = useState<ListItem[]>(site?.controllers ?? [
     { id: '1', quantity: '01', name: 'controlleur type 1' },
     { id: '2', quantity: '01', name: 'controlleur type 2' },
   ])
 
   // Step 5
-  const [groupeInfo, setGroupeInfo]           = useState('')
+  const [groupeInfo, setGroupeInfo]           = useState(site?.groupeInfo ?? '')
 
   // Step 6
-  const [contratSav, setContratSav]           = useState('')
+  const [contratSav, setContratSav]           = useState(site?.contratSav ?? '')
+
+  const validateStep = (targetStep: number) => {
+    setFormError('')
+    if (targetStep === 1) {
+      if (!nomSite.trim() || !lieuSite.trim() || !proprietaire.trim()) {
+        setFormError('Les champs Nom du site, Lieu du site et Propriétaire sont obligatoires.')
+        return false
+      }
+      if (c1Tel.trim() && !/^[+0-9() .-]{7,20}$/.test(c1Tel.trim())) {
+        setFormError('Le numéro du contact 1 semble invalide.')
+        return false
+      }
+      if (c2Tel.trim() && !/^[+0-9() .-]{7,20}$/.test(c2Tel.trim())) {
+        setFormError('Le numéro du contact 2 semble invalide.')
+        return false
+      }
+    }
+    if (targetStep === 2) {
+      const parsedPower = Number(puissance)
+      if (!typeInstall.trim()) {
+        setFormError('Veuillez renseigner le type d’installation.')
+        return false
+      }
+      if (!puissance.trim() || !Number.isFinite(parsedPower) || parsedPower <= 0) {
+        setFormError('Veuillez saisir une puissance installée supérieure à 0 kW.')
+        return false
+      }
+    }
+    return true
+  }
 
   const handleSave = () => {
+    if (!validateStep(1)) { setStep(1); return }
+    if (!validateStep(2)) { setStep(2); return }
     const parsedPower = Number(puissance)
-    if (!nomSite.trim() || !lieuSite.trim() || !proprietaire.trim() || !typeInstall.trim()) {
-      setFormError('Veuillez renseigner le nom, le lieu, le propriétaire et le type d’installation.')
-      setStep(1)
-      return
-    }
-    if (!puissance.trim() || !Number.isFinite(parsedPower) || parsedPower <= 0) {
-      setFormError('Veuillez saisir une puissance installée supérieure à 0 kW.')
-      setStep(2)
-      return
-    }
     onSave({
       id: site?.id ?? String(Date.now()),
       nom: nomSite.trim(),
@@ -188,6 +210,16 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
       typeInstallation: typeInstall.trim(),
       puissance: parsedPower,
       gps: gps.trim(),
+      numAffaire: numAffaire.trim(),
+      installateurNom: instNom.trim(),
+      installateurTel: instTel.trim(),
+      installationElectrique: installElec.trim(),
+      batteries: batteries.map(item => ({ ...item })),
+      pvTypes: pvTypes.map(item => ({ ...item })),
+      mttpTypes: mttpTypes.map(item => ({ ...item })),
+      controllers: controllers.map(item => ({ ...item })),
+      groupeInfo: groupeInfo.trim(),
+      contratSav: contratSav.trim(),
     })
     onClose()
   }
@@ -413,7 +445,7 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
           </button>
           {step < TOTAL ? (
             <button
-              onClick={() => setStep(s => s + 1)}
+              onClick={() => { if (validateStep(step)) setStep(s => s + 1) }}
               className="px-9 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-sm font-semibold rounded-md transition-colors"
             >
               Next
