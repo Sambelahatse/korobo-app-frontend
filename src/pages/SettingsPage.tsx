@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
+import Modal from '../components/Modal'
 
 interface ToggleProps { label: string; desc?: string; value: boolean; onChange: (v: boolean) => void }
 function Toggle({ label, desc, value, onChange }: ToggleProps) {
@@ -33,6 +34,7 @@ const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm o
 
 export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const [nom,    setNom]    = useState('Rakoto Jean')
   const [email,  setEmail]  = useState('jean.rakoto@korobo.mg')
   const [tel,    setTel]    = useState('+261 34 00 000 01')
@@ -82,26 +84,13 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Form fields — stack on mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500">Nom complet</label>
-                  <input className={inputCls} value={nom} onChange={e => setNom(e.target.value)} />
+              <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                <div className="grid gap-3 text-sm sm:grid-cols-2">
+                  <div><p className="text-xs font-medium text-gray-400">E-mail</p><p className="mt-1 break-all font-medium text-gray-800">{email}</p></div>
+                  <div><p className="text-xs font-medium text-gray-400">Téléphone</p><p className="mt-1 font-medium text-gray-800">{tel || 'Non renseigné'}</p></div>
+                  <div><p className="text-xs font-medium text-gray-400">Rôle</p><p className="mt-1 font-medium text-gray-800">{role}</p></div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500">Téléphone</label>
-                  <input className={inputCls} value={tel} onChange={e => setTel(e.target.value)} />
-                </div>
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-500">Email</label>
-                  <input type="email" className={inputCls} value={email} onChange={e => setEmail(e.target.value)} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500">Rôle</label>
-                  <select className={inputCls + ' appearance-none'} value={role} onChange={e => setRole(e.target.value)}>
-                    {['Administrateur','Technicien','Responsable site','Superviseur'].map(r => <option key={r}>{r}</option>)}
-                  </select>
-                </div>
+                <button onClick={() => setShowProfileModal(true)} className="mt-4 rounded-lg border border-[#4A7A3B]/20 bg-white px-4 py-2 text-sm font-semibold text-[#4A7A3B] transition hover:bg-[#edf5e8]">Modifier le profil</button>
               </div>
             </div>
           </Section>
@@ -166,6 +155,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      {showProfileModal && <Modal title="Modifier le profil" description="Mettez à jour les informations de votre compte." onClose={() => setShowProfileModal(false)}>
+        <form onSubmit={e => { e.preventDefault(); handleSave(); setShowProfileModal(false) }} className="space-y-4">
+          <label className="block text-sm font-semibold text-gray-700">Nom complet<input required className={inputCls} value={nom} onChange={e => setNom(e.target.value)} /></label>
+          <label className="block text-sm font-semibold text-gray-700">Téléphone<input className={inputCls} value={tel} onChange={e => setTel(e.target.value)} /></label>
+          <label className="block text-sm font-semibold text-gray-700">Adresse e-mail<input required type="email" className={inputCls} value={email} onChange={e => setEmail(e.target.value)} /></label>
+          <label className="block text-sm font-semibold text-gray-700">Rôle<select className={inputCls + ' appearance-none'} value={role} onChange={e => setRole(e.target.value)}>{['Administrateur','Technicien','Responsable site','Superviseur'].map(r => <option key={r}>{r}</option>)}</select></label>
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={() => setShowProfileModal(false)} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600">Annuler</button><button type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white">Enregistrer</button></div>
+        </form>
+      </Modal>}
     </div>
   )
 }
