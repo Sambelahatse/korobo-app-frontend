@@ -68,6 +68,10 @@ export default function RapportsPage() {
         const savedInterventions = localStorage.getItem('korobo.planifications.v1')
         setInterventions(savedInterventions === null ? mockPlanifications : JSON.parse(savedInterventions) as Planification[])
       } catch { setSites(mockSites); setInterventions(mockPlanifications) }
+      try {
+        const savedReports = localStorage.getItem('korobo.rapports.v1')
+        if (savedReports !== null) setRapports(JSON.parse(savedReports) as Rapport[])
+      } catch { /* Keep current reports if stored data is invalid. */ }
     }
     window.addEventListener('storage', refreshLocalData)
     return () => window.removeEventListener('storage', refreshLocalData)
