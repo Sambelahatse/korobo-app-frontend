@@ -46,7 +46,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-[#f6f8f4]">
 
       {/* ── Mobile overlay ── */}
       {mobileMenuOpen && (
@@ -60,16 +60,16 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
       <aside className={`
         fixed lg:relative z-40 lg:z-auto
         h-full lg:h-screen
-        flex-shrink-0 bg-[#f5f7f3] border-r border-gray-200 flex flex-col
+        flex-shrink-0 bg-white border-r border-gray-200 flex flex-col
         transition-transform duration-300
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        w-[220px] lg:w-[88px]
+        w-[248px]
       `}>
         {/* Top */}
-        <div className="h-[70px] flex items-center justify-between lg:justify-center px-4 lg:px-0 border-b border-gray-200">
+        <div className="h-[76px] flex items-center justify-between px-5 border-b border-gray-100">
           <button onClick={() => handleNavigate('dashboard')}
-            className="bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-[11px] font-bold font-syne tracking-wide px-3 py-1.5 rounded transition-colors">
-            #Admin
+            className="bg-gradient-to-r from-[#28402a] to-[#4A7A3B] text-white text-sm font-extrabold tracking-[0.18em] px-4 py-2 rounded-xl shadow-sm transition-colors">
+            KOROBO
           </button>
           {/* Close button mobile */}
           <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-800">
@@ -78,19 +78,19 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col items-start lg:items-center gap-1 py-4 px-3 lg:px-0 overflow-y-auto">
+        <nav className="flex-1 flex flex-col items-stretch gap-1.5 py-5 px-3 overflow-y-auto">
           {navItems.map((item) => (
             <button key={item.page} onClick={() => handleNavigate(item.page)}
               className={[
-                'relative flex items-center gap-3 lg:gap-0 lg:justify-center',
-                'w-full lg:w-[52px] h-[44px] lg:h-[52px]',
-                'rounded-xl px-3 lg:px-0 transition-all',
+                'relative flex items-center gap-3 justify-start',
+                'w-full h-11',
+                'rounded-xl px-3.5 transition-all',
                 currentPage === item.page
-                  ? 'bg-[#3d6b2a] text-white shadow-md'
-                  : 'text-gray-500 hover:bg-[#e8f2e3] hover:text-[#3d6b2a]',
+                  ? 'bg-[#edf5e8] text-[#355d2c] shadow-sm ring-1 ring-inset ring-[#dce9d4]'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-[#4A7A3B]',
               ].join(' ')}>
               <span className="flex-shrink-0">{item.icon}</span>
-              <span className="lg:hidden text-sm font-medium">{item.label}</span>
+              <span className="text-sm font-semibold">{item.label}</span>
               {item.page === 'notifications' && unreadCount > 0 && (
                 <span className="absolute top-1 left-7 lg:left-auto lg:-top-0.5 lg:-right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -101,11 +101,11 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
         </nav>
 
         {/* Logout */}
-        <div className="py-4 flex items-center lg:justify-center px-3 lg:px-0 border-t border-gray-200">
+        <div className="py-4 flex items-center px-3 border-t border-gray-100">
           <button onClick={() => { setMobileMenuOpen(false); setConfirmLogout(true) }}
-            className="flex items-center gap-3 lg:gap-0 lg:justify-center w-full lg:w-[52px] h-[44px] lg:h-[52px] px-3 lg:px-0 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all">
+            className="flex items-center gap-3 lg:gap-0 lg:justify-center w-full h-11 px-3.5 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all">
             <LogoutIcon />
-            <span className="lg:hidden text-sm font-medium">Déconnexion</span>
+            <span className="text-sm font-semibold">Déconnexion</span>
           </button>
         </div>
       </aside>
@@ -114,7 +114,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Header */}
-        <header className="h-[60px] lg:h-[70px] flex-shrink-0 bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 gap-3">
+        <header className="h-[64px] lg:h-[76px] flex-shrink-0 bg-white/95 border-b border-gray-100 flex items-center px-4 lg:px-8 gap-4">
           {/* Hamburger — mobile only */}
           <button onClick={() => setMobileMenuOpen(true)}
             className="lg:hidden flex flex-col gap-1.5 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
@@ -123,9 +123,9 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
             <span className="w-5 h-0.5 bg-gray-700 rounded" />
           </button>
 
-          <div className="flex items-center gap-2 text-[#3d6b2a] min-w-0">
+          <div className="flex items-center gap-2 text-[#4A7A3B] min-w-0">
             <span className="flex-shrink-0">{icon}</span>
-            <span className="font-syne font-bold text-[13px] lg:text-[15px] tracking-widest text-gray-800 truncate">{title}</span>
+            <span className="font-sans font-bold text-sm lg:text-base tracking-wide text-gray-800 truncate">{title}</span>
           </div>
 
           {/* Mobile notification bell shortcut */}
@@ -141,10 +141,10 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#f6f8f4]">{children}</main>
 
         {/* Footer bar */}
-        <div className="h-1.5 lg:h-2 bg-[#3d6b2a] flex-shrink-0" />
+        <div className="h-1 flex-shrink-0 bg-gradient-to-r from-[#28402a] via-[#4A7A3B] to-[#8eb86f]" />
       </div>
 
       {confirmLogout && (
