@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ListItem } from '../types'
 import { XIcon, PlusIcon, FolderIcon, LocationIcon } from './Icons'
 
@@ -135,6 +135,13 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
   const [installElec, setInstallElec]         = useState(site?.installationElectrique ?? '')
   const [puissance, setPuissance]             = useState(String(site?.puissance ?? ''))
   const [formError, setFormError]             = useState('')
+  const formErrorRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    if (formError) {
+      formErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [formError])
   const [batteries, setBatteries]             = useState<ListItem[]>(site?.batteries ?? [
     { id: '1', quantity: '01', name: 'Battterie type 1' },
     { id: '2', quantity: '01', name: 'Battterie type 2' },
@@ -441,7 +448,7 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-8 scrollbar-thin">
-          {formError && <p role="alert" className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
+          {formError && <p ref={formErrorRef} role="alert" aria-live="assertive" className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
           {renderStep()}
         </div>
 
