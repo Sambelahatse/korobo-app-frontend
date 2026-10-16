@@ -5,16 +5,16 @@ function TablePreview({ title, count, icon, headers, rows }: {
   headers: string[]; rows: (string | number)[][]
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
       <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-50 flex items-center justify-between">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="text-lg sm:text-xl flex-shrink-0">{icon}</span>
           <div className="min-w-0">
-            <h3 className="font-syne font-bold text-xs sm:text-sm text-gray-800 truncate">{title}</h3>
+            <h3 className="font-sans font-bold text-xs sm:text-sm text-gray-800 truncate">{title}</h3>
             <p className="text-xs text-gray-400">{count} enreg.</p>
           </div>
         </div>
-        <span className="px-2 py-1 bg-[#e8f2e3] text-[#3d6b2a] text-xs font-bold rounded-full flex-shrink-0">{count}</span>
+        <span className="px-2 py-1 bg-[#e8f2e3] text-[#4A7A3B] text-xs font-bold rounded-full flex-shrink-0">{count}</span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[360px]">
@@ -53,14 +53,14 @@ export default function DatabasePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-5">
-        <h2 className="font-syne font-bold text-xl text-gray-800">Base de données</h2>
+        <h2 className="font-sans font-bold text-xl text-gray-800">Base de données</h2>
         <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Vue des tables · {totalRecords} enregistrements</p>
       </div>
 
       {/* Stats — 2×2 mobile, 4 cols md+ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
         {[
-          { label: 'Sites',          count: mockSites.length,          icon: '🏗️', color: 'bg-[#e8f2e3] text-[#3d6b2a]' },
+          { label: 'Sites',          count: mockSites.length,          icon: '🏗️', color: 'bg-[#e8f2e3] text-[#4A7A3B]' },
           { label: 'Planifications', count: mockPlanifications.length, icon: '📅', color: 'bg-blue-50 text-blue-700'     },
           { label: 'Rapports',       count: mockRapports.length,       icon: '📋', color: 'bg-amber-50 text-amber-700'   },
           { label: 'Notifications',  count: mockNotifications.length,  icon: '🔔', color: 'bg-purple-50 text-purple-700' },
@@ -68,7 +68,7 @@ export default function DatabasePage() {
           <div key={label} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3">
             <div className={'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-lg sm:text-xl flex-shrink-0 ' + color}>{icon}</div>
             <div className="min-w-0">
-              <p className="font-syne font-bold text-lg sm:text-xl text-gray-800">{count}</p>
+              <p className="font-sans font-bold text-lg sm:text-xl text-gray-800">{count}</p>
               <p className="text-xs text-gray-400 truncate">{label}</p>
             </div>
           </div>
