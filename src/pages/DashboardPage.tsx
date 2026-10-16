@@ -17,9 +17,9 @@ function readLocalArray<T>(key: string, fallback: T[]): T[] {
   }
 }
 
-function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
+function StatCard({ label, value, sub, color, icon, iconTone, surface }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string; surface: string }) {
   return (
-    <div className="flex min-w-0 min-h-[142px] flex-col rounded-2xl border border-gray-200/80 bg-white p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:min-h-[150px] sm:p-4 xl:p-4 2xl:p-5">
+    <div className={`flex min-w-0 min-h-[142px] flex-col rounded-2xl border p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:min-h-[150px] sm:p-4 xl:p-4 2xl:p-5 ${surface}`}>
       <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
         <p className="min-w-0 flex-1 text-xs font-medium leading-4 text-gray-500 sm:text-sm">{label}</p>
         <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 sm:h-9 sm:w-9 ${iconTone}`}>
@@ -90,12 +90,12 @@ export default function DashboardPage() {
 
       {/* Stats — 2 cols mobile, 3 cols tablet, 6 cols desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${sites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
-        <StatCard label="Maintenance"    value={maintenance}          sub="sites à maintenir"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-600 bg-amber-50" />
-        <StatCard label="Inactifs"       value={inactifs}             sub="sites à réactiver"           color="text-red-500"    icon={<ModernIcon name="alert-triangle" size={21} />} iconTone="text-red-500 bg-red-50" />
-        <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon={<ModernIcon name="siren" size={21} />} iconTone="text-red-600 bg-red-50" />
-        <StatCard label="Notifications"  value={nonLues}              sub="non lues"                        color="text-blue-600"   icon={<ModernIcon name="bell" size={21} />} iconTone="text-blue-600 bg-blue-50" />
-        <StatCard label="Puissance tot." value={`${totalPuissance}kW`} sub="capacité installée"            color="text-[#3d6b2a]"  icon={<ModernIcon name="sun" size={21} />} iconTone="text-[#4A7A3B] bg-[#edf5e8]" />
+        <StatCard label="Sites actifs"   value={actifs}               sub={`sur ${sites.length} total`} color="text-[#4A7A3B]" icon={<ModernIcon name="zap" size={21} />} iconTone="text-[#4A7A3B] bg-emerald-100/80" surface="border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white" />
+        <StatCard label="Maintenance"    value={maintenance}          sub="sites à maintenir"                        color="text-amber-600"  icon={<ModernIcon name="wrench" size={21} />} iconTone="text-amber-700 bg-amber-100/80" surface="border-amber-200/80 bg-gradient-to-br from-amber-50 to-white" />
+        <StatCard label="Inactifs"       value={inactifs}             sub="sites à réactiver"           color="text-red-500"    icon={<ModernIcon name="alert-triangle" size={21} />} iconTone="text-rose-600 bg-rose-100/80" surface="border-rose-200/80 bg-gradient-to-br from-rose-50 to-white" />
+        <StatCard label="Urgences"       value={urgences}             sub="interventions urgentes"          color="text-red-600"    icon={<ModernIcon name="siren" size={21} />} iconTone="text-red-700 bg-red-100/80" surface="border-red-200/80 bg-gradient-to-br from-red-50 to-white" />
+        <StatCard label="Notifications"  value={nonLues}              sub="non lues"                        color="text-blue-600"   icon={<ModernIcon name="bell" size={21} />} iconTone="text-blue-700 bg-blue-100/80" surface="border-blue-200/80 bg-gradient-to-br from-sky-50 to-white" />
+        <StatCard label="Puissance tot." value={`${totalPuissance}kW`} sub="capacité installée"            color="text-[#3d6b2a]"  icon={<ModernIcon name="sun" size={21} />} iconTone="text-teal-700 bg-teal-100/80" surface="border-teal-200/80 bg-gradient-to-br from-teal-50 to-white" />
       </div>
 
       {/* État du parc matériel */}
