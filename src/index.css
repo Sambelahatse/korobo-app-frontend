@@ -1,3 +1,4 @@
+@import 'overlayscrollbars/overlayscrollbars.css';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700;800&family=Lato:wght@400;700;900&display=swap');
 
 @tailwind base;
@@ -23,6 +24,12 @@
 }
 
 @layer components {
+  .os-theme-korobo {
+    --os-handle-bg: rgba(142, 184, 111, 0.55);
+    --os-handle-bg-hover: rgba(92, 138, 66, 0.8);
+    --os-handle-bg-active: #4A7A3B;
+  }
+
   /* Scrollbar */
   .scrollbar-thin::-webkit-scrollbar { width: 5px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
