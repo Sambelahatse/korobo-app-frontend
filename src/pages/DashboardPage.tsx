@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ModernIcon } from '../components/Icons'
 import { mockSites, mockPlanifications, mockNotifications } from '../data/mockData'
+import SortableHeader from '../components/SortableHeader'
 
 function StatCard({ label, value, sub, color, icon, iconTone }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string }) {
   return (
@@ -28,6 +29,19 @@ export default function DashboardPage() {
   const totalPuissance = mockSites.reduce((acc, s) => acc + s.puissance, 0)
 
   const recent = mockPlanifications.filter(p => p.statut === 'en cours' || p.statut === 'planifiée').slice(0, 5)
+  const [sortKey, setSortKey] = useState('date')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const toggleSort = (key: string) => { if (sortKey === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDirection('asc') } }
+  const sortedRecent = [...recent].sort((a, b) => {
+    const values: Record<string, (item: typeof recent[number]) => string | number> = {
+      site: item => item.siteNom, type: item => item.type, priorite: item => ({ basse: 1, moyenne: 2, haute: 3 }[item.priorite]),
+      date: item => new Date(item.date).getTime(), technicien: item => item.technicien, statut: item => item.statut,
+    }
+    const get = values[sortKey] || values.date
+    const av = get(a), bv = get(b)
+    const result = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'fr', { numeric: true, sensitivity: 'base' })
+    return sortDirection === 'asc' ? result : -result
+  })
 
   const statutColor = {
     'planifiée': 'bg-blue-100 text-blue-700',
@@ -135,13 +149,15 @@ export default function DashboardPage() {
           <table className="w-full text-xs lg:text-sm min-w-[540px]">
             <thead>
               <tr className="bg-[#f6f8f4] text-[10px] lg:text-xs text-gray-500 uppercase tracking-wide">
-                {['Site', 'Type', 'Priorité', 'Date', 'Technicien', 'Statut'].map(h => (
-                  <th key={h} className="px-4 lg:px-6 py-2.5 lg:py-3 text-left font-semibold">{h}</th>
-                ))}
+                {[
+                  { label: 'Site', key: 'site' }, { label: 'Type', key: 'type' },
+                  { label: 'Priorité', key: 'priorite' }, { label: 'Date', key: 'date' },
+                  { label: 'Technicien', key: 'technicien' }, { label: 'Statut', key: 'statut' },
+                ].map(col => <SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-4 lg:px-6 py-2.5 lg:py-3 text-left font-semibold" />)}
               </tr>
             </thead>
             <tbody>
-              {recent.map((p, i) => (
+              {sortedRecent.map((p, i) => (
                 <tr key={p.id} className={`border-t border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3"><span className={`px-2 py-0.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${typeColor[p.type]}`}>{p.type}</span></td>
