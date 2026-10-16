@@ -3,7 +3,7 @@ import type { ListItem } from '../types'
 import { XIcon, PlusIcon, FolderIcon, LocationIcon } from './Icons'
 
 import type { Site } from "../types"
-interface Props { onClose: () => void; site?: Site }
+interface Props { onClose: () => void; onSave: (site: Site) => void; site?: Site }
 
 /* ─── Reusable sub-components ─────────────────────────────────────────── */
 
@@ -107,31 +107,34 @@ function makeQtyChanger(setter: React.Dispatch<React.SetStateAction<ListItem[]>>
     setter(prev => prev.map(i => i.id === id ? { ...i, quantity: qty } : i))
 }
 
-const years = Array.from({ length: 30 }, (_, i) => String(2025 - i))
+const currentYear = new Date().getFullYear()
+const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i))
 
 /* ─── Main Modal ──────────────────────────────────────────────────────── */
 
-export default function NewSiteModal({ onClose, site }: Props) {
+export default function NewSiteModal({ onClose, onSave, site }: Props) {
   const [step, setStep] = useState(1)
   const TOTAL = 6
 
   // Step 1
-  const [nomSite, setNomSite]                 = useState('')
-  const [lieuSite, setLieuSite]               = useState('')
-  const [proprietaire, setProprietaire]       = useState('')
-  const [annee, setAnnee]                     = useState('2025')
+  const [nomSite, setNomSite]                 = useState(site?.nom ?? '')
+  const [lieuSite, setLieuSite]               = useState(site?.localisation ?? '')
+  const [proprietaire, setProprietaire]       = useState(site?.proprietaire ?? '')
+  const [annee, setAnnee]                     = useState(site?.annee ?? String(currentYear))
   const [numAffaire, setNumAffaire]           = useState('')
-  const [gps, setGps]                         = useState('')
-  const [c1Nom, setC1Nom]                     = useState('')
-  const [c1Tel, setC1Tel]                     = useState('')
-  const [c2Nom, setC2Nom]                     = useState('')
-  const [c2Tel, setC2Tel]                     = useState('')
+  const [gps, setGps]                         = useState(site?.gps ?? '')
+  const [c1Nom, setC1Nom]                     = useState(site?.contact1Nom ?? '')
+  const [c1Tel, setC1Tel]                     = useState(site?.contact1Tel ?? '')
+  const [c2Nom, setC2Nom]                     = useState(site?.contact2Nom ?? '')
+  const [c2Tel, setC2Tel]                     = useState(site?.contact2Tel ?? '')
   const [instNom, setInstNom]                 = useState('')
   const [instTel, setInstTel]                 = useState('')
 
   // Step 2
-  const [typeInstall, setTypeInstall]         = useState('')
+  const [typeInstall, setTypeInstall]         = useState(site?.typeInstallation ?? '')
   const [installElec, setInstallElec]         = useState('')
+  const [puissance, setPuissance]             = useState(String(site?.puissance ?? ''))
+  const [formError, setFormError]             = useState('')
   const [batteries, setBatteries]             = useState<ListItem[]>([
     { id: '1', quantity: '01', name: 'Battterie type 1' },
     { id: '2', quantity: '01', name: 'Battterie type 2' },
@@ -158,6 +161,36 @@ export default function NewSiteModal({ onClose, site }: Props) {
 
   // Step 6
   const [contratSav, setContratSav]           = useState('')
+
+  const handleSave = () => {
+    const parsedPower = Number(puissance)
+    if (!nomSite.trim() || !lieuSite.trim() || !proprietaire.trim() || !typeInstall.trim()) {
+      setFormError('Veuillez renseigner le nom, le lieu, le propriétaire et le type d’installation.')
+      setStep(1)
+      return
+    }
+    if (!puissance.trim() || !Number.isFinite(parsedPower) || parsedPower <= 0) {
+      setFormError('Veuillez saisir une puissance installée supérieure à 0 kW.')
+      setStep(2)
+      return
+    }
+    onSave({
+      id: site?.id ?? String(Date.now()),
+      nom: nomSite.trim(),
+      localisation: lieuSite.trim(),
+      contact1Nom: c1Nom.trim(),
+      contact1Tel: c1Tel.trim(),
+      contact2Nom: c2Nom.trim(),
+      contact2Tel: c2Tel.trim(),
+      proprietaire: proprietaire.trim(),
+      annee,
+      statut: site?.statut ?? 'actif',
+      typeInstallation: typeInstall.trim(),
+      puissance: parsedPower,
+      gps: gps.trim(),
+    })
+    onClose()
+  }
 
   /* ─── Step renderers ── */
   const renderStep = () => {
@@ -234,6 +267,9 @@ export default function NewSiteModal({ onClose, site }: Props) {
               </Field>
               <Field label="Installation Electrique">
                 <input className={inputCls} value={installElec} onChange={e => setInstallElec(e.target.value)} />
+              </Field>
+              <Field label="Puissance installée (kW)">
+                <input className={inputCls} type="number" min="0.1" step="0.1" value={puissance} onChange={e => setPuissance(e.target.value)} placeholder="Ex. : 15" />
               </Field>
               <Field label="SLD">
                 <div className="relative">
@@ -363,6 +399,7 @@ export default function NewSiteModal({ onClose, site }: Props) {
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-8 scrollbar-thin">
+          {formError && <p role="alert" className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
           {renderStep()}
         </div>
 
@@ -383,10 +420,10 @@ export default function NewSiteModal({ onClose, site }: Props) {
             </button>
           ) : (
             <button
-              onClick={onClose}
+              onClick={handleSave}
               className="px-9 py-2.5 bg-[#3d6b2a] hover:bg-[#4e8a35] text-white text-sm font-semibold rounded-md transition-colors"
             >
-              Finish
+              {site ? 'Enregistrer' : 'Créer le site'}
             </button>
           )}
         </div>
