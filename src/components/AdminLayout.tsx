@@ -1,9 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { Page } from '../types'
-import {
-  ClockIcon, GridIcon, SunCogIcon, CalendarIcon,
-  BellIcon, DatabaseIcon, SettingsIcon, LogoutIcon, ModernIcon,
-} from './Icons'
+import { BellIcon, LogoutIcon, ModernIcon, type ModernIconName } from './Icons'
 import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
@@ -14,37 +11,51 @@ interface Props {
   onNavigate: (page: Page) => void
 }
 
+const pageIcons: Partial<Record<Page, ModernIconName>> = {
+  dashboard: 'layout-dashboard',
+  sites: 'map-pin',
+  equipements: 'wrench',
+  planifications: 'calendar-clock',
+  calendrier: 'calendar-days',
+  rapports: 'clipboard-check',
+  utilisateurs: 'users-round',
+  notifications: 'bell',
+  database: 'database',
+  settings: 'sliders-horizontal',
+}
+
 const navItems = [
-  { icon: <ClockIcon />, page: 'dashboard' as Page, label: 'Dashboard' },
-  { icon: <GridIcon />, page: 'sites' as Page, label: 'Sites' },
-  { icon: <SunCogIcon />, page: 'equipements' as Page, label: 'Équipements' },
-  { icon: <SunCogIcon />, page: 'planifications' as Page, label: 'Planifications' },
-  { icon: <CalendarIcon />, page: 'calendrier' as Page, label: 'Calendrier' },
-  { icon: <CalendarIcon />, page: 'rapports' as Page, label: 'Rapports' },
-  { icon: <GridIcon />, page: 'utilisateurs' as Page, label: 'Utilisateurs & rôles' },
-  { icon: <BellIcon />, page: 'notifications' as Page, label: 'Notifications' },
-  { icon: <DatabaseIcon />, page: 'database' as Page, label: 'Base de données' },
-  { icon: <SettingsIcon />, page: 'settings' as Page, label: 'Paramètres' },
+  { page: 'dashboard' as Page, label: 'Dashboard' },
+  { page: 'sites' as Page, label: 'Sites' },
+  { page: 'equipements' as Page, label: 'Équipements' },
+  { page: 'planifications' as Page, label: 'Planifications' },
+  { page: 'calendrier' as Page, label: 'Calendrier' },
+  { page: 'rapports' as Page, label: 'Rapports' },
+  { page: 'utilisateurs' as Page, label: 'Utilisateurs & rôles' },
+  { page: 'notifications' as Page, label: 'Notifications' },
+  { page: 'database' as Page, label: 'Base de données' },
+  { page: 'settings' as Page, label: 'Paramètres' },
 ]
 
-const pageMeta: Record<Page, { title: string; icon: ReactNode }> = {
-  landing: { title: '', icon: null },
-  dashboard: { title: 'DASHBOARD', icon: <ClockIcon /> },
-  sites: { title: 'SITES', icon: <GridIcon /> },
-  equipements: { title: 'ÉQUIPEMENTS & MATÉRIELS', icon: <SunCogIcon /> },
-  planifications: { title: 'PLANIFICATIONS', icon: <SunCogIcon /> },
-  calendrier: { title: 'CALENDRIER', icon: <CalendarIcon /> },
-  rapports: { title: 'RAPPORTS', icon: <CalendarIcon /> },
-  utilisateurs: { title: 'UTILISATEURS & RÔLES', icon: <GridIcon /> },
-  notifications: { title: 'NOTIFICATIONS', icon: <BellIcon /> },
-  database: { title: 'BASE DE DONNÉES', icon: <DatabaseIcon /> },
-  settings: { title: 'PARAMÈTRES', icon: <SettingsIcon /> },
+const pageMeta: Record<Page, { title: string }> = {
+  landing: { title: '' },
+  dashboard: { title: 'DASHBOARD' },
+  sites: { title: 'SITES' },
+  equipements: { title: 'ÉQUIPEMENTS & MATÉRIELS' },
+  planifications: { title: 'PLANIFICATIONS' },
+  calendrier: { title: 'CALENDRIER' },
+  rapports: { title: 'RAPPORTS' },
+  utilisateurs: { title: 'UTILISATEURS & RÔLES' },
+  notifications: { title: 'NOTIFICATIONS' },
+  database: { title: 'BASE DE DONNÉES' },
+  settings: { title: 'PARAMÈTRES' },
 }
 
 export default function AdminLayout({ children, currentPage, onNavigate }: Props) {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { title, icon } = pageMeta[currentPage]
+  const { title } = pageMeta[currentPage]
+  const currentIcon = pageIcons[currentPage]
   const unreadCount = mockNotifications.filter(n => !n.lu).length
   const handleNavigate = (page: Page) => { onNavigate(page); setMobileMenuOpen(false) }
 
@@ -57,8 +68,8 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
           <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden text-gray-400 hover:text-white" aria-label="Fermer le menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <OverlayScrollbarsComponent className="min-h-0 flex-1" options={{ scrollbars: { theme: 'os-theme-korobo', autoHide: 'scroll', autoHideDelay: 700, clickScroll: true } }} defer><nav className="flex flex-col items-stretch gap-1.5 py-5 px-3">
-          {navItems.map(item => <button key={item.page} onClick={() => handleNavigate(item.page)} className={['relative flex items-center gap-3 justify-start w-full min-h-11 rounded-lg px-3.5 py-2 transition-colors', currentPage === item.page ? 'bg-[#3f5d39] text-white shadow-sm ring-1 ring-inset ring-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white'].join(' ')}>
-            <span className="flex-shrink-0">{item.icon}</span><span className="text-left text-sm font-semibold">{item.label}</span>
+          {navItems.map(item => <button key={item.page} onClick={() => handleNavigate(item.page)} className={['group relative flex items-center gap-3 justify-start w-full min-h-12 rounded-xl px-3 py-2 transition-all duration-200', currentPage === item.page ? 'bg-[#3f5d39] text-white shadow-sm ring-1 ring-inset ring-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white'].join(' ')}>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-current transition-colors group-hover:bg-white/[0.08] group-[.bg-\[#3f5d39\]]:bg-white/10"><ModernIcon name={pageIcons[item.page]!} size={19} /></span><span className="text-left text-sm font-semibold">{item.label}</span>
             {item.page === 'notifications' && unreadCount > 0 && <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>)}
         </nav></OverlayScrollbarsComponent>
@@ -67,7 +78,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="h-[64px] lg:h-[76px] flex-shrink-0 bg-white/95 border-b border-gray-100 flex items-center px-4 lg:px-8 gap-4">
           <button onClick={() => setMobileMenuOpen(true)} aria-label="Ouvrir le menu" className="lg:hidden flex flex-col gap-1.5 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"><span className="w-5 h-0.5 bg-gray-700 rounded" /><span className="w-5 h-0.5 bg-gray-700 rounded" /><span className="w-5 h-0.5 bg-gray-700 rounded" /></button>
-          <div className="flex items-center gap-2 text-[#4A7A3B] min-w-0"><span className="flex-shrink-0">{icon}</span><span className="font-sans font-bold text-sm lg:text-base tracking-wide text-gray-800 truncate">{title}</span></div>
+          <div className="flex items-center gap-2 text-[#4A7A3B] min-w-0"><span className="flex-shrink-0">{currentIcon && <ModernIcon name={currentIcon} size={20} />}</span><span className="font-sans font-bold text-sm lg:text-base tracking-wide text-gray-800 truncate">{title}</span></div>
           <button onClick={() => handleNavigate('notifications')} aria-label="Ouvrir les notifications" className="lg:hidden ml-auto relative p-2 text-gray-500 hover:text-[#4A7A3B]"><BellIcon size={20} />{unreadCount > 0 && <span className="absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">{unreadCount}</span>}</button>
         </header>
         <main className="flex-1 min-h-0 overflow-hidden bg-[#f6f8f4]"><OverlayScrollbarsComponent className="h-full" options={{ scrollbars: { theme: 'os-theme-korobo', autoHide: 'scroll', autoHideDelay: 700, clickScroll: true } }} defer><div className="min-h-full">
