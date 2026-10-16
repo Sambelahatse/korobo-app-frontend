@@ -1,4 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void
+          renderButton: (parent: HTMLElement, options: Record<string, string | number | boolean>) => void
+        }
+      }
+    }
+  }
+}
 
 interface Props { onLogin: () => void; onGoRegister: () => void; onBack: () => void }
 
@@ -22,6 +35,82 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
+  const [googleError, setGoogleError] = useState('')
+  const [googleReady, setGoogleReady] = useState(false)
+  const googleButtonRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
+    if (!clientId || !apiKey || !googleButtonRef.current) return
+
+    let cancelled = false
+    const renderGoogleButton = () => {
+      if (cancelled || !googleButtonRef.current || !window.google) return
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async ({ credential }) => {
+          setGoogleError('')
+          setLoading(true)
+          try {
+            const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                postBody: new URLSearchParams({ id_token: credential, providerId: 'google.com' }).toString(),
+                requestUri: window.location.origin,
+                returnIdpCredential: true,
+                returnSecureToken: true,
+              }),
+            })
+            const result = await response.json() as {
+              idToken?: string; refreshToken?: string; expiresIn?: string
+              localId?: string; email?: string; displayName?: string; photoUrl?: string
+              error?: { message?: string }
+            }
+            if (!response.ok || !result.idToken) {
+              throw new Error(result.error?.message || 'La connexion Google a échoué.')
+            }
+            sessionStorage.setItem('korobo.auth.idToken', result.idToken)
+            if (result.refreshToken) sessionStorage.setItem('korobo.auth.refreshToken', result.refreshToken)
+            sessionStorage.setItem('korobo.auth.user', JSON.stringify({
+              id: result.localId, email: result.email, name: result.displayName, photo: result.photoUrl,
+            }))
+            onLogin()
+          } catch (err) {
+            const message = err instanceof Error ? err.message : ''
+            setGoogleError(message.includes('OPERATION_NOT_ALLOWED')
+              ? 'Google n’est pas activé dans les fournisseurs de connexion Firebase.'
+              : message.includes('API_KEY')
+                ? 'La clé API Firebase est invalide. Vérifiez la configuration.'
+                : 'Impossible de se connecter avec Google. Vérifiez la configuration Firebase et réessayez.')
+          } finally {
+            setLoading(false)
+          }
+        },
+      })
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: 'standard', theme: 'outline', size: 'large', text: 'continue_with',
+        shape: 'rectangular', logo_alignment: 'left', width: 360,
+      })
+      setGoogleReady(true)
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-google-identity]')
+    if (window.google) renderGoogleButton()
+    else if (existingScript) existingScript.addEventListener('load', renderGoogleButton, { once: true })
+    else {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.dataset.googleIdentity = 'true'
+      script.onload = renderGoogleButton
+      script.onerror = () => setGoogleError('Le service de connexion Google est inaccessible. Réessayez plus tard.')
+      document.head.appendChild(script)
+    }
+    return () => { cancelled = true }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,6 +215,17 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
               ) : 'Se connecter'}
             </button>
           </form>
+
+          <div className="mb-5 flex flex-col items-center gap-2">
+            <div ref={googleButtonRef} className="flex min-h-10 w-full justify-center" />
+            {!googleReady && !import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+              <p className="text-center text-xs text-amber-700">Connexion Google à configurer par l’administrateur.</p>
+            )}
+            {!googleReady && import.meta.env.VITE_GOOGLE_CLIENT_ID && !import.meta.env.VITE_FIREBASE_API_KEY && (
+              <p className="text-center text-xs text-amber-700">Clé API Firebase manquante.</p>
+            )}
+            {googleError && <p role="alert" className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-600">{googleError}</p>}
+          </div>
 
           <div className="flex items-center gap-3 my-6"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
 
