@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: korobo-app-frontend
+    name: korobo-app
     runtime: static
     buildCommand: npm install && npm run build:render
     staticPublishPath: ./dist
