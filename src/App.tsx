@@ -66,7 +66,7 @@ export default function App() {
           setAuthChecked(true)
           return
         }
-        await getSupabaseClient().auth.signOut().catch(() => undefined)
+        try { await getSupabaseClient().auth.signOut() } catch { /* Supabase may be unconfigured locally. */ }
         setAuthChecked(true)
         setCurrentPage('login')
         updateUrl('login')
