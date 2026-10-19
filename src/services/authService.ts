@@ -1,4 +1,4 @@
-import { createClient, type User } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 export interface AuthProfile {
   id: string
@@ -98,8 +98,3 @@ export async function signOut(): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-export async function getSessionUser(): Promise<User | null> {
-  const { data, error } = await getSupabaseClient().auth.getUser()
-  if (error) return null
-  return data.user
-}
