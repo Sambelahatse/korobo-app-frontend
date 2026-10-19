@@ -4,6 +4,7 @@ import { BellIcon, LogoutIcon, ModernIcon, type ModernIconName } from './Icons'
 import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { signOut } from '../services/authService'
 
 interface Props {
   children: ReactNode
@@ -53,11 +54,27 @@ const pageMeta: Record<Page, { title: string }> = {
 
 export default function AdminLayout({ children, currentPage, onNavigate }: Props) {
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  const [logoutLoading, setLogoutLoading] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { title } = pageMeta[currentPage]
   const currentIcon = pageIcons[currentPage]
   const unreadCount = mockNotifications.filter(notification => !notification.lu).length
+
+  const handleLogout = async () => {
+    setLogoutError('')
+    setLogoutLoading(true)
+    try {
+      await signOut()
+      setConfirmLogout(false)
+      onNavigate('landing')
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : 'La déconnexion a échoué. Réessayez.')
+    } finally {
+      setLogoutLoading(false)
+    }
+  }
 
   const handleNavigate = (page: Page) => {
     onNavigate(page)
@@ -216,17 +233,11 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
       {confirmLogout && (
         <ConfirmDialog
           title="Déconnexion"
-          message="Êtes-vous sûr de vouloir vous déconnecter de KOROBO ?"
-          confirmLabel="Se déconnecter"
+          message={logoutError || "Êtes-vous sûr de vouloir vous déconnecter de KOROBO ?"}
+          confirmLabel={logoutLoading ? 'Déconnexion…' : 'Se déconnecter'}
           cancelLabel="Rester connecté"
           danger={false}
-          onConfirm={() => {
-            setConfirmLogout(false)
-            sessionStorage.removeItem('korobo.auth.idToken')
-            sessionStorage.removeItem('korobo.auth.refreshToken')
-            sessionStorage.removeItem('korobo.auth.user')
-            onNavigate('landing')
-          }}
+          onConfirm={() => { void handleLogout() }}
           onCancel={() => setConfirmLogout(false)}
         />
       )}
