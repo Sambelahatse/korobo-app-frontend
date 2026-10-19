@@ -55,6 +55,8 @@ export default function App() {
     let cancelled = false
     const publicPage = currentPage === 'landing' || currentPage === 'login' || currentPage === 'register'
     if (currentPage === 'reset-password') {
+      // Initialize Supabase immediately so it can consume the recovery token from the URL.
+      try { getSupabaseClient() } catch { /* The reset screen will display configuration errors on submit. */ }
       setAuthChecked(true)
       return () => { cancelled = true }
     }
