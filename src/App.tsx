@@ -76,22 +76,43 @@ export default function App() {
       const generation = ++authGeneration.current
 
       if (!session?.access_token && recoverInitialSession) {
-        // During a hard refresh, Supabase may emit INITIAL_SESSION before its
-        // persisted session is immediately readable. Recheck before redirecting.
-        try {
-          let restoredSession = (await supabase.auth.getSession()).data.session
-          if (!restoredSession) {
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 1000))
-            if (disposed || generation !== authGeneration.current) return
-            restoredSession = (await supabase.auth.getSession()).data.session
+        // On a hard refresh, wait for Supabase's persisted storage to finish
+        // restoring before deciding that the user is signed out.
+        let restoredSession: Session | null = null
+        let sessionReadFailed = false
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            const result = await supabase.auth.getSession()
+            if (result.error) {
+              sessionReadFailed = true
+            } else {
+              restoredSession = result.data.session
+            }
+          } catch {
+            sessionReadFailed = true
           }
+
           if (disposed || generation !== authGeneration.current) return
           if (restoredSession?.access_token) {
             await processSession(restoredSession, true, false)
             return
           }
-        } catch {
-          // Continue below; a confirmed absence of a session is handled normally.
+          if (attempt < 4) {
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 500))
+            if (disposed || generation !== authGeneration.current) return
+          }
+        }
+
+        // A storage/lock error is not proof that the user has signed out.
+        // Keep protected routes in a loading state and retry when storage is readable.
+        if (sessionReadFailed) {
+          setAuthChecked(false)
+          window.setTimeout(() => {
+            if (!disposed && generation === authGeneration.current) {
+              void processSession(null, true, true)
+            }
+          }, 1500)
+          return
         }
       }
 
