@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { getMyProfile, getSupabaseClient, type AuthProfile } from './services/authService'
+import { getMyProfile, restoreSession, type AuthProfile } from './services/authService'
 import { disconnectAuthSocket, verifySessionWithSocket } from './services/realtimeAuth'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
@@ -64,139 +63,39 @@ export default function App() {
     updateUrl(page)
   }
 
-  // Listen to Supabase Auth state changes once. Navigation clicks do not trigger
-  // a network request to /auth/me; profile verification happens on session changes.
+  // Restore the custom KOROBO session from its HttpOnly refresh cookie on every page load.
   useEffect(() => {
     let disposed = false
-    let lastVerifiedToken: string | null = null
-    let verificationInFlight: string | null = null
-
-    const processSession = async (session: Session | null, forceVerify = false, recoverInitialSession = false) => {
-      if (disposed) return
-      const generation = ++authGeneration.current
-
-      if (!session?.access_token && recoverInitialSession) {
-        // During a hard refresh, Supabase may emit INITIAL_SESSION before its
-        // persisted session is immediately readable. Recheck before redirecting.
-        try {
-          let restoredSession = (await supabase.auth.getSession()).data.session
-          if (!restoredSession) {
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 1000))
-            if (disposed || generation !== authGeneration.current) return
-            restoredSession = (await supabase.auth.getSession()).data.session
-          }
-          if (disposed || generation !== authGeneration.current) return
-          if (restoredSession?.access_token) {
-            await processSession(restoredSession, true, false)
-            return
-          }
-        } catch {
-          // Continue below; a confirmed absence of a session is handled normally.
-        }
-      }
-
-      if (!session?.access_token) {
-        if (disposed || generation !== authGeneration.current) return
-        disconnectAuthSocket()
-        lastVerifiedToken = null
-        verificationInFlight = null
-        setVerifiedProfile(null)
-        setAuthChecked(true)
-        return
-      }
-
-      const token = session.access_token
-      if (!forceVerify && (token === lastVerifiedToken || token === verificationInFlight)) {
-        setAuthChecked(true)
-        return
-      }
-
-      verificationInFlight = token
-      setAuthChecked(false)
+    const restore = async () => {
       try {
-        // Supabase callbacks must not await other Supabase operations directly;
-        // this function is invoked asynchronously from the listener below.
-        let nextProfile: AuthProfile
-        try {
-          nextProfile = await verifySessionWithSocket(token)
-        } catch {
-          // Keep the HTTP endpoint as a resilient fallback if WebSocket is temporarily unavailable.
-          nextProfile = await getMyProfile()
-        }
-        if (disposed || generation !== authGeneration.current) return
-        lastVerifiedToken = token
-        setVerifiedProfile(nextProfile)
+        const restoredProfile = await restoreSession()
+        if (disposed) return
+        setVerifiedProfile(restoredProfile)
         setAuthChecked(true)
-        const page = getPageFromUrl()
-        if (page === 'login' || page === 'register' || page === 'landing') {
-          setCurrentPage('dashboard')
-          updateUrl('dashboard')
+        if (restoredProfile) {
+          const token = (await import('./services/authService')).getAccessToken()
+          if (token) {
+            void verifySessionWithSocket(token).catch(() => {
+              // HTTP auth remains authoritative if the realtime service is temporarily unavailable.
+            })
+          }
+          const page = getPageFromUrl()
+          if (page === 'login' || page === 'register' || page === 'landing') {
+            setCurrentPage('dashboard')
+            updateUrl('dashboard')
+          }
+        } else {
+          disconnectAuthSocket()
         }
       } catch {
-        if (disposed || generation !== authGeneration.current) return
-        lastVerifiedToken = null
-
-        // A failed API/WebSocket check does not prove that the user is signed out.
-        // Keep protected routes in the verification state and retry while Supabase
-        // still has a session instead of incorrectly redirecting to /login.
-        let currentSession: Session | null = null
-        try {
-          currentSession = (await supabase.auth.getSession()).data.session
-        } catch {
-          // The retry below will re-check the session and API.
-        }
-        if (disposed || generation !== authGeneration.current) return
-        if (currentSession?.access_token) {
-          setAuthChecked(false)
-          window.setTimeout(() => {
-            if (!disposed && generation === authGeneration.current) {
-              void processSession(currentSession, true)
-            }
-          }, 2000)
-          return
-        }
-
+        if (disposed) return
         setVerifiedProfile(null)
         setAuthChecked(true)
-        const page = getPageFromUrl()
-        if (!isPublicPage(page)) {
-          setCurrentPage('login')
-          updateUrl('login')
-        }
-      } finally {
-        if (verificationInFlight === token) verificationInFlight = null
+        disconnectAuthSocket()
       }
     }
-
-    let supabase: ReturnType<typeof getSupabaseClient>
-    try {
-      supabase = getSupabaseClient()
-    } catch {
-      setVerifiedProfile(null)
-      setAuthChecked(true)
-      return () => { disposed = true }
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-        // Defer the API call until Supabase has finished dispatching its event.
-        window.setTimeout(() => {
-          void processSession(session, event === 'SIGNED_IN', event === 'INITIAL_SESSION')
-        }, 0)
-      } else if (event === 'SIGNED_OUT') {
-        void processSession(null)
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        // Re-authenticate the realtime connection with the rotated access token.
-        window.setTimeout(() => { void processSession(session, true) }, 0)
-      } else if (event === 'USER_UPDATED' && session) {
-        window.setTimeout(() => { void processSession(session, true) }, 0)
-      }
-    })
-
-    return () => {
-      disposed = true
-      subscription.unsubscribe()
-    }
+    void restore()
+    return () => { disposed = true }
   }, [setVerifiedProfile])
 
   // Keep authenticated users out of the login route, including direct visits to /#/login.
@@ -225,8 +124,20 @@ export default function App() {
   }
 
   if (currentPage === 'landing') return <LandingPage onEnter={() => goTo('login')} onRegister={() => goTo('register')} />
-  if (currentPage === 'login') return <LoginPage onLogin={() => goTo('dashboard')} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
-  if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('dashboard')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
+  if (currentPage === 'login') return <LoginPage onLogin={() => {
+    void getMyProfile().then((nextProfile) => {
+      setVerifiedProfile(nextProfile)
+      const token = (window as Window & { __unused?: never }) && null
+      void token
+      goTo('dashboard')
+    }).catch(() => goTo('login'))
+  }} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
+  if (currentPage === 'register') return <RegisterPage onRegister={() => {
+    void getMyProfile().then((nextProfile) => {
+      setVerifiedProfile(nextProfile)
+      goTo('dashboard')
+    }).catch(() => goTo('login'))
+  }} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
 
   const adminPage = currentPage as Page
   return (
