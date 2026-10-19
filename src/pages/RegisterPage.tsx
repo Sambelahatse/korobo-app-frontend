@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { bootstrapOwner } from '../services/authService'
 
 interface Props { onRegister: () => void; onGoLogin: () => void; onBack: () => void }
 
@@ -22,7 +23,7 @@ function CheckIcon() {
 
 function PasswordStrength({ password }: { password: string }) {
   const checks = [
-    { label: '8 caractères min.', ok: password.length >= 8 },
+    { label: '12 caractères min.', ok: password.length >= 12 },
     { label: 'Une majuscule',      ok: /[A-Z]/.test(password) },
     { label: 'Un chiffre',         ok: /[0-9]/.test(password) },
     { label: 'Char. spécial',      ok: /[^A-Za-z0-9]/.test(password) },
@@ -60,6 +61,8 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   const [prenom,    setPrenom]    = useState('')
   const [email,     setEmail]     = useState('')
   const [telephone, setTelephone] = useState('')
+  const [setupToken, setSetupToken] = useState('')
+  const [submitError, setSubmitError] = useState('')
   const [password,  setPassword]  = useState('')
   const [confirm,   setConfirm]   = useState('')
   const [showPw,    setShowPw]    = useState(false)
@@ -78,7 +81,8 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   }
   const validate2 = () => {
     const e: Record<string,string> = {}
-    if (password.length < 8)   e.password = 'Minimum 8 caractères'
+    if (password.length < 12)  e.password = 'Minimum 12 caractères'
+    if (!setupToken.trim())    e.setupToken = 'Code de configuration requis'
     if (password !== confirm)  e.confirm  = 'Ne correspondent pas'
     if (!agree)                e.agree    = 'Accepter les conditions'
     setErrors(e); return !Object.keys(e).length
@@ -90,11 +94,22 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitError('')
     if (!validate2()) return
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    setLoading(false)
-    onRegister()
+    try {
+      await bootstrapOwner({
+        fullName: `${prenom.trim()} ${nom.trim()}`,
+        email: email.trim(),
+        password,
+        setupToken: setupToken.trim(),
+      })
+      onRegister()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'La création du compte a échoué.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -221,6 +236,14 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 )}
                 {errors.confirm && <p className="text-xs text-red-500">{errors.confirm}</p>}
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">Code de configuration propriétaire</label>
+                <input type="password" autoComplete="off" placeholder="Code fourni par l’administrateur technique"
+                  value={setupToken} onChange={e => setSetupToken(e.target.value)} className={inputCls('setupToken')} />
+                <p className="text-xs leading-relaxed text-gray-500">Ce code à usage unique autorise la création du premier compte propriétaire. Il sera désactivé après la configuration.</p>
+                {errors.setupToken && <p className="text-xs text-red-500">{errors.setupToken}</p>}
+              </div>
+              {submitError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{submitError}</div>}
               <label className="flex items-start gap-2.5 cursor-pointer mt-1">
                 <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#4A7A3B] flex-shrink-0" />
                 <span className="text-sm text-gray-600 leading-relaxed">
