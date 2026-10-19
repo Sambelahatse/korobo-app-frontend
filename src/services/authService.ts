@@ -95,6 +95,23 @@ export async function bootstrapOwner(input: {
   return signIn(input.email, input.password)
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalizedEmail = email.trim()
+  if (!normalizedEmail) throw new Error('Saisissez votre adresse e-mail.')
+  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: `${window.location.origin}/?auth=reset-password`
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  const { data: { session }, error: sessionError } = await getSupabaseClient().auth.getSession()
+  if (sessionError) throw new Error(sessionError.message)
+  if (!session) throw new Error('Le lien de réinitialisation est invalide ou a expiré. Demandez un nouveau lien.')
+  const { error } = await getSupabaseClient().auth.updateUser({ password })
+  if (error) throw new Error(error.message)
+}
+
 export async function signOut(): Promise<void> {
   const { error } = await getSupabaseClient().auth.signOut()
   if (error) throw new Error(error.message)
