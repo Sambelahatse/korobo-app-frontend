@@ -149,6 +149,14 @@ export default function App() {
     }
   }, [setVerifiedProfile])
 
+  // Keep authenticated users out of the login route, including direct visits to /#/login.
+  // This uses the already verified profile and does not trigger another API request.
+  useEffect(() => {
+    if (!authChecked || !profile || currentPage !== 'login') return
+    setCurrentPage('dashboard')
+    updateUrl('dashboard')
+  }, [currentPage, authChecked, profile])
+
   useEffect(() => {
     if (isPublicPage(currentPage)) return
     if (!authChecked) return
