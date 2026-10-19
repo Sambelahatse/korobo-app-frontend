@@ -41,7 +41,13 @@ export async function getMyProfile(): Promise<AuthProfile> {
   if (!session?.access_token) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
 
   const response = await fetch(`${apiUrl()}/auth/me`, {
-    headers: { Authorization: `Bearer ${session.access_token}` }
+    // Authentication responses are user-specific and must never be reused from cache.
+    cache: 'no-store',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache'
+    }
   })
   if (!response.ok) throw new Error(await readError(response))
   const result = await response.json() as { data: AuthProfile }
