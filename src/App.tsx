@@ -143,10 +143,9 @@ export default function App() {
         window.setTimeout(() => { void processSession(session, event === 'SIGNED_IN') }, 0)
       } else if (event === 'SIGNED_OUT') {
         void processSession(null)
-      } else if (event === 'TOKEN_REFRESHED') {
-        // A refreshed access token is still the same authenticated user. Keep the
-        // server-verified profile and avoid a redundant /auth/me call.
-        if (session?.access_token) lastVerifiedToken = session.access_token
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Re-authenticate the realtime connection with the rotated access token.
+        window.setTimeout(() => { void processSession(session, true) }, 0)
       } else if (event === 'USER_UPDATED' && session) {
         window.setTimeout(() => { void processSession(session, true) }, 0)
       }
