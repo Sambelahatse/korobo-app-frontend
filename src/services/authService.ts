@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-
 export interface AuthProfile {
   id: string
   fullName: string
@@ -9,63 +7,103 @@ export interface AuthProfile {
   isActive: boolean
 }
 
-let client: ReturnType<typeof createClient> | undefined
-
-export function getSupabaseClient() {
-  if (client) return client
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
-  if (!url || !key) {
-    throw new Error('La configuration Supabase manque (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY).')
+type AuthResponse = {
+  data: {
+    profile: AuthProfile
+    accessToken: string
+    expiresIn: number
   }
-  client = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  })
-  return client
 }
+let accessToken: string | null = null
+let refreshInFlight: Promise<AuthProfile | null> | null = null
 
 function apiUrl() {
   return ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '')
 }
 
 async function readError(response: Response): Promise<string> {
-  const payload = await response.json().catch(() => ({})) as {
-    error?: { message?: string }
-  }
+  const payload = await response.json().catch(() => ({})) as { error?: { message?: string } }
   return payload.error?.message || 'Une erreur est survenue. Réessayez.'
 }
 
-export async function getMyProfile(): Promise<AuthProfile> {
-  const supabase = getSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
-
-  const response = await fetch(`${apiUrl()}/auth/me`, {
-    headers: { Authorization: `Bearer ${session.access_token}` }
+async function post<T>(path: string, body?: unknown, headers: Record<string, string> = {}): Promise<T> {
+  const response = await fetch(`${apiUrl()}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) })
   })
+  if (!response.ok) throw new Error(await readError(response))
+  if (response.status === 204) return undefined as T
+  return response.json() as Promise<T>
+}
+
+function applyAuth(result: AuthResponse): AuthProfile {
+  accessToken = result.data.accessToken
+  return result.data.profile
+}
+
+async function refreshSession(): Promise<AuthProfile | null> {
+  if (refreshInFlight) return refreshInFlight
+  refreshInFlight = (async () => {
+    try {
+      const result = await post<AuthResponse>('/auth/refresh')
+      return applyAuth(result)
+    } catch {
+      accessToken = null
+      return null
+    } finally {
+      refreshInFlight = null
+    }
+  })()
+  return refreshInFlight
+}
+
+export function getAccessToken(): string | null {
+  return accessToken
+}
+
+/** Restore the in-memory access token from the HttpOnly refresh cookie after a page reload. */
+export async function restoreSession(): Promise<AuthProfile | null> {
+  return refreshSession()
+}
+
+export async function getMyProfile(): Promise<AuthProfile> {
+  if (!accessToken) {
+    const restored = await refreshSession()
+    if (!restored) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
+    return restored
+  }
+
+  let response = await fetch(`${apiUrl()}/auth/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    credentials: 'include'
+  })
+  if (response.status === 401) {
+    const restored = await refreshSession()
+    if (!restored || !accessToken) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
+    response = await fetch(`${apiUrl()}/auth/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'include'
+    })
+  }
   if (!response.ok) throw new Error(await readError(response))
   const result = await response.json() as { data: AuthProfile }
   return result.data
 }
 
 export async function signIn(email: string, password: string): Promise<AuthProfile> {
-  const supabase = getSupabaseClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(error.message)
   try {
-    return await getMyProfile()
+    const result = await post<AuthResponse>('/auth/login', { email: email.trim(), password })
+    return applyAuth(result)
   } catch (error) {
-    await supabase.auth.signOut()
+    accessToken = null
     throw error
   }
 }
 
 export async function signInWithGoogle(): Promise<void> {
-  const { error } = await getSupabaseClient().auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin }
-  })
-  if (error) throw new Error(error.message)
+  throw new Error("La connexion Google n'est pas disponible avec l'authentification KOROBO personnalisée.")
 }
 
 export async function bootstrapOwner(input: {
@@ -75,45 +113,32 @@ export async function bootstrapOwner(input: {
   phone?: string
   setupToken: string
 }): Promise<AuthProfile> {
-  const response = await fetch(`${apiUrl()}/auth/bootstrap-owner`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-owner-bootstrap-token': input.setupToken
-    },
-    body: JSON.stringify({
-      fullName: input.fullName,
-      email: input.email,
-      password: input.password,
-      phone: input.phone
-    })
-  })
-  if (!response.ok) throw new Error(await readError(response))
-
-  // The owner endpoint creates the first confirmed Auth user. Sign in through Supabase,
-  // then let the API validate the token and return the server-owned profile and role.
+  await post('/auth/bootstrap-owner', {
+    fullName: input.fullName,
+    email: input.email,
+    password: input.password,
+    phone: input.phone
+  }, { 'x-owner-bootstrap-token': input.setupToken })
   return signIn(input.email, input.password)
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
-  const normalizedEmail = email.trim()
-  if (!normalizedEmail) throw new Error('Saisissez votre adresse e-mail.')
-  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizedEmail, {
-    redirectTo: `${window.location.origin}/?auth=reset-password`
-  })
-  if (error) throw new Error(error.message)
+/**
+ * Password setup/reset links are currently issued by an administrator because no email
+ * delivery provider is configured yet. The token is passed in the URL query string.
+ */
+export async function requestPasswordReset(_email: string): Promise<void> {
+  throw new Error("L'envoi automatique d'e-mails n'est pas encore configuré. Demandez à l'administrateur de générer un lien sécurisé de réinitialisation.")
 }
 
-export async function updatePassword(password: string): Promise<void> {
-  const { data: { session }, error: sessionError } = await getSupabaseClient().auth.getSession()
-  if (sessionError) throw new Error(sessionError.message)
-  if (!session) throw new Error('Le lien de réinitialisation est invalide ou a expiré. Demandez un nouveau lien.')
-  const { error } = await getSupabaseClient().auth.updateUser({ password })
-  if (error) throw new Error(error.message)
+export async function updatePassword(password: string, token: string): Promise<AuthProfile> {
+  const result = await post<AuthResponse>('/auth/password/setup', { password, token })
+  return applyAuth(result)
 }
 
 export async function signOut(): Promise<void> {
-  const { error } = await getSupabaseClient().auth.signOut()
-  if (error) throw new Error(error.message)
+  try {
+    await post<void>('/auth/logout')
+  } finally {
+    accessToken = null
+  }
 }
-
