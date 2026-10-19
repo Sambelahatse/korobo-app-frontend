@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signIn, signInWithGoogle } from '../services/authService'
+import { requestPasswordReset, signIn, signInWithGoogle } from '../services/authService'
 
 interface Props { onLogin: () => void; onGoRegister: () => void; onBack: () => void }
 
@@ -24,6 +24,8 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   const [googleError, setGoogleError] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +39,24 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
       setError(err instanceof Error ? err.message : 'Connexion impossible. Réessayez.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    setError('')
+    setResetMessage('')
+    if (!email.trim()) {
+      setError('Saisissez votre adresse e-mail pour recevoir le lien de réinitialisation.')
+      return
+    }
+    setResetLoading(true)
+    try {
+      await requestPasswordReset(email)
+      setResetMessage('Si un compte correspond à cette adresse, un lien de réinitialisation va vous être envoyé.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible d’envoyer le lien de réinitialisation.')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -102,7 +122,8 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
+            {error && <div role="alert" className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
+            {resetMessage && <div role="status" className="px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{resetMessage}</div>}
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700">Adresse e-mail</label>
@@ -113,7 +134,7 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-gray-700">Mot de passe</label>
-                <button type="button" className="text-xs text-[#3d6b2a] hover:underline font-medium">Oublié ?</button>
+                <button type="button" onClick={handlePasswordReset} disabled={loading || resetLoading} className="text-xs text-[#3d6b2a] hover:underline font-medium disabled:opacity-50">{resetLoading ? 'Envoi…' : 'Oublié ?'}</button>
               </div>
               <div className="relative">
                 <input type={showPw ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
