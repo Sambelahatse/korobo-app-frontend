@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getMyProfile, restoreSession, type AuthProfile } from './services/authService'
+import { getAccessToken, getMyProfile, restoreSession, type AuthProfile } from './services/authService'
 import { disconnectAuthSocket, verifySessionWithSocket } from './services/realtimeAuth'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
@@ -73,7 +73,7 @@ export default function App() {
         setVerifiedProfile(restoredProfile)
         setAuthChecked(true)
         if (restoredProfile) {
-          const token = (await import('./services/authService')).getAccessToken()
+          const token = getAccessToken()
           if (token) {
             void verifySessionWithSocket(token).catch(() => {
               // HTTP auth remains authoritative if the realtime service is temporarily unavailable.
@@ -127,14 +127,16 @@ export default function App() {
   if (currentPage === 'login') return <LoginPage onLogin={() => {
     void getMyProfile().then((nextProfile) => {
       setVerifiedProfile(nextProfile)
-      const token = (window as Window & { __unused?: never }) && null
-      void token
+      const token = getAccessToken()
+      if (token) void verifySessionWithSocket(token).catch(() => undefined)
       goTo('dashboard')
     }).catch(() => goTo('login'))
   }} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
   if (currentPage === 'register') return <RegisterPage onRegister={() => {
     void getMyProfile().then((nextProfile) => {
       setVerifiedProfile(nextProfile)
+      const token = getAccessToken()
+      if (token) void verifySessionWithSocket(token).catch(() => undefined)
       goTo('dashboard')
     }).catch(() => goTo('login'))
   }} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
