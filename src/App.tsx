@@ -71,11 +71,32 @@ export default function App() {
     let lastVerifiedToken: string | null = null
     let verificationInFlight: string | null = null
 
-    const processSession = async (session: Session | null, forceVerify = false) => {
+    const processSession = async (session: Session | null, forceVerify = false, recoverInitialSession = false) => {
       if (disposed) return
       const generation = ++authGeneration.current
 
+      if (!session?.access_token && recoverInitialSession) {
+        // During a hard refresh, Supabase may emit INITIAL_SESSION before its
+        // persisted session is immediately readable. Recheck before redirecting.
+        try {
+          let restoredSession = (await supabase.auth.getSession()).data.session
+          if (!restoredSession) {
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 1000))
+            if (disposed || generation !== authGeneration.current) return
+            restoredSession = (await supabase.auth.getSession()).data.session
+          }
+          if (disposed || generation !== authGeneration.current) return
+          if (restoredSession?.access_token) {
+            await processSession(restoredSession, true, false)
+            return
+          }
+        } catch {
+          // Continue below; a confirmed absence of a session is handled normally.
+        }
+      }
+
       if (!session?.access_token) {
+        if (disposed || generation !== authGeneration.current) return
         disconnectAuthSocket()
         lastVerifiedToken = null
         verificationInFlight = null
@@ -140,7 +161,9 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         // Defer the API call until Supabase has finished dispatching its event.
-        window.setTimeout(() => { void processSession(session, event === 'SIGNED_IN') }, 0)
+        window.setTimeout(() => {
+          void processSession(session, event === 'SIGNED_IN', event === 'INITIAL_SESSION')
+        }, 0)
       } else if (event === 'SIGNED_OUT') {
         void processSession(null)
       } else if (event === 'TOKEN_REFRESHED' && session) {
