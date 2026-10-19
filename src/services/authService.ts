@@ -72,6 +72,7 @@ export async function bootstrapOwner(input: {
   fullName: string
   email: string
   password: string
+  phone?: string
   setupToken: string
 }): Promise<AuthProfile> {
   const response = await fetch(`${apiUrl()}/auth/bootstrap-owner`, {
@@ -83,7 +84,8 @@ export async function bootstrapOwner(input: {
     body: JSON.stringify({
       fullName: input.fullName,
       email: input.email,
-      password: input.password
+      password: input.password,
+      phone: input.phone
     })
   })
   if (!response.ok) throw new Error(await readError(response))
