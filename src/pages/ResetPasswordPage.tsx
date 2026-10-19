@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { updatePassword } from '../services/authService'
+import { updatePassword, type AuthProfile } from '../services/authService'
 
-interface Props { onDone: () => void }
+interface Props { onDone: (profile?: AuthProfile) => void }
 
 export default function ResetPasswordPage({ onDone }: Props) {
   const [password, setPassword] = useState('')
@@ -29,9 +29,9 @@ export default function ResetPasswordPage({ onDone }: Props) {
     }
     setLoading(true)
     try {
-      await updatePassword(password, setupToken)
-      setSuccess('Votre mot de passe a été modifié. Vous pouvez maintenant vous connecter.')
-      window.setTimeout(onDone, 1200)
+      const profile = await updatePassword(password, setupToken)
+      setSuccess('Votre mot de passe a été défini. Connexion réussie.')
+      window.setTimeout(() => onDone(profile), 900)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de modifier le mot de passe.')
     } finally {
