@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getAccessToken, getMyProfile, restoreSession, type AuthProfile } from './services/authService'
 import { disconnectAuthSocket, verifySessionWithSocket } from './services/realtimeAuth'
 import type { Page } from './types'
@@ -44,11 +44,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>(getPageFromUrl)
   const [authChecked, setAuthChecked] = useState(false)
   const [profile, setProfile] = useState<AuthProfile | null>(null)
-  const authGeneration = useRef(0)
-  const profileRef = useRef<AuthProfile | null>(null)
-
   const setVerifiedProfile = useCallback((nextProfile: AuthProfile | null) => {
-    profileRef.current = nextProfile
     setProfile(nextProfile)
   }, [])
 
@@ -116,7 +112,14 @@ export default function App() {
   }, [currentPage, authChecked, profile])
 
   if (currentPage === 'reset-password') {
-    return <ResetPasswordPage onDone={() => goTo('login')} />
+    return <ResetPasswordPage onDone={(nextProfile) => {
+      if (nextProfile) {
+        setVerifiedProfile(nextProfile)
+        goTo('dashboard')
+      } else {
+        goTo('login')
+      }
+    }} />
   }
 
   if (!authChecked && !isPublicPage(currentPage)) {
