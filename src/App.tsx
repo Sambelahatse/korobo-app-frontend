@@ -71,11 +71,32 @@ export default function App() {
     let lastVerifiedToken: string | null = null
     let verificationInFlight: string | null = null
 
-    const processSession = async (session: Session | null, forceVerify = false) => {
+    const processSession = async (session: Session | null, forceVerify = false, recoverInitialSession = false) => {
       if (disposed) return
       const generation = ++authGeneration.current
 
+      if (!session?.access_token && recoverInitialSession) {
+        // During a hard refresh, Supabase may emit INITIAL_SESSION before its
+        // persisted session is immediately readable. Recheck before redirecting.
+        try {
+          let restoredSession = (await supabase.auth.getSession()).data.session
+          if (!restoredSession) {
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 1000))
+            if (disposed || generation !== authGeneration.current) return
+            restoredSession = (await supabase.auth.getSession()).data.session
+          }
+          if (disposed || generation !== authGeneration.current) return
+          if (restoredSession?.access_token) {
+            await processSession(restoredSession, true, false)
+            return
+          }
+        } catch {
+          // Continue below; a confirmed absence of a session is handled normally.
+        }
+      }
+
       if (!session?.access_token) {
+        if (disposed || generation !== authGeneration.current) return
         disconnectAuthSocket()
         lastVerifiedToken = null
         verificationInFlight = null
@@ -114,10 +135,29 @@ export default function App() {
       } catch {
         if (disposed || generation !== authGeneration.current) return
         lastVerifiedToken = null
+
+        // A failed API/WebSocket check does not prove that the user is signed out.
+        // Keep protected routes in the verification state and retry while Supabase
+        // still has a session instead of incorrectly redirecting to /login.
+        let currentSession: Session | null = null
+        try {
+          currentSession = (await supabase.auth.getSession()).data.session
+        } catch {
+          // The retry below will re-check the session and API.
+        }
+        if (disposed || generation !== authGeneration.current) return
+        if (currentSession?.access_token) {
+          setAuthChecked(false)
+          window.setTimeout(() => {
+            if (!disposed && generation === authGeneration.current) {
+              void processSession(currentSession, true)
+            }
+          }, 2000)
+          return
+        }
+
         setVerifiedProfile(null)
         setAuthChecked(true)
-        // Do not destroy a persisted Supabase session because a temporary API or
-        // WebSocket request failed. A later auth event can retry verification.
         const page = getPageFromUrl()
         if (!isPublicPage(page)) {
           setCurrentPage('login')
@@ -128,7 +168,7 @@ export default function App() {
       }
     }
 
-    let supabase
+    let supabase: ReturnType<typeof getSupabaseClient>
     try {
       supabase = getSupabaseClient()
     } catch {
@@ -140,7 +180,9 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         // Defer the API call until Supabase has finished dispatching its event.
-        window.setTimeout(() => { void processSession(session, event === 'SIGNED_IN') }, 0)
+        window.setTimeout(() => {
+          void processSession(session, event === 'SIGNED_IN', event === 'INITIAL_SESSION')
+        }, 0)
       } else if (event === 'SIGNED_OUT') {
         void processSession(null)
       } else if (event === 'TOKEN_REFRESHED' && session) {
