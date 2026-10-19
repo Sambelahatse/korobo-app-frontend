@@ -168,7 +168,7 @@ export default function App() {
       }
     }
 
-    let supabase
+    let supabase: ReturnType<typeof getSupabaseClient>
     try {
       supabase = getSupabaseClient()
     } catch {
