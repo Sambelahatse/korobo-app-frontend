@@ -127,8 +127,14 @@ export default function App() {
       }
 
       const token = session.access_token
-      if (!forceVerify && (token === lastVerifiedToken || token === verificationInFlight)) {
+      if (!forceVerify && token === lastVerifiedToken) {
         setAuthChecked(true)
+        return
+      }
+
+      if (!forceVerify && token === verificationInFlight) {
+        // Another startup/auth event is already verifying this token.
+        // Do not mark auth as checked until that verification sets the profile.
         return
       }
 
