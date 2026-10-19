@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { updatePassword, type AuthProfile } from '../services/authService'
 
 interface Props { onDone: (profile?: AuthProfile) => void }
@@ -10,6 +10,14 @@ export default function ResetPasswordPage({ onDone }: Props) {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const setupToken = new URLSearchParams(window.location.search).get('token') || ''
+
+  useEffect(() => {
+    if (!setupToken) return
+    const cleanUrl = new URL(window.location.href)
+    cleanUrl.searchParams.delete('token')
+    cleanUrl.searchParams.delete('auth')
+    window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.hash)
+  }, [setupToken])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
