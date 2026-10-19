@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getMyProfile, getSupabaseClient } from './services/authService'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -35,6 +36,7 @@ function updateUrl(page: AppPage) {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>(getPageFromUrl)
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
     const syncWithUrl = () => setCurrentPage(getPageFromUrl())
@@ -47,9 +49,41 @@ export default function App() {
     updateUrl(page)
   }
 
+  useEffect(() => {
+    let cancelled = false
+    const publicPage = currentPage === 'landing' || currentPage === 'login' || currentPage === 'register'
+    setAuthChecked(false)
+
+    const verify = async () => {
+      try {
+        await getMyProfile()
+        if (cancelled) return
+        setAuthChecked(true)
+        if (publicPage) goTo('dashboard')
+      } catch {
+        if (cancelled) return
+        if (publicPage) {
+          setAuthChecked(true)
+          return
+        }
+        await getSupabaseClient().auth.signOut().catch(() => undefined)
+        setAuthChecked(true)
+        setCurrentPage('login')
+        updateUrl('login')
+      }
+    }
+
+    void verify()
+    return () => { cancelled = true }
+  }, [currentPage])
+
+  if (!authChecked && currentPage !== 'landing' && currentPage !== 'login' && currentPage !== 'register') {
+    return <div className="min-h-screen flex items-center justify-center bg-[#f3f6f1] text-sm text-gray-500">Vérification de la session…</div>
+  }
+
   if (currentPage === 'landing') return <LandingPage onEnter={() => goTo('login')} onRegister={() => goTo('register')} />
   if (currentPage === 'login') return <LoginPage onLogin={() => goTo('dashboard')} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
-  if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('login')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
+  if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('dashboard')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
 
   const adminPage = currentPage as Page
   return (
