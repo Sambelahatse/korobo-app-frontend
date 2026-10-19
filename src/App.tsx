@@ -139,11 +139,15 @@ export default function App() {
         // A failed API/WebSocket check does not prove that the user is signed out.
         // Keep protected routes in the verification state and retry while Supabase
         // still has a session instead of incorrectly redirecting to /login.
-        let currentSession: Session | null = null
+        // Keep the session that triggered this verification as a fallback.
+        // A transient getSession/storage-lock failure must not be interpreted as
+        // a signed-out user and send them to login after a hard refresh.
+        let currentSession: Session | null = session
         try {
-          currentSession = (await supabase.auth.getSession()).data.session
+          const restoredSession = (await supabase.auth.getSession()).data.session
+          if (restoredSession?.access_token) currentSession = restoredSession
         } catch {
-          // The retry below will re-check the session and API.
+          // Retain the known session and retry verification below.
         }
         if (disposed || generation !== authGeneration.current) return
         if (currentSession?.access_token) {
