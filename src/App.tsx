@@ -218,6 +218,28 @@ export default function App() {
       }
     })
 
+    // Bootstrap from persisted storage explicitly as well as listening for auth events.
+    // This avoids depending solely on INITIAL_SESSION, which can arrive before storage
+    // restoration is visible in some browser startup / refresh timing scenarios.
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (disposed) return
+      if (error) {
+        setAuthChecked(false)
+        window.setTimeout(() => {
+          if (!disposed) void processSession(null, true, true)
+        }, 0)
+        return
+      }
+      void processSession(data.session, true, !data.session)
+    }).catch(() => {
+      if (!disposed) {
+        setAuthChecked(false)
+        window.setTimeout(() => {
+          if (!disposed) void processSession(null, true, true)
+        }, 0)
+      }
+    })
+
     return () => {
       disposed = true
       subscription.unsubscribe()
