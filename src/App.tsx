@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getMyProfile, getSupabaseClient } from './services/authService'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { getMyProfile, getSupabaseClient, type AuthProfile } from './services/authService'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -36,9 +37,20 @@ function updateUrl(page: AppPage) {
   if (window.location.hash !== hash) window.location.hash = hash
 }
 
+const isPublicPage = (page: AppPage) =>
+  page === 'landing' || page === 'login' || page === 'register' || page === 'reset-password'
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>(getPageFromUrl)
   const [authChecked, setAuthChecked] = useState(false)
+  const [profile, setProfile] = useState<AuthProfile | null>(null)
+  const authGeneration = useRef(0)
+  const profileRef = useRef<AuthProfile | null>(null)
+
+  const setVerifiedProfile = useCallback((nextProfile: AuthProfile | null) => {
+    profileRef.current = nextProfile
+    setProfile(nextProfile)
+  }, [])
 
   useEffect(() => {
     const syncWithUrl = () => setCurrentPage(getPageFromUrl())
@@ -51,48 +63,112 @@ export default function App() {
     updateUrl(page)
   }
 
+  // Listen to Supabase Auth state changes once. Navigation clicks do not trigger
+  // a network request to /auth/me; profile verification happens on session changes.
   useEffect(() => {
-    let cancelled = false
-    const publicPage = currentPage === 'landing' || currentPage === 'login' || currentPage === 'register'
-    if (currentPage === 'reset-password') {
-      // Initialize Supabase immediately so it can consume the recovery token from the URL.
-      try { getSupabaseClient() } catch { /* The reset screen will display configuration errors on submit. */ }
-      setAuthChecked(true)
-      return () => { cancelled = true }
-    }
-    setAuthChecked(false)
+    let disposed = false
+    let lastVerifiedToken: string | null = null
+    let verificationInFlight: string | null = null
 
-    const verify = async () => {
+    const processSession = async (session: Session | null, forceVerify = false) => {
+      if (disposed) return
+      const generation = ++authGeneration.current
+
+      if (!session?.access_token) {
+        lastVerifiedToken = null
+        verificationInFlight = null
+        setVerifiedProfile(null)
+        setAuthChecked(true)
+        return
+      }
+
+      const token = session.access_token
+      if (!forceVerify && (token === lastVerifiedToken || token === verificationInFlight)) {
+        setAuthChecked(true)
+        return
+      }
+
+      verificationInFlight = token
+      setAuthChecked(false)
       try {
-        await getMyProfile()
-        if (cancelled) return
+        // Supabase callbacks must not await other Supabase operations directly;
+        // this function is invoked asynchronously from the listener below.
+        const nextProfile = await getMyProfile()
+        if (disposed || generation !== authGeneration.current) return
+        lastVerifiedToken = token
+        setVerifiedProfile(nextProfile)
         setAuthChecked(true)
-        if (publicPage) goTo('dashboard')
-      } catch {
-        if (cancelled) return
-        if (publicPage) {
-          setAuthChecked(true)
-          return
+        const page = getPageFromUrl()
+        if (page === 'login' || page === 'register' || page === 'landing') {
+          setCurrentPage('dashboard')
+          updateUrl('dashboard')
         }
-        try { await getSupabaseClient().auth.signOut() } catch { /* Supabase may be unconfigured locally. */ }
+      } catch {
+        if (disposed || generation !== authGeneration.current) return
+        lastVerifiedToken = null
+        setVerifiedProfile(null)
         setAuthChecked(true)
-        setCurrentPage('login')
-        updateUrl('login')
+        try { await getSupabaseClient().auth.signOut() } catch { /* Network/configuration may be unavailable. */ }
+        const page = getPageFromUrl()
+        if (!isPublicPage(page)) {
+          setCurrentPage('login')
+          updateUrl('login')
+        }
+      } finally {
+        if (verificationInFlight === token) verificationInFlight = null
       }
     }
 
-    void verify()
-    return () => { cancelled = true }
-  }, [currentPage])
+    let supabase
+    try {
+      supabase = getSupabaseClient()
+    } catch {
+      setVerifiedProfile(null)
+      setAuthChecked(true)
+      return () => { disposed = true }
+    }
 
-  if (!authChecked && currentPage !== 'landing' && currentPage !== 'login' && currentPage !== 'register') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        // Defer the API call until Supabase has finished dispatching its event.
+        window.setTimeout(() => { void processSession(session, event === 'SIGNED_IN') }, 0)
+      } else if (event === 'SIGNED_OUT') {
+        void processSession(null)
+      } else if (event === 'TOKEN_REFRESHED') {
+        // A refreshed access token is still the same authenticated user. Keep the
+        // server-verified profile and avoid a redundant /auth/me call.
+        if (session?.access_token) lastVerifiedToken = session.access_token
+      } else if (event === 'USER_UPDATED' && session) {
+        window.setTimeout(() => { void processSession(session, true) }, 0)
+      }
+    })
+
+    return () => {
+      disposed = true
+      subscription.unsubscribe()
+    }
+  }, [setVerifiedProfile])
+
+  useEffect(() => {
+    if (isPublicPage(currentPage)) return
+    if (!authChecked) return
+    if (!profile) {
+      setCurrentPage('login')
+      updateUrl('login')
+    }
+  }, [currentPage, authChecked, profile])
+
+  if (currentPage === 'reset-password') {
+    return <ResetPasswordPage onDone={() => goTo('login')} />
+  }
+
+  if (!authChecked && !isPublicPage(currentPage)) {
     return <div className="min-h-screen flex items-center justify-center bg-[#f3f6f1] text-sm text-gray-500">Vérification de la session…</div>
   }
 
   if (currentPage === 'landing') return <LandingPage onEnter={() => goTo('login')} onRegister={() => goTo('register')} />
   if (currentPage === 'login') return <LoginPage onLogin={() => goTo('dashboard')} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
   if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('dashboard')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
-  if (currentPage === 'reset-password') return <ResetPasswordPage onDone={() => goTo('login')} />
 
   const adminPage = currentPage as Page
   return (
