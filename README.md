@@ -59,19 +59,31 @@ src/
 - **Planifications** — Shell vide avec CTA
 - **4 placeholders** — Dashboard, Rapports, Base, Paramètres prêts à développer
 
-## 🔐 Connexion Google (Firebase Authentication)
+## 🔐 Authentification (Supabase + API KOROBO)
 
-La connexion Google utilise Google Identity Services et Firebase Authentication. Elle nécessite une configuration Firebase/Google avant de fonctionner en production.
+L'authentification e-mail/mot de passe et Google est gérée par Supabase Auth. Le profil et les rôles sont ensuite vérifiés côté serveur par l'API KOROBO via `GET /auth/me`. Le frontend ne doit jamais contenir de clé Supabase `secret` ou `service_role`.
 
-1. Créez ou sélectionnez un projet dans la [console Firebase](https://console.firebase.google.com/).
-2. Dans **Authentication → Sign-in method**, activez le fournisseur **Google**.
-3. Dans **Authentication → Settings → Authorized domains**, ajoutez `sambelahatse.github.io`.
-4. Dans [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), créez un identifiant OAuth **Web application** et ajoutez `https://sambelahatse.github.io` aux origines JavaScript autorisées.
-5. Dans **GitHub → Settings → Secrets and variables → Actions → Variables**, créez les variables de dépôt suivantes (elles sont des paramètres clients publics, pas des mots de passe) :
-   - `VITE_GOOGLE_CLIENT_ID` : l’identifiant OAuth client Google se terminant par `.apps.googleusercontent.com`.
-   - `VITE_FIREBASE_API_KEY` : la clé Web de l’application Firebase (Paramètres du projet → Vos applications Web).
-6. Relancez le workflow **Deploy frontend to GitHub Pages** dans l’onglet Actions.
+### Configuration locale
 
-Pour le développement local, placez les deux valeurs dans un fichier `.env.local` à la racine (ne commitez pas ce fichier), puis relancez `npm run dev`.
+Créer un fichier `.env.local` à la racine, sans le committer :
 
-> La connexion valide le jeton Google auprès de Firebase et conserve les jetons dans la session du navigateur. Le dépôt backend `KOROBO_APP` étant encore vide, la protection des API et l’autorisation des rôles côté serveur restent à implémenter avant d’utiliser des données sensibles. La connexion e-mail/mot de passe actuelle est encore une simulation.
+```dotenv
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+VITE_API_URL=https://korobo-app-api.onrender.com
+```
+
+Pour la production, configurer les mêmes variables dans l'environnement de build Render du frontend. `VITE_SUPABASE_PUBLISHABLE_KEY` doit être une clé publique/publishable, jamais une clé secrète.
+
+### Supabase Auth
+
+1. Dans Supabase → Authentication → Sign In / Providers, activer Email et Google si la connexion Google est souhaitée.
+2. Dans Authentication → URL Configuration, définir l'URL du site et autoriser les URLs de redirection du frontend déployé. La récupération de mot de passe redirige vers `/?auth=reset-password`.
+3. Pour Google, configurer le fournisseur OAuth dans Supabase et autoriser les origines/URL de callback demandées par Supabase.
+4. Configurer `VITE_API_URL` avec l'URL du backend. Le backend doit autoriser l'origine du frontend via `CORS_ORIGIN`.
+
+### Premier propriétaire
+
+L'inscription publique sert uniquement à créer le premier propriétaire via `POST /auth/bootstrap-owner` et nécessite le jeton de configuration transmis par l'administrateur technique. Le backend refuse toute nouvelle création de propriétaire une fois l'espace initial configuré. Après la création du propriétaire, retirer `OWNER_BOOTSTRAP_TOKEN` de l'environnement du backend. Les comptes suivants doivent être créés via le flux d'invitation administrateur prévu par l'API.
+
+Le bouton « Mot de passe oublié » envoie un lien par e-mail ; le lien ouvre ensuite l'écran de choix d'un nouveau mot de passe.
