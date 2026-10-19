@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { getMyProfile, getSupabaseClient, type AuthProfile } from './services/authService'
+import { disconnectAuthSocket, verifySessionWithSocket } from './services/realtimeAuth'
 import type { Page } from './types'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -75,6 +76,7 @@ export default function App() {
       const generation = ++authGeneration.current
 
       if (!session?.access_token) {
+        disconnectAuthSocket()
         lastVerifiedToken = null
         verificationInFlight = null
         setVerifiedProfile(null)
@@ -93,7 +95,13 @@ export default function App() {
       try {
         // Supabase callbacks must not await other Supabase operations directly;
         // this function is invoked asynchronously from the listener below.
-        const nextProfile = await getMyProfile()
+        let nextProfile: AuthProfile
+        try {
+          nextProfile = await verifySessionWithSocket(token)
+        } catch {
+          // Keep the HTTP endpoint as a resilient fallback if WebSocket is temporarily unavailable.
+          nextProfile = await getMyProfile()
+        }
         if (disposed || generation !== authGeneration.current) return
         lastVerifiedToken = token
         setVerifiedProfile(nextProfile)
@@ -108,7 +116,8 @@ export default function App() {
         lastVerifiedToken = null
         setVerifiedProfile(null)
         setAuthChecked(true)
-        try { await getSupabaseClient().auth.signOut() } catch { /* Network/configuration may be unavailable. */ }
+        // Do not destroy a persisted Supabase session because a temporary API or
+        // WebSocket request failed. A later auth event can retry verification.
         const page = getPageFromUrl()
         if (!isPublicPage(page)) {
           setCurrentPage('login')
@@ -134,10 +143,9 @@ export default function App() {
         window.setTimeout(() => { void processSession(session, event === 'SIGNED_IN') }, 0)
       } else if (event === 'SIGNED_OUT') {
         void processSession(null)
-      } else if (event === 'TOKEN_REFRESHED') {
-        // A refreshed access token is still the same authenticated user. Keep the
-        // server-verified profile and avoid a redundant /auth/me call.
-        if (session?.access_token) lastVerifiedToken = session.access_token
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Re-authenticate the realtime connection with the rotated access token.
+        window.setTimeout(() => { void processSession(session, true) }, 0)
       } else if (event === 'USER_UPDATED' && session) {
         window.setTimeout(() => { void processSession(session, true) }, 0)
       }
