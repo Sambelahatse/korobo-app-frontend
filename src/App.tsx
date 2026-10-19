@@ -135,10 +135,29 @@ export default function App() {
       } catch {
         if (disposed || generation !== authGeneration.current) return
         lastVerifiedToken = null
+
+        // A failed API/WebSocket check does not prove that the user is signed out.
+        // Keep protected routes in the verification state and retry while Supabase
+        // still has a session instead of incorrectly redirecting to /login.
+        let currentSession: Session | null = null
+        try {
+          currentSession = (await supabase.auth.getSession()).data.session
+        } catch {
+          // The retry below will re-check the session and API.
+        }
+        if (disposed || generation !== authGeneration.current) return
+        if (currentSession?.access_token) {
+          setAuthChecked(false)
+          window.setTimeout(() => {
+            if (!disposed && generation === authGeneration.current) {
+              void processSession(currentSession, true)
+            }
+          }, 2000)
+          return
+        }
+
         setVerifiedProfile(null)
         setAuthChecked(true)
-        // Do not destroy a persisted Supabase session because a temporary API or
-        // WebSocket request failed. A later auth event can retry verification.
         const page = getPageFromUrl()
         if (!isPublicPage(page)) {
           setCurrentPage('login')
