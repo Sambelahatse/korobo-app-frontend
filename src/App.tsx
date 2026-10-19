@@ -15,16 +15,18 @@ import UtilisateursPage from './pages/UtilisateursPage'
 import NotificationsPage from './pages/NotificationsPage'
 import DatabasePage from './pages/DatabasePage'
 import SettingsPage from './pages/SettingsPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
-type AppPage = Page | 'login' | 'register'
+type AppPage = Page | 'login' | 'register' | 'reset-password'
 
 const validPages: AppPage[] = [
-  'landing', 'login', 'register', 'dashboard', 'sites', 'equipements',
+  'landing', 'login', 'register', 'reset-password', 'dashboard', 'sites', 'equipements',
   'planifications', 'calendrier', 'rapports', 'utilisateurs',
   'notifications', 'database', 'settings',
 ]
 
 function getPageFromUrl(): AppPage {
+  if (new URLSearchParams(window.location.search).get('auth') === 'reset-password') return 'reset-password'
   const route = window.location.hash.slice(2).split('?')[0]
   return validPages.includes(route as AppPage) ? route as AppPage : 'landing'
 }
@@ -52,6 +54,10 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     const publicPage = currentPage === 'landing' || currentPage === 'login' || currentPage === 'register'
+    if (currentPage === 'reset-password') {
+      setAuthChecked(true)
+      return () => { cancelled = true }
+    }
     setAuthChecked(false)
 
     const verify = async () => {
@@ -84,6 +90,7 @@ export default function App() {
   if (currentPage === 'landing') return <LandingPage onEnter={() => goTo('login')} onRegister={() => goTo('register')} />
   if (currentPage === 'login') return <LoginPage onLogin={() => goTo('dashboard')} onGoRegister={() => goTo('register')} onBack={() => goTo('landing')} />
   if (currentPage === 'register') return <RegisterPage onRegister={() => goTo('dashboard')} onGoLogin={() => goTo('login')} onBack={() => goTo('landing')} />
+  if (currentPage === 'reset-password') return <ResetPasswordPage onDone={() => goTo('login')} />
 
   const adminPage = currentPage as Page
   return (
