@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.0",
     "filepond": "^4.32.7",
     "overlayscrollbars": "^2.11.0",
     "overlayscrollbars-react": "^0.5.6",
