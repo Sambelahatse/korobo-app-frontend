@@ -146,7 +146,13 @@ export default function App() {
 
   const adminPage = currentPage as Page
   return (
-    <AdminLayout currentPage={adminPage} onNavigate={(page) => goTo(page)}>
+    <AdminLayout currentPage={adminPage} onNavigate={(page) => {
+      if (page === 'landing') {
+        setVerifiedProfile(null)
+        disconnectAuthSocket()
+      }
+      goTo(page)
+    }}>
       {adminPage === 'dashboard' && <DashboardPage />}
       {adminPage === 'sites' && <SitesPage />}
       {adminPage === 'equipements' && <EquipementsPage />}
