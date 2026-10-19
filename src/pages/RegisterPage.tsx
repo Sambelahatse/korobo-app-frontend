@@ -102,6 +102,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
         fullName: `${prenom.trim()} ${nom.trim()}`,
         email: email.trim(),
         password,
+        phone: telephone.trim() || undefined,
         setupToken: setupToken.trim(),
       })
       onRegister()
