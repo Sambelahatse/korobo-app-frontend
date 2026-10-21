@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import KoroboLogo from '../components/KoroboLogo'
 
 interface Props {
   onEnter: () => void
@@ -97,8 +96,8 @@ export default function LandingPage({ onEnter, onRegister }: Props) {
     <main className="min-h-screen bg-[#171a18] text-white" style={{ fontFamily: "'Inter', 'Open Sans', 'Lato', sans-serif" }}>
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#171a18]/95 backdrop-blur-sm">
         <nav aria-label="Navigation principale" className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-14">
-          <a href="#accueil" onClick={closeMenu} aria-label="KOROBO, accueil" className="shrink-0 flex items-center">
-            <KoroboLogo compact className="h-12 w-auto sm:h-14" />
+          <a href="#accueil" onClick={closeMenu} aria-label="KOROBO, accueil" className="shrink-0 text-[25px] font-extrabold tracking-[0.12em] text-[#5c8a42] sm:text-[28px]">
+            KOROBO<span className="text-white">.</span>
           </a>
 
           <div className="hidden items-center gap-7 lg:flex xl:gap-10">
