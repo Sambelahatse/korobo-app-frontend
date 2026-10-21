@@ -18,8 +18,45 @@ export function getSupabaseClient() {
   if (!url || !key) {
     throw new Error('La configuration Supabase manque (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY).')
   }
+
+  // Supabase's standard browser key is "sb-<project-ref>-auth-token".
+  // Older KOROBO sessions may still exist under "<project-ref>-auth-token".
+  // Read and migrate that legacy value once instead of silently treating the user as signed out.
+  const projectRef = new URL(url).hostname.split('.')[0]
+  const storageKey = `sb-${projectRef}-auth-token`
+  const legacyStorageKey = `${projectRef}-auth-token`
+  const compatibleStorage = {
+    getItem(key: string): string | null {
+      try {
+        const current = window.localStorage.getItem(key)
+        if (current !== null || key !== storageKey) return current
+
+        const legacy = window.localStorage.getItem(legacyStorageKey)
+        if (legacy === null) return null
+
+        window.localStorage.setItem(storageKey, legacy)
+        return legacy
+      } catch {
+        return null
+      }
+    },
+    setItem(key: string, value: string): void {
+      window.localStorage.setItem(key, value)
+    },
+    removeItem(key: string): void {
+      window.localStorage.removeItem(key)
+      if (key === storageKey) window.localStorage.removeItem(legacyStorageKey)
+    }
+  }
+
   client = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey,
+      storage: compatibleStorage
+    }
   })
   return client
 }
@@ -122,4 +159,3 @@ export async function signOut(): Promise<void> {
   const { error } = await getSupabaseClient().auth.signOut()
   if (error) throw new Error(error.message)
 }
-
