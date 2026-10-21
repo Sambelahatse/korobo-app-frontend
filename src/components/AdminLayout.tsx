@@ -5,7 +5,6 @@ import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { signOut } from '../services/authService'
-import KoroboLogo from './KoroboLogo'
 
 interface Props {
   children: ReactNode
@@ -102,7 +101,8 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
             aria-label="Retour au dashboard"
             className={'bg-white/5 border border-white/10 text-white text-sm font-bold tracking-[0.16em] py-2 rounded-lg transition-colors hover:bg-white/10 ' + (sidebarCollapsed ? 'lg:px-2.5 px-4' : 'px-4')}
           >
-            {sidebarCollapsed ? <span className="text-base font-extrabold tracking-widest">K</span> : <KoroboLogo compact className="h-10 w-auto max-w-[168px]" />}
+            <span className="lg:hidden">KOROBO</span>
+            <span className="hidden lg:inline">{sidebarCollapsed ? 'K' : 'KOROBO'}</span>
           </button>
           <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden text-gray-400 hover:text-white" aria-label="Fermer le menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
