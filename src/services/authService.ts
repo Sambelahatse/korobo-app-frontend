@@ -62,7 +62,7 @@ export function getSupabaseClient() {
 }
 
 function apiUrl() {
-  return ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\\/$/, '')
+  return ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '')
 }
 
 async function readError(response: Response): Promise<string> {
