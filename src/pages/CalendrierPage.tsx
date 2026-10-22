@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import type { Planification } from '../types'
 import { mockPlanifications } from '../data/mockData'
-import { showToast } from '../components/ToastViewport'
 
 type EventItem = {
   id: string
