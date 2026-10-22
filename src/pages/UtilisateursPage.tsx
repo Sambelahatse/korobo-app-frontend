@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ModernIcon } from '../components/Icons'
+import { ModernIcon } from '../components/Icons'\nimport ActionsMenu from '../components/ActionsMenu'
 import Modal from '../components/Modal'
 import SortableHeader from '../components/SortableHeader'
 import PhoneNumberField from '../components/PhoneNumberField'
@@ -285,11 +285,11 @@ export default function UtilisateursPage() {
                   <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>{status}</span></td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(user.createdAt))}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{displayDate(user.lastSeenAt)}</td>
-                  <td className="px-4 py-3"><div className="flex justify-end gap-2">
-                    <button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>
+                  <td className="px-4 py-3"><ActionsMenu>
+                    <button onClick={() => openEdit(user) className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>
                     {status === 'Invitation en attente' && <><button onClick={() => void copyUserInvitation(user)} aria-label={`Copier le lien d’invitation de ${user.fullName}`} title="Copier le lien d’invitation" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button><button onClick={() => void resendInvitation(user)} className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Renvoyer l’invitation</button></>}
                     {user.id !== currentUserId && <button onClick={() => void toggleStatus(user)} className="whitespace-nowrap rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}
-                  </div></td>
+                  </ActionsMenu></td>
                 </tr>
               })}
               {filtered.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-sm text-gray-500">Aucun utilisateur trouvé.</td></tr>}
