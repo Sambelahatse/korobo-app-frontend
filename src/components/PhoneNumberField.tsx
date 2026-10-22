@@ -21,7 +21,6 @@ export default function PhoneNumberField({
   return (
     <PhoneInput
       id={id}
-      international
       defaultCountry={defaultCountry}
       countryCallingCodeEditable={false}
       value={value || undefined}
