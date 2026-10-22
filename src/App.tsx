@@ -89,9 +89,20 @@ export default function App() {
       setVerifiedProfile(null)
       setAuthChecked(true)
     }
+    const onAuthChanged = () => {
+      void getMyProfile().then(async nextProfile => {
+        if (disposed) return
+        setVerifiedProfile(nextProfile)
+        const token = getAccessToken()
+        if (token) { try { await verifySessionWithSocket(token) } catch { /* HTTP verification remains the fallback. */ } }
+        if (!disposed) setAuthChecked(true)
+      }).catch(() => { if (!disposed) { setVerifiedProfile(null); setAuthChecked(true) } })
+    }
+    window.addEventListener('korobo:auth-changed', onAuthChanged)
     window.addEventListener('korobo:logout', onLogout)
     return () => {
       disposed = true
+      window.removeEventListener('korobo:auth-changed', onAuthChanged)
       window.removeEventListener('korobo:logout', onLogout)
     }
   }, [setVerifiedProfile])
