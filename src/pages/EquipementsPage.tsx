@@ -76,7 +76,8 @@ export default function EquipementsPage() {
   const [detailsLoading, setDetailsLoading] = useState(false)
 
   const refresh = useCallback(async () => {
-    const [lookups, result] = await Promise.all([getEquipmentLookups(), listEquipment()])
+    const lookups = await getEquipmentLookups()
+    const result = await listEquipment()
     setSites(lookups.sites)
     setUsers(lookups.users)
     setItems(result.data)
@@ -85,16 +86,22 @@ export default function EquipementsPage() {
 
   useEffect(() => {
     let active = true
-    Promise.all([getEquipmentLookups(), listEquipment()])
-      .then(([lookups, result]) => {
+    const load = async () => {
+      try {
+        const lookups = await getEquipmentLookups()
+        const result = await listEquipment()
         if (!active) return
         setSites(lookups.sites)
         setUsers(lookups.users)
         setItems(result.data)
         setForm(current => ({ ...current, siteId: current.siteId || lookups.sites[0]?.id || '' }))
-      })
-      .catch(error => { if (active) showToast(errorMessage(error), 'error') })
-      .finally(() => { if (active) setLoading(false) })
+      } catch (error) {
+        if (active) showToast(errorMessage(error), 'error')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
     return () => { active = false }
   }, [])
 
