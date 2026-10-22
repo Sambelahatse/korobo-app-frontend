@@ -59,31 +59,24 @@ src/
 - **Planifications** — Shell vide avec CTA
 - **4 placeholders** — Dashboard, Rapports, Base, Paramètres prêts à développer
 
-## 🔐 Authentification (Supabase + API KOROBO)
+## 🔐 Authentification (API KOROBO + Neon PostgreSQL)
 
-L'authentification e-mail/mot de passe et Google est gérée par Supabase Auth. Le profil et les rôles sont ensuite vérifiés côté serveur par l'API KOROBO via `GET /auth/me`. Le frontend ne doit jamais contenir de clé Supabase `secret` ou `service_role`.
+L’authentification est gérée par l’API KOROBO. Les profils, hash de mots de passe et jetons temporaires sont stockés dans Neon PostgreSQL. Le navigateur conserve uniquement un jeton d’accès de durée limitée. Aucun identifiant de base de données ni secret serveur ne doit être exposé dans le frontend.
 
 ### Configuration locale
 
-Créer un fichier `.env.local` à la racine, sans le committer :
+Créer un fichier `.env.local` sans le committer :
 
 ```dotenv
-VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
-VITE_API_URL=https://korobo-app-api.onrender.com
+VITE_API_URL=http://localhost:3000
 ```
 
-Pour la production, configurer les mêmes variables dans l'environnement de build Render du frontend. `VITE_SUPABASE_PUBLISHABLE_KEY` doit être une clé publique/publishable, jamais une clé secrète.
-
-### Supabase Auth
-
-1. Dans Supabase → Authentication → Sign In / Providers, activer Email et Google si la connexion Google est souhaitée.
-2. Dans Authentication → URL Configuration, définir l'URL du site et autoriser les URLs de redirection du frontend déployé. La récupération de mot de passe redirige vers `/?auth=reset-password`.
-3. Pour Google, configurer le fournisseur OAuth dans Supabase et autoriser les origines/URL de callback demandées par Supabase.
-4. Configurer `VITE_API_URL` avec l'URL du backend. Le backend doit autoriser l'origine du frontend via `CORS_ORIGIN`.
+Pour la production, configurer `VITE_API_URL` dans l’environnement de build du frontend et configurer `DATABASE_URL`, `JWT_SECRET`, le service SMTP et `FRONTEND_URL` dans l’environnement de l’API.
 
 ### Premier propriétaire
 
-L'inscription publique sert uniquement à créer le premier propriétaire via `POST /auth/bootstrap-owner` et nécessite le jeton de configuration transmis par l'administrateur technique. Le backend refuse toute nouvelle création de propriétaire une fois l'espace initial configuré. Après la création du propriétaire, retirer `OWNER_BOOTSTRAP_TOKEN` de l'environnement du backend. Les comptes suivants doivent être créés via le flux d'invitation administrateur prévu par l'API.
+L’inscription initiale utilise `POST /auth/bootstrap-owner` et le jeton de configuration transmis par l’administrateur technique. Après la création du premier compte, retirer `OWNER_BOOTSTRAP_TOKEN` de l’environnement de l’API. Les utilisateurs suivants doivent être invités par un administrateur. Les invitations et réinitialisations nécessitent un service SMTP configuré.
 
-Le bouton « Mot de passe oublié » envoie un lien par e-mail ; le lien ouvre ensuite l'écran de choix d'un nouveau mot de passe.
+### Migration des comptes existants
+
+Les anciens profils sont conservés, mais les mots de passe Supabase ne sont pas accessibles à l’API et ne peuvent pas être migrés en clair. Les utilisateurs existants devront utiliser le parcours de réinitialisation ou être réinvités pour définir un nouveau mot de passe.
