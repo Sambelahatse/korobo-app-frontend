@@ -126,7 +126,7 @@ export default function EquipementsPage() {
     })
     setFormOpen(true)
   }
-  const setField = <K extends keyof FormValues>(key: K, value: FormValues[K]) => setForm(current => ({ ...current, [key]: value }))
+  const setField = <K extends keyof FormValues,>(key: K, value: FormValues[K]) => setForm(current => ({ ...current, [key]: value }))
 
   const saveEquipment = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -226,7 +226,7 @@ export default function EquipementsPage() {
         { label: 'Équipements suivis', value: items.length, icon: 'database' as const, tone: 'text-gray-900' },
         { label: 'Opérationnels', value: operational, icon: 'check-circle' as const, tone: 'text-emerald-700' },
         { label: 'À contrôler / en panne', value: attention, icon: 'alert-triangle' as const, tone: 'text-amber-700' },
-        { label: 'Unités disponibles en stock', value: availableUnits, icon: 'package' as const, tone: 'text-[#4A7A3B]' },
+        { label: 'Unités disponibles en stock', value: availableUnits, icon: 'database' as const, tone: 'text-[#4A7A3B]' },
       ].map(card => <div key={card.label} className="flex items-center gap-4 rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf4e9] text-[#4A7A3B]"><ModernIcon name={card.icon} size={22} /></div>
         <div><p className="text-sm text-gray-500">{card.label}</p><p className={`mt-1 text-2xl font-bold ${card.tone}`}>{card.value}</p></div>
