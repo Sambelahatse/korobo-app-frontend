@@ -215,15 +215,15 @@ export default function UtilisateursPage() {
     setFeedback('')
     try {
       const result = await request<ApiEnvelope<TeamUser> & { activationLink: string }>(`/auth/users/${user.id}/activation-link`, { method: 'POST' })
-      await navigator.clipboard.writeText(result.activationLink)
       setActivationLink(result.activationLink)
-      setFeedback(`Lien d’invitation de ${user.fullName} copié. Vous pouvez le partager directement ; aucun e-mail n’a été envoyé.`)
-    } catch (cause) {
-      if (cause instanceof Error && cause.message.toLowerCase().includes('clipboard')) {
-        setFeedback('Le lien a été généré, mais la copie automatique a échoué.')
-      } else {
-        setError(cause instanceof Error ? cause.message : 'Impossible de générer le lien d’invitation.')
+      try {
+        await navigator.clipboard.writeText(result.activationLink)
+        setFeedback(`Lien d’invitation de ${user.fullName} copié. Vous pouvez le partager directement ; aucun e-mail n’a été envoyé.`)
+      } catch {
+        setFeedback('Le lien a été généré, mais la copie automatique a échoué. Le lien est affiché ci-dessus pour une copie manuelle.')
       }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossible de générer le lien d’invitation.')
     }
   }
 
