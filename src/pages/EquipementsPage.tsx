@@ -5,7 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
 import {
   archiveEquipment, createEquipment, createMaintenance, getEquipmentDetails, getEquipmentLookups,
-  listEquipment, recordEquipmentMovement, updateEquipment,
+  listEquipment, recordEquipmentMovement, updateEquipment, updateMaintenance,
   type EquipmentDetails, type EquipmentInput, type EquipmentMaintenance, type EquipmentRecord,
   type EquipmentSite, type EquipmentUser, type EquipmentStatus, type TrackingMode,
 } from '../services/equipmentService'
@@ -208,6 +208,14 @@ export default function EquipementsPage() {
     catch (error) { showToast(errorMessage(error), 'error') }
     finally { setDetailsLoading(false) }
   }
+  const changeMaintenanceStatus = async (maintenance: EquipmentMaintenance, status: EquipmentMaintenance['status']) => {
+    try {
+      await updateMaintenance(maintenance.id, { status })
+      if (details) setDetails(await getEquipmentDetails(details.id))
+      await refresh()
+      showToast(status === 'completed' ? 'Maintenance terminée et enregistrée.' : 'Intervention mise à jour.')
+    } catch (error) { showToast(errorMessage(error), 'error') }
+  }
 
   return <div className="min-h-full space-y-6 p-4 sm:p-6 lg:p-8">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -335,7 +343,7 @@ export default function EquipementsPage() {
           {details.movements.length ? <div className="max-h-64 space-y-3 overflow-y-auto">{details.movements.map(move => <div key={move.id} className="rounded-xl border border-gray-100 p-3"><div className="flex flex-wrap justify-between gap-2"><span className="font-semibold text-gray-800">{({created:'Création',updated:'Modification',assigned:'Affectation',unassigned:'Désaffectation',transfer:'Transfert',stock_in:'Entrée de stock',stock_out:'Sortie de stock',maintenance_started:'Maintenance démarrée',maintenance_completed:'Maintenance terminée',archived:'Archivage',restored:'Restauration'} as Record<string,string>)[move.movement_type] ?? move.movement_type}</span><span className="text-xs text-gray-500">{dateLabel(move.created_at)}</span></div><p className="mt-1 text-sm text-gray-600">{move.notes || '—'}{move.quantity > 1 ? ` · Quantité : ${move.quantity}` : ''}</p><p className="mt-1 text-xs text-gray-400">{move.from_site_name && move.to_site_name && move.from_site_name !== move.to_site_name ? `${move.from_site_name} → ${move.to_site_name}` : ''}{move.created_by_name ? ` · Par ${move.created_by_name}` : ''}</p></div>)}</div> : <p className="text-sm text-gray-500">Aucun mouvement enregistré.</p>}
         </section>
         <section><h3 className="mb-3 font-bold text-gray-900">Interventions de maintenance</h3>
-          {details.maintenance.length ? <div className="space-y-3">{details.maintenance.map(maintenance => <div key={maintenance.id} className="rounded-xl border border-gray-100 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-gray-800">{maintenance.title}</span><span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">{maintenanceStatus[maintenance.status]}</span></div><p className="mt-1 text-xs text-gray-500">{maintenance.maintenance_type === 'preventive' ? 'Préventive' : 'Corrective'} · {dateLabel(maintenance.scheduled_at)} · Priorité {maintenance.priority}</p></div>)}</div> : <p className="text-sm text-gray-500">Aucune intervention enregistrée.</p>}
+          {details.maintenance.length ? <div className="space-y-3">{details.maintenance.map(maintenance => <div key={maintenance.id} className="rounded-xl border border-gray-100 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-gray-800">{maintenance.title}</span><span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">{maintenanceStatus[maintenance.status]}</span></div><p className="mt-1 text-xs text-gray-500">{maintenance.maintenance_type === 'preventive' ? 'Préventive' : 'Corrective'} · {dateLabel(maintenance.scheduled_at)} · Priorité {maintenance.priority}</p>{maintenance.status === 'planned' && <button onClick={() => void changeMaintenanceStatus(maintenance, 'in_progress')} className={buttonCls + ' mt-3'}>Démarrer l’intervention</button>}{maintenance.status === 'in_progress' && <button onClick={() => void changeMaintenanceStatus(maintenance, 'completed')} className="mt-3 rounded-xl bg-[#4A7A3B] px-3 py-2 text-xs font-semibold text-white">Marquer comme terminée</button>}</div>)}</div> : <p className="text-sm text-gray-500">Aucune intervention enregistrée.</p>}
         </section>
       </div>}
     </Modal>}
