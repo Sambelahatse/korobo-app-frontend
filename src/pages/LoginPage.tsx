@@ -121,7 +121,7 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             <p className="text-gray-500 text-sm">Connectez-vous à votre compte KOROBO</p>
           </div>
 
-          <button type="button" onClick={() => { window.location.assign((((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\\/$/, '')) + '/auth/google') }}
+          <button type="button" onClick={() => window.location.assign(((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '') + '/auth/google')}
             className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-lg bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.01 13.22l7.98 6.19C11.88 13.72 17.43 9.5 24 9.5z"/>
