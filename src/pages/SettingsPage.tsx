@@ -1,257 +1,192 @@
-import { useEffect, useState } from 'react'
-import { ModernIcon, type ModernIconName } from '../components/Icons'
-import Modal from '../components/Modal'
+import { useCallback, useEffect, useState } from 'react'
 import {
-  settingsService,
-  type AccountPreferences,
-  type AccountProfile,
+  defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
 
-interface ToggleProps {
-  label: string
-  desc?: string
-  value: boolean
-  onChange: (value: boolean) => void
-  disabled?: boolean
+const inputClass = 'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10'
+function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="border-b border-gray-100 px-5 py-4 sm:px-6"><h3 className="text-sm font-bold text-gray-800">{title}</h3>{description && <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>}</div>
+    <div className="space-y-4 px-5 py-5 sm:px-6">{children}</div>
+  </section>
 }
-function Toggle({ label, desc, value, onChange, disabled = false }: ToggleProps) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-3.5">
-      <div className="min-w-0 flex-1">
-        <p className={'text-sm font-semibold ' + (disabled ? 'text-gray-400' : 'text-gray-800')}>{label}</p>
-        {desc && <p className="mt-1 text-xs leading-relaxed text-gray-500">{desc}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={value}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => onChange(!value)}
-        className={[
-          'group relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full border-2 border-transparent',
-          'transition-colors duration-200 ease-in-out',
-          'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4A7A3B]/20',
-          'disabled:cursor-not-allowed disabled:opacity-45',
-          value ? 'bg-[#4A7A3B]' : 'bg-gray-300 hover:bg-gray-400',
-        ].join(' ')}
-      >
-        <span
-          aria-hidden="true"
-          className={[
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white',
-            'shadow-[0_1px_3px_rgba(0,0,0,0.25)] ring-0',
-            'transition-transform duration-200 ease-in-out',
-            value ? 'translate-x-5' : 'translate-x-0',
-          ].join(' ')}
-        />
-      </button>
-    </div>
-  )
+function Switch({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return <div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-gray-800">{label}</p><p className="mt-1 text-xs text-gray-500">{description}</p></div><button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={'relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4A7A3B]/20 ' + (checked ? 'bg-[#4A7A3B]' : 'bg-gray-300')}><span className={'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ' + (checked ? 'translate-x-5' : 'translate-x-0.5')} /></button></div>
 }
-
-function Section({ title, icon, children }: { title: string; icon: ModernIconName; children: React.ReactNode }) {
-  return (
-    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-center gap-2.5 border-b border-gray-50 px-4 py-3 sm:px-6 sm:py-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf5e8] text-[#4A7A3B]"><ModernIcon name={icon} size={19} /></span>
-        <h3 className="font-sans text-sm font-bold text-gray-800">{title}</h3>
-      </div>
-      <div className="divide-y divide-gray-50 px-4 sm:px-6">{children}</div>
-    </section>
-  )
+function formatDate(value: string | null) {
+  if (!value) return 'Pas encore utilisée'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleString('fr-FR')
 }
-
-const inputCls = 'mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition-all focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10'
+function deviceLabel(session: AccountSession) {
+  const ua = session.userAgent || ''
+  if (/iphone|ipad/i.test(ua)) return 'Appareil Apple'
+  if (/android/i.test(ua)) return 'Appareil Android'
+  if (/windows/i.test(ua)) return 'Ordinateur Windows'
+  if (/macintosh|mac os/i.test(ua)) return 'Ordinateur Mac'
+  if (/linux/i.test(ua)) return 'Ordinateur Linux'
+  return 'Navigateur ou appareil'
+}
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<AccountProfile>(() => settingsService.getProfile())
-  const [preferences, setPreferences] = useState<AccountPreferences>(() => settingsService.getPreferences())
-  const [draftProfile, setDraftProfile] = useState<AccountProfile>(profile)
-  const [showProfileModal, setShowProfileModal] = useState(false)
-  const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [profile, setProfile] = useState<AccountProfile | null>(null)
+  const [draftName, setDraftName] = useState('')
+  const [draftPhone, setDraftPhone] = useState('')
+  const [preferences, setPreferences] = useState<AccountPreferences>(defaultPreferences)
+  const [sessions, setSessions] = useState<AccountSession[]>([])
+  const [googleLinked, setGoogleLinked] = useState(false)
+  const [hasPassword, setHasPassword] = useState(false)
+  const [setupPassword, setSetupPassword] = useState('')
+  const [confirmSetupPassword, setConfirmSetupPassword] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [deleteEmail, setDeleteEmail] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [showDeleteForm, setShowDeleteForm] = useState(false)
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = preferences.theme.toLowerCase()
-  }, [preferences.theme])
-
-  const updatePreferences = (patch: Partial<AccountPreferences>) => {
-    setPreferences(current => ({ ...current, ...patch }))
-    setSaved(false)
-    setMessage('')
-  }
-
-  const updateNotification = (key: keyof AccountPreferences['notifications'], value: boolean) => {
-    setPreferences(current => ({
-      ...current,
-      notifications: { ...current.notifications, [key]: value },
-    }))
-    setSaved(false)
-    setMessage('')
-  }
-
-  const updateSecurity = (key: keyof AccountPreferences['security'], value: boolean) => {
-    setPreferences(current => ({
-      ...current,
-      security: { ...current.security, [key]: value },
-    }))
-    setSaved(false)
-    setMessage('')
-  }
-
-  const handleSave = () => {
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
     try {
-      settingsService.saveProfile(profile)
-      settingsService.savePreferences(preferences)
-      setSaved(true)
-      setMessage('Vos préférences ont été enregistrées sur cet appareil.')
-      window.setTimeout(() => setSaved(false), 3500)
-    } catch {
-      setSaved(false)
-      setMessage('Impossible d’enregistrer les paramètres dans le navigateur. Vérifiez les autorisations de stockage.')
+      const [account, activeSessions] = await Promise.all([settingsService.getAccount(), settingsService.getSessions()])
+      setProfile(account.profile)
+      setDraftName(account.profile.fullName)
+      setDraftPhone(account.profile.phone || '')
+      setGoogleLinked(account.googleLinked)
+      setPreferences(account.preferences || defaultPreferences)
+      setSessions(activeSessions)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les paramètres du compte.')
+    } finally { setLoading(false) }
+  }, [])
+  useEffect(() => { void load() }, [load])
+  useEffect(() => { document.documentElement.dataset.theme = preferences.theme.toLowerCase() }, [preferences.theme])
+
+  const run = async (action: () => Promise<void>, success: string) => {
+    setBusy(true); setError(''); setMessage('')
+    try { await action(); setMessage(success) }
+    catch (err) { setError(err instanceof Error ? err.message : 'L’opération a échoué.') }
+    finally { setBusy(false) }
+  }
+  const saveProfile = () => run(async () => {
+    if (draftName.trim().length < 2) throw new Error('Le nom complet doit contenir au moins 2 caractères.')
+    const updated = await settingsService.updateProfile({ fullName: draftName.trim(), phone: draftPhone.trim() || null })
+    setProfile(updated); setDraftName(updated.fullName); setDraftPhone(updated.phone || '')
+  }, 'Les informations personnelles ont été enregistrées.')
+  const savePreferences = () => run(async () => {
+    const saved = await settingsService.savePreferences(preferences)
+    setPreferences({ ...defaultPreferences, ...saved, notifications: { ...defaultPreferences.notifications, ...saved.notifications }, security: { ...defaultPreferences.security, ...saved.security } })
+    document.documentElement.dataset.theme = saved.theme.toLowerCase()
+  }, 'Les préférences et notifications ont été enregistrées.')
+  const submitPassword = () => run(async () => {
+    if (newPassword.length < 12) throw new Error('Le nouveau mot de passe doit contenir au moins 12 caractères.')
+    if (newPassword !== confirmPassword) throw new Error('La confirmation du mot de passe ne correspond pas.')
+    await settingsService.changePassword(currentPassword, newPassword)
+    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+    await load()
+  }, 'Le mot de passe a été modifié.')
+  const submitSetupPassword = () => run(async () => {
+    if (setupPassword.length < 12) throw new Error('Le mot de passe doit contenir au moins 12 caractères.')
+    if (setupPassword !== confirmSetupPassword) throw new Error('La confirmation du mot de passe ne correspond pas.')
+    await settingsService.setPassword(setupPassword)
+    setHasPassword(true); setSetupPassword(''); setConfirmSetupPassword('')
+    await load()
+  }, 'Le mot de passe a été configuré.')
+  const connectGoogle = () => run(async () => {
+    const url = await settingsService.getGoogleLinkUrl()
+    window.location.assign(url)
+  }, 'Redirection vers Google…')
+  const unlinkGoogle = () => run(async () => {
+    await settingsService.unlinkGoogle()
+    setGoogleLinked(false)
+  }, 'Le compte Google a été dissocié.')
+  const revokeSession = (session: AccountSession) => run(async () => {
+    await settingsService.revokeSession(session.id)
+    if (session.current) {
+      window.localStorage.removeItem('korobo.access-token')
+      window.localStorage.removeItem('korobo.auth-profile')
+      window.dispatchEvent(new Event('korobo:logout'))
+      window.location.hash = '#/login'
+      return
     }
-  }
+    setSessions(current => current.filter(item => item.id !== session.id))
+  }, 'La session a été révoquée.')
+  const deleteAccount = () => run(async () => {
+    if (!profile) throw new Error('Compte introuvable.')
+    if (deleteEmail.trim().toLowerCase() !== profile.email.toLowerCase()) throw new Error('Saisissez exactement votre adresse e-mail pour confirmer.')
+    await settingsService.deleteAccount(deleteEmail.trim(), deletePassword || undefined)
+    window.location.hash = '#/login'
+  }, 'Le compte a été désactivé.')
+  const initials = profile?.fullName.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase() || 'K'
 
-  const openProfileModal = () => {
-    setDraftProfile(profile)
-    setShowProfileModal(true)
-  }
+  if (loading) return <div className="p-8 text-sm text-gray-500">Chargement des paramètres du compte…</div>
+  if (!profile && error) return <div className="p-4 sm:p-8"><div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}<button onClick={() => void load()} className="ml-3 font-semibold underline">Réessayer</button></div></div>
 
-  const saveProfile = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const normalized = { ...draftProfile, name: draftProfile.name.trim(), email: draftProfile.email.trim() }
-    if (!normalized.name || !normalized.email) return
-    setProfile(normalized)
-    settingsService.saveProfile(normalized)
-    setShowProfileModal(false)
-    setSaved(true)
-    setMessage('Profil enregistré sur cet appareil.')
-    window.setTimeout(() => setSaved(false), 3500)
-  }
+  return <div className="p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-3xl space-y-5">
+    <div className="mb-2"><h2 className="text-xl font-bold text-gray-800">Paramètres du compte</h2><p className="mt-1 text-sm text-gray-500">Gérez vos informations, votre sécurité et vos préférences.</p></div>
+    {message && <div role="status" className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
+    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-  const initials = profile.name.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase() || 'U'
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
-          <div>
-            <h2 className="font-sans text-xl font-bold text-gray-800">Paramètres</h2>
-            <p className="mt-0.5 text-xs text-gray-400 sm:text-sm">Compte et préférences</p>
-          </div>
-          {saved && <span className="rounded-lg bg-green-100 px-3 py-2 text-xs font-semibold text-green-700">✓ Enregistré</span>}
-        </div>
-
-        {message && (
-          <div role="status" className={'mb-4 rounded-xl border px-4 py-3 text-sm ' + (message.startsWith('Impossible') ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-800')}>
-            {message}
-          </div>
-        )}
-
-        <div className="space-y-4 sm:space-y-5">
-          <Section title="Profil utilisateur" icon="user-round">
-            <div className="py-4">
-              <div className="mb-5 flex items-center gap-3 sm:gap-4">
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#4A7A3B] text-xl font-bold text-white sm:h-16 sm:w-16 sm:text-2xl">{initials}</div>
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-gray-800">{profile.name}</p>
-                  <p className="text-sm text-gray-400">{profile.role}</p>
-                  <p className="mt-1 text-xs text-gray-400">Photo de profil : disponible avec le backend</p>
-                </div>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
-                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div><p className="text-xs font-medium text-gray-400">E-mail</p><p className="mt-1 break-all font-medium text-gray-800">{profile.email}</p></div>
-                  <div><p className="text-xs font-medium text-gray-400">Téléphone</p><p className="mt-1 font-medium text-gray-800">{profile.phone || 'Non renseigné'}</p></div>
-                  <div><p className="text-xs font-medium text-gray-400">Rôle</p><p className="mt-1 font-medium text-gray-800">{profile.role}</p></div>
-                </div>
-                <button type="button" onClick={openProfileModal} className="mt-4 rounded-lg border border-[#4A7A3B]/20 bg-white px-4 py-2 text-sm font-semibold text-[#4A7A3B] transition hover:bg-[#edf5e8]">Modifier le profil</button>
-              </div>
-            </div>
-          </Section>
-
-          <Section title="Préférences d'affichage" icon="palette">
-            <div className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-2 sm:gap-4">
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-500">Langue
-                <select className={inputCls + ' appearance-none'} value={preferences.language} onChange={event => updatePreferences({ language: event.target.value })}>
-                  {['Français', 'English', 'Malagasy'].map(language => <option key={language}>{language}</option>)}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-500">Thème
-                <select className={inputCls + ' appearance-none'} value={preferences.theme} onChange={event => updatePreferences({ theme: event.target.value })}>
-                  {['Clair', 'Sombre', 'Système'].map(theme => <option key={theme}>{theme}</option>)}
-                </select>
-              </label>
-              <p className="text-xs leading-relaxed text-gray-400 sm:col-span-2">Les choix sont mémorisés sur cet appareil. La traduction complète de l’application et l’application du thème à toutes les pages restent à intégrer.</p>
-            </div>
-          </Section>
-
-          <Section title="Notifications" icon="bell">
-            <Toggle label="Notifications par e-mail" desc="Préférence pour les alertes envoyées par e-mail" value={preferences.notifications.email} onChange={value => updateNotification('email', value)} />
-            <Toggle label="Notifications push" desc="Préférence pour les alertes en temps réel" value={preferences.notifications.push} onChange={value => updateNotification('push', value)} />
-            <Toggle label="Alertes de panne" desc="Préférence pour les notifications de panne" value={preferences.notifications.outageAlerts} onChange={value => updateNotification('outageAlerts', value)} />
-            <Toggle label="Rappels de maintenance" desc="Préférence pour les rappels avant intervention" value={preferences.notifications.maintenanceReminders} onChange={value => updateNotification('maintenanceReminders', value)} />
-            <Toggle label="Rapports mensuels" desc="Préférence pour recevoir les rapports de fin de mois" value={preferences.notifications.monthlyReports} onChange={value => updateNotification('monthlyReports', value)} />
-            <p className="pb-4 pt-2 text-xs leading-relaxed text-gray-400">Ces options sont sauvegardées localement. L’envoi effectif des e-mails, notifications push et rapports nécessitera le backend.</p>
-          </Section>
-
-          <Section title="Sécurité" icon="shield-check">
-            <Toggle label="Authentification à deux facteurs" desc="À activer lorsque le service d’authentification sera connecté" value={preferences.security.twoFactor} onChange={value => updateSecurity('twoFactor', value)} disabled />
-            <Toggle label="Déconnexion automatique" desc="Préférence d’expiration après une période d’inactivité" value={preferences.security.sessionTimeout} onChange={value => updateSecurity('sessionTimeout', value)} />
-            <div className="flex items-center justify-between gap-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-gray-800">Changer le mot de passe</p>
-                <p className="mt-0.5 text-xs text-gray-400">Nécessite un service d’authentification côté serveur</p>
-              </div>
-              <button type="button" onClick={() => setShowPasswordModal(true)} className="flex-shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:border-[#4A7A3B] hover:text-[#4A7A3B] sm:px-4 sm:text-sm">Détails</button>
-            </div>
-            <p className="pb-4 pt-2 text-xs leading-relaxed text-amber-700">Les fonctions de sécurité réelles ne doivent pas être simulées dans le navigateur. Elles seront activées avec le backend.</p>
-          </Section>
-
-          <button type="button" onClick={handleSave} className="w-full rounded-xl bg-[#4A7A3B] py-3 text-sm font-bold tracking-wide text-white shadow-lg shadow-[#4A7A3B]/20 transition-colors hover:bg-[#5C8A42] active:scale-[0.99] sm:py-3.5">
-            Enregistrer les modifications
-          </button>
-
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 sm:p-5">
-            <h3 className="mb-1 font-sans text-sm font-bold text-red-700">Zone dangereuse</h3>
-            <p className="mb-3 text-xs leading-relaxed text-red-500">La suppression réelle du compte doit être réalisée et vérifiée par le serveur. Aucun compte ne sera supprimé depuis cette version de démonstration.</p>
-            <button type="button" onClick={() => setMessage('La suppression du compte sera disponible après la mise en place du backend et d’une vérification d’identité.')} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 sm:px-4 sm:text-sm">À configurer avec le backend</button>
-          </div>
-        </div>
+    <Card title="Informations personnelles" description="Ces informations sont enregistrées dans votre compte KOROBO.">
+      <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-xs text-gray-500">{profile?.role}</p></div></div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-semibold text-gray-700">Nom complet<input className={inputClass} autoComplete="name" maxLength={160} value={draftName} onChange={e => setDraftName(e.target.value)} /></label>
+        <label className="block text-sm font-semibold text-gray-700">Téléphone<input className={inputClass} type="tel" autoComplete="tel" maxLength={40} value={draftPhone} onChange={e => setDraftPhone(e.target.value)} /></label>
+        <label className="block text-sm font-semibold text-gray-700 sm:col-span-2">Adresse e-mail<input className={inputClass + ' bg-gray-50 text-gray-500'} value={profile?.email || ''} readOnly /><span className="mt-1 block text-xs font-normal text-gray-400">L’adresse e-mail est protégée. Sa modification nécessite une procédure de vérification distincte.</span></label>
       </div>
+      <button disabled={busy} onClick={() => void saveProfile()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer le profil</button>
+    </Card>
 
-      {showProfileModal && (
-        <Modal title="Modifier le profil" description="Les informations sont enregistrées dans le navigateur pour cette version de démonstration." onClose={() => setShowProfileModal(false)}>
-          <form onSubmit={saveProfile} className="space-y-4">
-            <label className="block text-sm font-semibold text-gray-700">Nom complet
-              <input required maxLength={100} className={inputCls} value={draftProfile.name} onChange={event => setDraftProfile(current => ({ ...current, name: event.target.value }))} />
-            </label>
-            <label className="block text-sm font-semibold text-gray-700">Téléphone
-              <input type="tel" maxLength={30} className={inputCls} value={draftProfile.phone} onChange={event => setDraftProfile(current => ({ ...current, phone: event.target.value }))} />
-            </label>
-            <label className="block text-sm font-semibold text-gray-700">Adresse e-mail
-              <input required type="email" maxLength={254} className={inputCls} value={draftProfile.email} onChange={event => setDraftProfile(current => ({ ...current, email: event.target.value }))} />
-            </label>
-            <div className="rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">Le rôle « {profile.role} » est en lecture seule ici. Les permissions doivent être validées par le serveur, pas modifiées par l’utilisateur.</div>
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => setShowProfileModal(false)} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600">Annuler</button>
-              <button type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white">Enregistrer</button>
-            </div>
-          </form>
-        </Modal>
-      )}
+    <Card title="Sécurité et mot de passe" description="Le mot de passe est vérifié et modifié côté serveur.">
+      {hasPassword ? <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void submitPassword() }}>
+        <label className="text-sm font-semibold text-gray-700 sm:col-span-2">Mot de passe actuel<input className={inputClass} type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required /></label>
+        <label className="text-sm font-semibold text-gray-700">Nouveau mot de passe<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><span className="mt-1 block text-xs font-normal text-gray-400">12 caractères minimum.</span></label>
+        <label className="text-sm font-semibold text-gray-700">Confirmation<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
+        <div className="sm:col-span-2"><button disabled={busy} type="submit" className="rounded-xl border border-[#4A7A3B]/30 px-4 py-2.5 text-sm font-semibold text-[#4A7A3B] disabled:opacity-50">Modifier le mot de passe</button></div>
+      </form> : <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void submitSetupPassword() }}>
+        <p className="text-sm leading-relaxed text-gray-600 sm:col-span-2">Votre compte n’a pas encore de mot de passe KOROBO. Définissez-en un pour pouvoir dissocier Google et utiliser la connexion par e-mail.</p>
+        <label className="text-sm font-semibold text-gray-700">Nouveau mot de passe<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={setupPassword} onChange={e => setSetupPassword(e.target.value)} required /></label>
+        <label className="text-sm font-semibold text-gray-700">Confirmation<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmSetupPassword} onChange={e => setConfirmSetupPassword(e.target.value)} required /></label>
+        <div className="sm:col-span-2"><button disabled={busy} type="submit" className="rounded-xl border border-[#4A7A3B]/30 px-4 py-2.5 text-sm font-semibold text-[#4A7A3B] disabled:opacity-50">Définir un mot de passe</button></div>
+      </form>}
+    </Card>
 
-      {showPasswordModal && (
-        <Modal title="Sécurité du compte" description="Le changement de mot de passe ne peut pas être sécurisé sans un backend d’authentification." onClose={() => setShowPasswordModal(false)}>
-          <div className="space-y-4">
-            <p className="text-sm leading-relaxed text-gray-600">Cette version utilise des données de démonstration côté frontend. Pour éviter de donner une fausse impression de sécurité, aucun mot de passe ne sera demandé ni enregistré dans le navigateur.</p>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">À connecter : vérification du mot de passe actuel, validation du nouveau mot de passe côté serveur et invalidation des sessions si nécessaire.</div>
-            <div className="flex justify-end"><button type="button" onClick={() => setShowPasswordModal(false)} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white">Compris</button></div>
-          </div>
-        </Modal>
-      )}
-    </div>
-  )
+    <Card title="Compte Google" description="L’association permet d’utiliser Google pour se connecter à KOROBO.">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-gray-800">{googleLinked ? 'Un compte Google est associé' : 'Aucun compte Google associé'}</p><p className="mt-1 text-xs text-gray-500">{googleLinked ? (hasPassword ? 'Vous pouvez dissocier Google.' : 'Définissez un mot de passe KOROBO avant de dissocier Google.') : 'L’association nécessite une authentification Google vérifiée.'}</p></div>
+        {googleLinked && hasPassword ? <button disabled={busy} onClick={() => void unlinkGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Dissocier Google</button> : googleLinked ? <span className="text-xs text-gray-500">Mot de passe requis pour dissocier</span> : <button disabled={busy} onClick={() => void connectGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Associer Google</button>}</div>
+    </Card>
+
+    <Card title="Notifications et préférences" description="Les préférences sont stockées sur votre compte, pas uniquement dans ce navigateur.">
+      <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-gray-700">Langue<select className={inputClass} value={preferences.language} onChange={e => setPreferences(p => ({ ...p, language: e.target.value as AccountPreferences['language'] }))}>{['Français','English','Malagasy'].map(x => <option key={x}>{x}</option>)}</select></label><label className="text-sm font-semibold text-gray-700">Thème<select className={inputClass} value={preferences.theme} onChange={e => setPreferences(p => ({ ...p, theme: e.target.value as AccountPreferences['theme'] }))}>{['Clair','Sombre','Système'].map(x => <option key={x}>{x}</option>)}</select></label></div>
+      <div className="divide-y divide-gray-100">{([
+        ['email','Notifications par e-mail','Recevoir les notifications par e-mail'],
+        ['push','Notifications push','Préférence pour les alertes en temps réel'],
+        ['outageAlerts','Alertes de panne','Être averti des pannes détectées'],
+        ['maintenanceReminders','Rappels de maintenance','Recevoir les rappels d’intervention'],
+        ['monthlyReports','Rapports mensuels','Recevoir les rapports de fin de mois'],
+      ] as const).map(([key,label,desc]) => <Switch key={key} label={label} description={desc} checked={preferences.notifications[key]} onChange={value => setPreferences(p => ({ ...p, notifications: { ...p.notifications, [key]: value } }))} />)}</div>
+      <Switch label="Déconnexion automatique" description="Préférence enregistrée pour la gestion future de l’inactivité." checked={preferences.security.sessionTimeout} onChange={value => setPreferences(p => ({ ...p, security: { ...p.security, sessionTimeout: value } }))} />
+      <button disabled={busy} onClick={() => void savePreferences()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer les préférences</button>
+      <p className="text-xs leading-relaxed text-gray-400">Ces réglages enregistrent les préférences. L’envoi réel des e-mails et notifications push dépend encore de l’activation des services de notification.</p>
+    </Card>
+
+    <Card title="Sessions actives" description="Révoquez une session pour empêcher son jeton de continuer à être utilisé.">
+      {sessions.length === 0 ? <p className="text-sm text-gray-500">Aucune session active enregistrée.</p> : <div className="divide-y divide-gray-100">{sessions.map(session => <div key={session.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold text-gray-800">{deviceLabel(session)}</p>{session.current && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">Session actuelle</span>}</div><p className="mt-1 text-xs text-gray-500">Créée : {formatDate(session.createdAt)}</p><p className="text-xs text-gray-500">Dernière activité : {formatDate(session.lastSeenAt)}{session.ipAddress ? ' · IP ' + session.ipAddress : ''}</p></div><button disabled={busy} onClick={() => void revokeSession(session)} className="self-start rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 disabled:opacity-50">{session.current ? 'Déconnecter cette session' : 'Révoquer'}</button></div>)}</div>}
+      <button onClick={() => void load()} className="text-sm font-semibold text-[#4A7A3B] underline">Actualiser les sessions</button>
+    </Card>
+
+    <section className="rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
+      <h3 className="text-sm font-bold text-red-800">Zone dangereuse — suppression du compte</h3>
+      <p className="mt-1 text-sm leading-relaxed text-red-700">Le compte sera désactivé, les identifiants de connexion seront neutralisés et les sessions révoquées. Les données opérationnelles associées sont conservées pour préserver l’historique des interventions.</p>
+      {!showDeleteForm ? <button onClick={() => setShowDeleteForm(true)} className="mt-4 rounded-xl border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100">Supprimer mon compte…</button> : <form className="mt-4 space-y-3" onSubmit={e => { e.preventDefault(); void deleteAccount() }}>
+        <label className="block text-sm font-semibold text-red-900">Saisissez votre adresse e-mail pour confirmer<input className={inputClass} type="email" autoComplete="email" value={deleteEmail} onChange={e => setDeleteEmail(e.target.value)} required /></label>
+        <label className="block text-sm font-semibold text-red-900">Mot de passe actuel (si configuré)<input className={inputClass} type="password" autoComplete="current-password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} maxLength={128} /></label>
+        <div className="flex flex-wrap gap-2"><button disabled={busy} type="submit" className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Confirmer la suppression</button><button type="button" onClick={() => { setShowDeleteForm(false); setDeleteEmail(''); setDeletePassword('') }} className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700">Annuler</button></div>
+      </form>}
+    </section>
+  </div></div>
 }
