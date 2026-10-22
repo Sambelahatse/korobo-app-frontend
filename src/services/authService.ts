@@ -55,9 +55,6 @@ export async function signIn(email: string, password: string): Promise<AuthProfi
   const result = await apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
   return saveSession(result)
 }
-export async function signInWithGoogle(): Promise<void> {
-  throw new Error('La connexion Google n’est pas disponible dans l’authentification interne actuelle.')
-}
 export async function bootstrapOwner(input: { fullName: string; email: string; password: string; phone?: string; setupToken: string }): Promise<AuthProfile> {
   const result = await apiRequest<AuthResponse>('/auth/bootstrap-owner', {
     method: 'POST',
