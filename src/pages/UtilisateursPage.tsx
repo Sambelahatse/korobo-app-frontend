@@ -63,9 +63,6 @@ function displayDate(value: string | null) {
   if (!value) return 'Jamais connecté'
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
-function initials(name: string) {
-  return name.trim().split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase()
-}
 
 export default function UtilisateursPage() {
   const [users, setUsers] = useState<TeamUser[]>([])
