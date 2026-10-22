@@ -76,6 +76,7 @@ export default function SettingsPage() {
   }
   const saveProfile = () => run(async () => {
     if (draftName.trim().length < 2) throw new Error('Le nom complet doit contenir au moins 2 caractères.')
+    if (draftPhone.trim() && !isValidPhoneNumber(draftPhone, 'MG')) throw new Error('Veuillez saisir un numéro de téléphone valide.')
     const updated = await settingsService.updateProfile({ fullName: draftName.trim(), phone: draftPhone.trim() || null })
     setProfile(updated); setDraftName(updated.fullName); setDraftPhone(updated.phone || '')
   }, 'Les informations personnelles ont été enregistrées.')
