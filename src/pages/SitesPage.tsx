@@ -6,6 +6,7 @@ import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
 import SortableHeader from '../components/SortableHeader'
+import ActionsMenu from '../components/ActionsMenu'
 import { createSite, deleteSite as deleteSiteFromApi, listSites, updateSite } from '../services/siteService'
 
 const ITEMS_PER_PAGE = 8
@@ -176,7 +177,7 @@ export default function SitesPage() {
                     </span>
                   </td>
                   <td className="px-3 lg:px-4 py-3">
-                    <div className="flex items-center gap-0.5">
+                    <ActionsMenu>
                       <button onClick={() => setViewSite(site)} title="Voir"
                         className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
                         <EyeIcon size={13} />
@@ -189,7 +190,7 @@ export default function SitesPage() {
                         className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all">
                         <TrashIcon />
                       </button>
-                    </div>
+                    </ActionsMenu>
                   </td>
                 </tr>
               ))}

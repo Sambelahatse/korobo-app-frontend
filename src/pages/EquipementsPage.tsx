@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
+import ActionsMenu from '../components/ActionsMenu'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
@@ -281,13 +282,13 @@ export default function EquipementsPage() {
               <td className="px-5 py-4"><div className="font-semibold text-gray-900">{item.quantity} {item.unit}</div><div className="mt-1 text-xs text-gray-500">{item.availableQuantity} disponible(s) · {item.assignedQuantity} affecté(s)</div></td>
               <td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{statusLabels[item.status]}</span></td>
               <td className="px-5 py-4 text-gray-600">{item.assignedTo?.fullName ?? '—'}</td>
-              <td className="px-5 py-4"><div className="flex flex-wrap items-center gap-1.5">
+              <td className="px-5 py-4"><ActionsMenu>
                 <button onClick={() => void openDetails(item)} className={buttonCls}>Historique</button>
                 <button onClick={() => openMovement(item)} className={buttonCls}>Mouvement</button>
                 <button onClick={() => openMaintenance(item)} className={buttonCls}>Maintenance</button>
                 <button onClick={() => openEdit(item)} className={buttonCls}>Modifier</button>
                 <button onClick={() => setDeleteTarget(item)} className="rounded-xl border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Archiver</button>
-              </div></td>
+              </ActionsMenu></td>
             </tr>)}
           </tbody>
         </table>
