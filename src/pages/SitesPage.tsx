@@ -5,6 +5,7 @@ import { SearchIcon, FilterIcon, PlusIcon, EyeIcon } from '../components/Icons'
 import NewSiteModal from '../components/NewSiteModal'
 import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { showToast } from '../components/ToastViewport'
 import SortableHeader from '../components/SortableHeader'
 
 const ITEMS_PER_PAGE = 8
@@ -222,7 +223,7 @@ export default function SitesPage() {
         <ConfirmDialog title="Supprimer ce site ?" danger
           message={`Supprimer "${deleteSite.nom}" ? Cette action est irréversible.`}
           confirmLabel="Supprimer"
-          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); setPage(1); setDeleteSite(null) }}
+          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); showToast('Site supprimé.'); setPage(1); setDeleteSite(null) }}
           onCancel={() => setDeleteSite(null)} />
       )}
     </div>
