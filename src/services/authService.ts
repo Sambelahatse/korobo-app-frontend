@@ -18,11 +18,13 @@ export function getAccessToken(): string | null {
 function saveSession(result: AuthResponse): AuthProfile {
   window.localStorage.setItem(TOKEN_KEY, result.accessToken)
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(result.data))
+  window.dispatchEvent(new Event('korobo:auth-changed'))
   return result.data
 }
 function clearSession(): void {
   window.localStorage.removeItem(TOKEN_KEY)
   window.localStorage.removeItem(PROFILE_KEY)
+  window.dispatchEvent(new Event('korobo:logout'))
 }
 async function readError(response: Response): Promise<string> {
   const payload = await response.json().catch(() => ({})) as { error?: { message?: string } }
