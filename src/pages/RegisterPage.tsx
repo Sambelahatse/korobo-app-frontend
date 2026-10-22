@@ -75,7 +75,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
 
   const validate1 = () => {
     const e: Record<string,string> = {}
-    if (!companyName.trim()) e.companyName = 'Nom de l’entreprise requis'
+    if (companyName.trim().length < 2) e.companyName = 'Saisissez au moins 2 caractères pour le nom de l’entreprise'
     if (!nom.trim())    e.nom    = 'Requis'
     if (!prenom.trim()) e.prenom = 'Requis'
     if (!email.trim())  e.email  = 'Requis'
