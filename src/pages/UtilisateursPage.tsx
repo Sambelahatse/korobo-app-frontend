@@ -210,6 +210,23 @@ export default function UtilisateursPage() {
     }
   }
 
+  const copyUserInvitation = async (user: TeamUser) => {
+    setError('')
+    setFeedback('')
+    try {
+      const result = await request<ApiEnvelope<TeamUser> & { activationLink: string }>(`/auth/users/${user.id}/activation-link`, { method: 'POST' })
+      await navigator.clipboard.writeText(result.activationLink)
+      setActivationLink(result.activationLink)
+      setFeedback(`Lien d’invitation de ${user.fullName} copié. Vous pouvez le partager directement ; aucun e-mail n’a été envoyé.`)
+    } catch (cause) {
+      if (cause instanceof Error && cause.message.toLowerCase().includes('clipboard')) {
+        setFeedback('Le lien a été généré, mais la copie automatique a échoué.')
+      } else {
+        setError(cause instanceof Error ? cause.message : 'Impossible de générer le lien d’invitation.')
+      }
+    }
+  }
+
   const activeCount = users.filter(user => user.isActive).length
   const pendingCount = users.filter(user => userStatus(user) === 'Invitation en attente').length
   const currentUserId = (() => { try { return (JSON.parse(window.localStorage.getItem('korobo.auth-profile') || 'null') as { id?: string } | null)?.id || null } catch { return null } })()
@@ -268,7 +285,7 @@ export default function UtilisateursPage() {
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{displayDate(user.lastSeenAt)}</td>
                   <td className="px-4 py-3"><div className="flex justify-end gap-2">
                     <button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>
-                    {status === 'Invitation en attente' && <button onClick={() => void resendInvitation(user)} className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Renvoyer l’invitation</button>}
+                    {status === 'Invitation en attente' && <><button onClick={() => void copyUserInvitation(user)} aria-label={`Copier le lien d’invitation de ${user.fullName}`} title="Copier le lien d’invitation" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button><button onClick={() => void resendInvitation(user)} className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Renvoyer l’invitation</button></>}
                     {user.id !== currentUserId && <button onClick={() => void toggleStatus(user)} className="whitespace-nowrap rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}
                   </div></td>
                 </tr>
