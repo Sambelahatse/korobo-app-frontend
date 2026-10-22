@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ModernIcon } from '../components/Icons'\nimport ActionsMenu from '../components/ActionsMenu'
+import { ModernIcon } from '../components/Icons'
+import ActionsMenu from '../components/ActionsMenu'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
