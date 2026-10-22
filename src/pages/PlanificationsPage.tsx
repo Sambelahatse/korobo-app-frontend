@@ -329,7 +329,7 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
                       <ActionsMenu>
-                        <button onClick={() => setEditItem(p) className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
+                        <button onClick={() => setEditItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
                         <button onClick={() => setDeleteItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-red-100 rounded text-red-500 hover:bg-red-50 transition-colors">Suppr.</button>
                       </ActionsMenu>
                     </td>
