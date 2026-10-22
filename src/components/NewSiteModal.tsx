@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import PhoneNumberField from './PhoneNumberField'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 import { FilePond } from 'react-filepond'
 import type { FilePondFile } from 'filepond'
 import 'filepond/dist/filepond.min.css'
@@ -213,11 +215,11 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
         setFormError('Les champs Nom du site, Lieu du site et Propriétaire sont obligatoires.')
         return false
       }
-      if (c1Tel.trim() && !/^[+0-9() .-]{7,20}$/.test(c1Tel.trim())) {
+      if (c1Tel.trim() && !isValidPhoneNumber(c1Tel, 'MG')) {
         setFormError('Le numéro du contact 1 semble invalide.')
         return false
       }
-      if (c2Tel.trim() && !/^[+0-9() .-]{7,20}$/.test(c2Tel.trim())) {
+      if (c2Tel.trim() && !isValidPhoneNumber(c2Tel, 'MG')) {
         setFormError('Le numéro du contact 2 semble invalide.')
         return false
       }
@@ -313,21 +315,21 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
             <FieldGroup title="Contact 1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={c1Nom} onChange={e => setC1Nom(e.target.value)} /></Field>
-                <Field label="Contact"><input className={inputCls} value={c1Tel} onChange={e => setC1Tel(e.target.value)} /></Field>
+                <Field label="Contact"><PhoneNumberField value={c1Tel} onChange={setC1Tel} placeholder="Téléphone du contact" /></Field>
               </div>
             </FieldGroup>
 
             <FieldGroup title="Contact 2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={c2Nom} onChange={e => setC2Nom(e.target.value)} /></Field>
-                <Field label="Contact"><input className={inputCls} value={c2Tel} onChange={e => setC2Tel(e.target.value)} /></Field>
+                <Field label="Contact"><PhoneNumberField value={c2Tel} onChange={setC2Tel} placeholder="Téléphone du contact" /></Field>
               </div>
             </FieldGroup>
 
             <FieldGroup title="Installateur">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Field label="Nom"><input className={inputCls} value={instNom} onChange={e => setInstNom(e.target.value)} /></Field>
-                <Field label="Contact"><input className={inputCls} value={instTel} onChange={e => setInstTel(e.target.value)} /></Field>
+                <Field label="Contact"><PhoneNumberField value={instTel} onChange={setInstTel} placeholder="Téléphone de l’installateur" /></Field>
               </div>
             </FieldGroup>
           </div>
