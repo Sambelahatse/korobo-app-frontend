@@ -14,7 +14,26 @@ function Card({ title, description, children }: { title: string; description?: s
   </section>
 }
 function Switch({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return <div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-gray-800">{label}</p><p className="mt-1 text-xs text-gray-500">{description}</p></div><button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={'relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4A7A3B]/20 ' + (checked ? 'bg-[#4A7A3B]' : 'bg-gray-300')}><span className={'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ' + (checked ? 'translate-x-5' : 'translate-x-0.5')} /></button></div>
+  const inputId = `preference-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+  return <div className="flex items-center justify-between gap-4 py-3">
+    <div className="min-w-0">
+      <label htmlFor={inputId} className="cursor-pointer text-sm font-semibold text-gray-800">{label}</label>
+      <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>
+    </div>
+    <label htmlFor={inputId} className="relative inline-flex flex-shrink-0 cursor-pointer items-center">
+      <input
+        id={inputId}
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        onChange={event => onChange(event.currentTarget.checked)}
+        className="peer sr-only"
+        aria-label={label}
+      />
+      <span aria-hidden="true" className="h-6 w-11 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-[#4A7A3B] peer-focus-visible:outline-none peer-focus-visible:ring-4 peer-focus-visible:ring-[#4A7A3B]/20" />
+      <span aria-hidden="true" className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-5" />
+    </label>
+  </div>
 }
 function formatDate(value: string | null) {
   if (!value) return 'Pas encore utilisée'
