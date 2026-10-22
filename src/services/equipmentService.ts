@@ -152,3 +152,15 @@ export async function createMaintenance(id: string, input: {
   }) })
   return result.data
 }
+
+export async function updateMaintenance(id: string, input: { status?: EquipmentMaintenance['status']; maintenanceType?: 'preventive' | 'corrective'; priority?: EquipmentMaintenance['priority']; title?: string; description?: string | null; diagnosis?: string | null; workPerformed?: string | null; cost?: number | null; scheduledAt?: string | null; nextDueAt?: string | null; assignedToId?: string | null }): Promise<EquipmentMaintenance> {
+  const result = await request<ApiResponse<EquipmentMaintenance>>(`/equipment/maintenance/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      ...input,
+      ...(input.scheduledAt !== undefined ? { scheduledAt: toIsoDate(input.scheduledAt ?? undefined) } : {}),
+      ...(input.nextDueAt !== undefined ? { nextDueAt: toIsoDate(input.nextDueAt ?? undefined) } : {}),
+    }),
+  })
+  return result.data
+}
