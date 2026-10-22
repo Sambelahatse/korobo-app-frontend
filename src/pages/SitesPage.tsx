@@ -5,7 +5,8 @@ import NewSiteModal from '../components/NewSiteModal'
 import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
-import SortableHeader from '../components/SortableHeader'\nimport ActionsMenu from '../components/ActionsMenu'
+import SortableHeader from '../components/SortableHeader'
+import ActionsMenu from '../components/ActionsMenu'
 import { createSite, deleteSite as deleteSiteFromApi, listSites, updateSite } from '../services/siteService'
 
 const ITEMS_PER_PAGE = 8
