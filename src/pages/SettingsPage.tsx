@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [draftPhone, setDraftPhone] = useState('')
   const [preferences, setPreferences] = useState<AccountPreferences>(defaultPreferences)
   const [sessions, setSessions] = useState<AccountSession[]>([])
-  const [googleLinked, setGoogleLinked] = useState(false)
+  const [googleLinked, setGoogleLinked] = useState(false)\n  const [hasPassword, setHasPassword] = useState(false)\n  const [setupPassword, setSetupPassword] = useState('')\n  const [confirmSetupPassword, setConfirmSetupPassword] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -86,6 +86,13 @@ export default function SettingsPage() {
     setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
     await load()
   }, 'Le mot de passe a été modifié.')
+  const submitSetupPassword = () => run(async () => {
+    if (setupPassword.length < 12) throw new Error('Le mot de passe doit contenir au moins 12 caractères.')
+    if (setupPassword !== confirmSetupPassword) throw new Error('La confirmation du mot de passe ne correspond pas.')
+    await settingsService.setPassword(setupPassword)
+    setHasPassword(true); setSetupPassword(''); setConfirmSetupPassword('')
+    await load()
+  }, 'Le mot de passe a été configuré.')
   const connectGoogle = () => run(async () => {
     const url = await settingsService.getGoogleLinkUrl()
     window.location.assign(url)
@@ -132,17 +139,22 @@ export default function SettingsPage() {
     </Card>
 
     <Card title="Sécurité et mot de passe" description="Le mot de passe est vérifié et modifié côté serveur.">
-      <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void submitPassword() }}>
+      {hasPassword ? <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void submitPassword() }}>
         <label className="text-sm font-semibold text-gray-700 sm:col-span-2">Mot de passe actuel<input className={inputClass} type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required /></label>
         <label className="text-sm font-semibold text-gray-700">Nouveau mot de passe<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><span className="mt-1 block text-xs font-normal text-gray-400">12 caractères minimum.</span></label>
         <label className="text-sm font-semibold text-gray-700">Confirmation<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
         <div className="sm:col-span-2"><button disabled={busy} type="submit" className="rounded-xl border border-[#4A7A3B]/30 px-4 py-2.5 text-sm font-semibold text-[#4A7A3B] disabled:opacity-50">Modifier le mot de passe</button></div>
-      </form>
+      </form> : <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void submitSetupPassword() }}>
+        <p className="text-sm leading-relaxed text-gray-600 sm:col-span-2">Votre compte n’a pas encore de mot de passe KOROBO. Définissez-en un pour pouvoir dissocier Google et utiliser la connexion par e-mail.</p>
+        <label className="text-sm font-semibold text-gray-700">Nouveau mot de passe<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={setupPassword} onChange={e => setSetupPassword(e.target.value)} required /></label>
+        <label className="text-sm font-semibold text-gray-700">Confirmation<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmSetupPassword} onChange={e => setConfirmSetupPassword(e.target.value)} required /></label>
+        <div className="sm:col-span-2"><button disabled={busy} type="submit" className="rounded-xl border border-[#4A7A3B]/30 px-4 py-2.5 text-sm font-semibold text-[#4A7A3B] disabled:opacity-50">Définir un mot de passe</button></div>
+      </form>}
     </Card>
 
     <Card title="Compte Google" description="L’association permet d’utiliser Google pour se connecter à KOROBO.">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-gray-800">{googleLinked ? 'Un compte Google est associé' : 'Aucun compte Google associé'}</p><p className="mt-1 text-xs text-gray-500">{googleLinked ? 'Vous pouvez dissocier Google si un mot de passe KOROBO est configuré.' : 'L’association nécessite une authentification Google vérifiée.'}</p></div>
-        {googleLinked ? <button disabled={busy} onClick={() => void unlinkGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Dissocier Google</button> : <button disabled={busy} onClick={() => void connectGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Associer Google</button>}</div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-gray-800">{googleLinked ? 'Un compte Google est associé' : 'Aucun compte Google associé'}</p><p className="mt-1 text-xs text-gray-500">{googleLinked ? (hasPassword ? 'Vous pouvez dissocier Google.' : 'Définissez un mot de passe KOROBO avant de dissocier Google.') : 'L’association nécessite une authentification Google vérifiée.'}</p></div>
+        {googleLinked && hasPassword ? <button disabled={busy} onClick={() => void unlinkGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Dissocier Google</button> : googleLinked ? <span className="text-xs text-gray-500">Mot de passe requis pour dissocier</span> : <button disabled={busy} onClick={() => void connectGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Associer Google</button>}</div>
     </Card>
 
     <Card title="Notifications et préférences" description="Les préférences sont stockées sur votre compte, pas uniquement dans ce navigateur.">
