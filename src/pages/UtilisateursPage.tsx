@@ -154,6 +154,7 @@ export default function UtilisateursPage() {
 
   const activeCount = users.filter(user => user.isActive).length
   const pendingCount = users.filter(user => userStatus(user) === 'Invitation en attente').length
+  const currentUserId = (() => { try { return (JSON.parse(window.localStorage.getItem('korobo.auth-profile') || 'null') as { id?: string } | null)?.id || null } catch { return null } })()
   const statusClass = (status: UserStatus) => status === 'Actif'
     ? 'bg-emerald-50 text-emerald-700'
     : status === 'Invitation en attente' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-600'
@@ -176,7 +177,7 @@ export default function UtilisateursPage() {
             const status = userStatus(user)
             return <div key={user.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#edf4e9] text-xs font-bold text-[#426b36]">{initials(user.fullName)}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-gray-900">{user.fullName}</p><p className="truncate text-xs text-gray-500">{user.email}</p><p className="mt-1 text-[11px] text-gray-400">Dernière activité : {displayDate(user.lastSeenAt)}</p></div></div>
-              <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>{status}</span><span className="max-w-[210px] rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600">{roleLabels[user.role]}</span><button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>{user.id !== window.localStorage.getItem('korobo.auth-profile') && <button onClick={() => void toggleStatus(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}</div>
+              <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>{status}</span><span className="max-w-[210px] rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600">{roleLabels[user.role]}</span><button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>{user.id !== currentUserId && <button onClick={() => void toggleStatus(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}</div>
             </div>
           })}
           {filtered.length === 0 && <p className="p-8 text-center text-sm text-gray-500">Aucun utilisateur trouvé.</p>}
