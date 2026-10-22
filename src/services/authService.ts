@@ -1,5 +1,6 @@
 export interface AuthProfile {
   id: string
+  companyId?: string
   fullName: string
   email: string
   role: 'admin' | 'manager' | 'technician' | 'viewer'
@@ -55,11 +56,10 @@ export async function signIn(email: string, password: string): Promise<AuthProfi
   const result = await apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
   return saveSession(result)
 }
-export async function bootstrapOwner(input: { fullName: string; email: string; password: string; phone?: string; setupToken: string }): Promise<AuthProfile> {
-  const result = await apiRequest<AuthResponse>('/auth/bootstrap-owner', {
+export async function registerCompany(input: { companyName: string; fullName: string; email: string; password: string; phone?: string }): Promise<AuthProfile> {
+  const result = await apiRequest<AuthResponse>('/auth/register', {
     method: 'POST',
-    headers: { 'x-owner-bootstrap-token': input.setupToken },
-    body: JSON.stringify({ fullName: input.fullName, email: input.email, password: input.password, phone: input.phone })
+    body: JSON.stringify({ companyName: input.companyName, fullName: input.fullName, email: input.email, password: input.password, phone: input.phone })
   })
   return saveSession(result)
 }
