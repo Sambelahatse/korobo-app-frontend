@@ -112,9 +112,49 @@ async function migrateLocalSites(): Promise<void> {
     knownNames.add(name.toLocaleLowerCase())
   }
 }
+async function migrateLocalEquipment(sites: EquipmentSite[]): Promise<void> {
+  let profile
+  try { profile = await getMyProfile() } catch { return }
+  if (profile.role !== 'admin' && profile.role !== 'manager') return
+  let localItems: Array<Record<string, unknown>> = []
+  try {
+    const raw = window.localStorage.getItem('korobo.equipment.v1')
+    if (!raw) return
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed)) localItems = parsed as Array<Record<string, unknown>>
+  } catch { return }
+  if (!localItems.length) return
+  const existing = await request<ApiResponse<EquipmentRecord[]>>('/equipment?limit=100')
+  const serials = new Set(existing.data.map(item => item.serialNumber?.trim().toLocaleLowerCase()).filter((value): value is string => Boolean(value)))
+  const known = new Set(existing.data.map(item => `${item.name.toLocaleLowerCase()}|${item.siteId}`))
+  for (const item of localItems) {
+    const name = String(item.name ?? '').trim()
+    const siteName = String(item.site ?? '').trim()
+    const site = sites.find(value => value.name.trim().toLocaleLowerCase() === siteName.toLocaleLowerCase())
+    if (!name || !site) continue
+    const serialNumber = String(item.serial ?? '').trim()
+    const trackingMode: TrackingMode = serialNumber ? 'individual' : 'quantity'
+    if (serialNumber && serials.has(serialNumber.toLocaleLowerCase())) continue
+    if (!serialNumber && known.has(`${name.toLocaleLowerCase()}|${site.id}`)) continue
+    const oldStatus = String(item.status ?? '')
+    const status: EquipmentStatus = oldStatus === 'En panne' ? 'faulty' : oldStatus === 'À surveiller' ? 'warning' : 'operational'
+    await request('/equipment', {
+      method: 'POST',
+      body: JSON.stringify({
+        siteId: site.id, name, category: String(item.category ?? 'Autre'), brand: null, model: null,
+        serialNumber: serialNumber || null, trackingMode, quantity: trackingMode === 'individual' ? 1 : 1,
+        unit: 'unité', status, notes: item.power ? `Puissance / capacité : ${String(item.power)}` : null,
+      }),
+    })
+    if (serialNumber) serials.add(serialNumber.toLocaleLowerCase())
+    known.add(`${name.toLocaleLowerCase()}|${site.id}`)
+  }
+}
+
 export async function getEquipmentLookups(): Promise<{ sites: EquipmentSite[]; users: EquipmentUser[] }> {
   await migrateLocalSites()
   const result = await request<ApiResponse<{ sites: EquipmentSite[]; users: EquipmentUser[] }>>('/equipment/lookups')
+  await migrateLocalEquipment(result.data.sites)
   return result.data
 }
 export async function listEquipment(filters: { q?: string; status?: string; trackingMode?: string; siteId?: string } = {}): Promise<{ data: EquipmentRecord[]; total: number }> {
