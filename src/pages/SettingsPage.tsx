@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAccessToken } from '../services/authService'
 import {
   defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
@@ -185,6 +184,5 @@ export default function SettingsPage() {
         <div className="flex flex-wrap gap-2"><button disabled={busy} type="submit" className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Confirmer la suppression</button><button type="button" onClick={() => { setShowDeleteForm(false); setDeleteEmail(''); setDeletePassword('') }} className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700">Annuler</button></div>
       </form>}
     </section>
-    <p className="text-xs text-gray-400">Jeton présent : {getAccessToken() ? 'session authentifiée' : 'aucun jeton détecté'}.</p>
   </div></div>
 }
