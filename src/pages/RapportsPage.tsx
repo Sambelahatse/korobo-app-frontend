@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { mockPlanifications, mockRapports, mockSites } from '../data/mockData'
 import type { Planification, Rapport, Site } from '../types'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { showToast } from '../components/ToastViewport'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 const DAYS_FULL  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
@@ -121,6 +122,7 @@ export default function RapportsPage() {
     setRapports(prev => editingReport
       ? prev.map(item => item.id === editingReport.id ? values : item)
       : [values, ...prev])
+    showToast(editingReport ? 'Rapport mis à jour.' : 'Rapport créé.')
     setShowForm(false); setEditingReport(null); setForm({})
   }
 
@@ -140,6 +142,7 @@ export default function RapportsPage() {
     setRapports(prev => prev.map(item => item.id === report.id
       ? { ...item, statut: item.statut === 'validé' ? 'brouillon' : 'validé' }
       : item))
+    showToast(report.statut === 'validé' ? 'Le rapport est repassé en brouillon.' : 'Rapport validé.')
   }
 
   const linkIntervention = (id: string) => {
@@ -351,7 +354,7 @@ export default function RapportsPage() {
         <ConfirmDialog title="Supprimer ce rapport ?" danger
           message={'Supprimer "' + deleteItem.siteNom + '" du ' + new Date(deleteItem.date).toLocaleDateString('fr-FR') + ' ?'}
           confirmLabel="Supprimer"
-          onConfirm={() => { setRapports(p => p.filter(r => r.id !== deleteItem.id)); setDeleteItem(null) }}
+          onConfirm={() => { setRapports(p => p.filter(r => r.id !== deleteItem.id)); showToast('Rapport supprimé.'); setDeleteItem(null) }}
           onCancel={() => setDeleteItem(null)} />
       )}
     </div>

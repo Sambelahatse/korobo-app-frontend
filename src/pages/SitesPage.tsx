@@ -5,6 +5,7 @@ import { SearchIcon, FilterIcon, PlusIcon, EyeIcon } from '../components/Icons'
 import NewSiteModal from '../components/NewSiteModal'
 import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { showToast } from '../components/ToastViewport'
 import SortableHeader from '../components/SortableHeader'
 
 const ITEMS_PER_PAGE = 8
@@ -215,14 +216,14 @@ export default function SitesPage() {
         )}
       </div>
 
-      {showNewModal && <NewSiteModal onClose={() => setShowNewModal(false)} onSave={site => { setSites(current => [site, ...current]); setPage(1) }} />}
+      {showNewModal && <NewSiteModal onClose={() => setShowNewModal(false)} onSave={site => { setSites(current => [site, ...current]); showToast('Site créé avec succès.'); setPage(1) }} />}
       {viewSite      && <SiteDetailModal site={viewSite} onClose={() => setViewSite(null)} onEdit={() => { setEditSite(viewSite); setViewSite(null) }} />}
-      {editSite && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} onSave={updated => setSites(current => current.map(item => item.id === updated.id ? updated : item))} />}
+      {editSite && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} onSave={updated => { setSites(current => current.map(item => item.id === updated.id ? updated : item)); showToast('Site modifié avec succès.') }} />}
       {deleteSite && (
         <ConfirmDialog title="Supprimer ce site ?" danger
           message={`Supprimer "${deleteSite.nom}" ? Cette action est irréversible.`}
           confirmLabel="Supprimer"
-          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); setPage(1); setDeleteSite(null) }}
+          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); showToast('Site supprimé.'); setPage(1); setDeleteSite(null) }}
           onCancel={() => setDeleteSite(null)} />
       )}
     </div>

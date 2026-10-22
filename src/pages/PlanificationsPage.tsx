@@ -3,6 +3,7 @@ import type { Planification, Site } from '../types'
 import { mockPlanifications, mockSites } from '../data/mockData'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
+import { showToast } from '../components/ToastViewport'
 
 const statutStyle = {
   planifiée:  'bg-blue-100 text-blue-700',
@@ -216,7 +217,9 @@ export default function PlanificationsPage() {
   })
 
   const handleSave = (p: Planification) => {
+    const exists = items.some(x => x.id === p.id)
     setItems(prev => prev.some(x => x.id === p.id) ? prev.map(x => x.id === p.id ? p : x) : [p, ...prev])
+    showToast(exists ? 'Planification mise à jour.' : 'Planification créée.')
     setShowModal(false); setEditItem(null)
   }
 
@@ -345,7 +348,7 @@ export default function PlanificationsPage() {
         <ConfirmDialog title="Supprimer cette planification ?" danger
           message={'Supprimer "' + deleteItem.siteNom + '" du ' + new Date(deleteItem.date).toLocaleDateString('fr-FR') + ' ?'}
           confirmLabel="Supprimer"
-          onConfirm={() => { setItems(p => p.filter(x => x.id !== deleteItem.id)); setDeleteItem(null) }}
+          onConfirm={() => { setItems(p => p.filter(x => x.id !== deleteItem.id)); showToast('Planification supprimée.'); setDeleteItem(null) }}
           onCancel={() => setDeleteItem(null)} />
       )}
     </div>

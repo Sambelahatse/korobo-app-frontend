@@ -4,6 +4,7 @@ import Modal from '../components/Modal'
 import SortableHeader from '../components/SortableHeader'
 import PhoneNumberField from '../components/PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
+import { showToast } from '../components/ToastViewport'
 
 type ApiRole = 'admin' | 'manager' | 'technician' | 'viewer'
 type UserStatus = 'Actif' | 'Invitation en attente' | 'Suspendu'
@@ -82,6 +83,9 @@ export default function UtilisateursPage() {
   const [feedback, setFeedback] = useState('')
   const [activationLink, setActivationLink] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => { if (feedback) showToast(feedback, 'success') }, [feedback])
+  useEffect(() => { if (error) showToast(error, 'error') }, [error])
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -239,9 +243,7 @@ export default function UtilisateursPage() {
       <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#5C8A42]">Équipe & accès</p><h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Utilisateurs et rôles</h1><p className="mt-2 text-sm text-gray-500">Gérez les membres, leurs accès et leurs responsabilités dans KOROBO.</p></div>
       <button onClick={openCreate} className="rounded-xl bg-[#4A7A3B] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#3d672f]">+ Créer un utilisateur</button>
     </div>
-    {feedback && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{feedback}</div>}
     {activationLink && <div className="rounded-xl border border-[#4A7A3B]/20 bg-white p-4 shadow-sm"><label htmlFor="activation-link" className="block text-sm font-semibold text-gray-800">Lien d’activation à partager</label><p className="mt-1 text-xs text-gray-500">Ce lien est valable 72 heures et ne peut être utilisé qu’une seule fois. Vous pouvez générer un nouveau lien tant que le compte n’est pas activé.</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><input id="activation-link" readOnly value={activationLink} onFocus={event => event.currentTarget.select()} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600" /><button onClick={() => void copyActivationLink()} className="rounded-xl bg-[#4A7A3B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3d672f]">Copier le lien</button></div></div>}
-    {error && !showForm && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"><div className="flex flex-wrap items-center justify-between gap-3"><span>{error}</span><button onClick={() => void loadUsers()} className="font-semibold underline">Réessayer</button></div></div>}
     <div className="grid gap-3 sm:grid-cols-3">
       {[{ label: 'Membres', value: users.length, icon: 'user-round' as const }, { label: 'Comptes actifs', value: activeCount, icon: 'check-circle' as const }, { label: 'Invitations en attente', value: pendingCount, icon: 'bell' as const }].map(item => <div key={item.label} className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf4e9] text-[#4A7A3B]"><ModernIcon name={item.icon} size={22} /></div><div><p className="text-sm text-gray-500">{item.label}</p><p className="mt-1 text-2xl font-bold text-gray-900">{loading ? '—' : item.value}</p></div></div>)}
     </div>
@@ -304,7 +306,6 @@ export default function UtilisateursPage() {
         <label className="block text-sm font-semibold text-gray-700">Téléphone (facultatif)<div className="mt-1.5"><PhoneNumberField value={phone} onChange={setPhone} placeholder="Numéro de téléphone" /></div></label>
         <label className="block text-sm font-semibold text-gray-700">Rôle<select value={role} onChange={event => setRole(event.target.value as ApiRole)} className={inputCls}>{(editing ? allRoles : inviteRoles).map(item => <option key={item} value={item}>{roleLabels[item]}</option>)}</select></label>
         {!editing && <p className="rounded-xl border border-[#4A7A3B]/20 bg-[#f4f8f1] p-3 text-xs leading-5 text-gray-600">Le compte sera créé en attente d’activation. Vous pourrez copier le lien d’activation, le partager vous-même et renvoyer une invitation à tout moment tant que le compte n’est pas activé.</p>}
-        {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={closeForm} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button><button disabled={saving} type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3d672f] disabled:cursor-not-allowed disabled:opacity-60">{saving ? 'Enregistrement…' : editing ? 'Enregistrer les modifications' : 'Créer le compte'}</button></div>
       </form>
     </Modal>}

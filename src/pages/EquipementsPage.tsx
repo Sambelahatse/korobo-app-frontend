@@ -4,6 +4,7 @@ import SortableHeader from '../components/SortableHeader'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { mockSites } from '../data/mockData'
+import { showToast } from '../components/ToastViewport'
 import type { Site } from '../types'
 
 type EquipmentStatus = 'Opérationnel' | 'À surveiller' | 'En panne'
@@ -78,6 +79,7 @@ export default function EquipementsPage() {
   const [serial, setSerial] = useState('')
   const [formStatus, setFormStatus] = useState<EquipmentStatus>('Opérationnel')
   const [formError, setFormError] = useState('')
+  useEffect(() => { if (formError) showToast(formError, 'error') }, [formError])
 
   const openCreate = () => {
     setEditing(null); setName(''); setSite('Site Andohalo A'); setCategory('Onduleur')
@@ -112,8 +114,8 @@ export default function EquipementsPage() {
     e.preventDefault()
     if (!name.trim() || !serial.trim() || !power.trim()) { setFormError('Renseignez le nom, la référence et la puissance.'); return }
     const values = { name: name.trim(), category, site, serial: serial.trim(), power: power.trim(), status: formStatus, updated: new Date().toLocaleDateString('fr-FR') }
-    if (editing) setItems(prev => prev.map(item => item.id === editing.id ? { ...item, ...values } : item))
-    else setItems(prev => [{ id: `EQ-${String(Math.max(0, ...prev.map(item => Number(item.id.split('-')[1]) || 0)) + 1).padStart(3, '0')}`, ...values }, ...prev])
+    if (editing) { setItems(prev => prev.map(item => item.id === editing.id ? { ...item, ...values } : item)); showToast('Équipement modifié avec succès.') }
+    else { setItems(prev => [{ id: `EQ-${String(Math.max(0, ...prev.map(item => Number(item.id.split('-')[1]) || 0)) + 1).padStart(3, '0')}`, ...values }, ...prev]); showToast('Équipement ajouté avec succès.') }
     closeForm()
   }
 
@@ -131,7 +133,7 @@ export default function EquipementsPage() {
       {filtered.length===0 && <div className="p-10 text-center text-sm text-gray-500">Aucun équipement ne correspond à votre recherche.</div>}
     </div>
     <p className="text-xs text-gray-400">Données de démonstration : les modifications sont conservées sur cet appareil et ne sont pas synchronisées avec une API.</p>
-    {deleteTarget && <ConfirmDialog title="Supprimer cet équipement ?" message={`Voulez-vous vraiment supprimer « ${deleteTarget.name} » ? Cette action est irréversible sur cet appareil.`} confirmLabel="Supprimer" danger onConfirm={() => { setItems(prev => prev.filter(item => item.id !== deleteTarget.id)); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} />}
+    {deleteTarget && <ConfirmDialog title="Supprimer cet équipement ?" message={`Voulez-vous vraiment supprimer « ${deleteTarget.name} » ? Cette action est irréversible sur cet appareil.`} confirmLabel="Supprimer" danger onConfirm={() => { setItems(prev => prev.filter(item => item.id !== deleteTarget.id)); showToast('Équipement supprimé.'); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} />}
     {showForm && <Modal title={editing ? 'Modifier un équipement' : 'Ajouter un équipement'} description="Renseignez les informations de l’équipement." onClose={closeForm} size="lg">
       <form onSubmit={saveEquipment} className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -142,7 +144,6 @@ export default function EquipementsPage() {
           <label className="text-sm font-semibold text-gray-700">Puissance / capacité<input required value={power} onChange={e=>setPower(e.target.value)} className={inputCls} placeholder="Ex. 10 kW"/></label>
           <label className="text-sm font-semibold text-gray-700">État<select value={formStatus} onChange={e=>setFormStatus(e.target.value as EquipmentStatus)} className={inputCls}><option>Opérationnel</option><option>À surveiller</option><option>En panne</option></select></label>
         </div>
-        {formError && <p role="alert" className="text-sm text-rose-600">{formError}</p>}
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={closeForm} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button><button type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3d672f]">{editing ? 'Enregistrer les modifications' : 'Ajouter l’équipement'}</button></div>
       </form>
     </Modal>}

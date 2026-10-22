@@ -5,6 +5,7 @@ import ConfirmDialog from './ConfirmDialog'
 import { mockNotifications } from '../data/mockData'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { signOut } from '../services/authService'
+import ToastViewport from './ToastViewport'
 
 interface Props {
   children: ReactNode
@@ -89,7 +90,9 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
   ].join(' ')
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f8f4]">
+    <>
+      <ToastViewport />
+      <div className="flex h-screen overflow-hidden bg-[#f6f8f4]">
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
@@ -241,6 +244,7 @@ export default function AdminLayout({ children, currentPage, onNavigate }: Props
           onCancel={() => setConfirmLogout(false)}
         />
       )}
-    </div>
+      </div>
+    </>
   )
 }

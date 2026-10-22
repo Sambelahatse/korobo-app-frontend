@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import PhoneNumberField from '../components/PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
+import { showToast } from '../components/ToastViewport'
 import {
   defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
@@ -67,6 +68,8 @@ export default function SettingsPage() {
   }, [])
   useEffect(() => { void load() }, [load])
   useEffect(() => { document.documentElement.dataset.theme = preferences.theme.toLowerCase() }, [preferences.theme])
+  useEffect(() => { if (message) showToast(message, 'success') }, [message])
+  useEffect(() => { if (error) showToast(error, 'error') }, [error])
 
   const run = async (action: () => Promise<void>, success: string) => {
     setBusy(true); setError(''); setMessage('')
@@ -131,8 +134,6 @@ export default function SettingsPage() {
 
   return <div className="p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-3xl space-y-5">
     <div className="mb-2"><h2 className="text-xl font-bold text-gray-800">Paramètres du compte</h2><p className="mt-1 text-sm text-gray-500">Gérez vos informations, votre sécurité et vos préférences.</p></div>
-    {message && <div role="status" className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
-    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
     <Card title="Informations personnelles" description="Ces informations sont enregistrées dans votre compte KOROBO.">
       <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-xs text-gray-500">{profile?.role}</p></div></div>

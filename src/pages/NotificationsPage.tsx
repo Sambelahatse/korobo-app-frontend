@@ -3,6 +3,7 @@ import { ModernIcon, type ModernIconName } from '../components/Icons'
 import { mockNotifications } from '../data/mockData'
 import type { Notification } from '../types'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { showToast } from '../components/ToastViewport'
 
 const typeConfig = {
   alerte:        { bg: 'bg-red-50 border-red-200',     icon: 'alert-triangle' as ModernIconName, label: 'bg-red-100 text-red-700'    },
@@ -19,9 +20,9 @@ export default function NotificationsPage() {
   const filtered  = notifs.filter(n => filter === 'toutes' || n.type === filter || (filter === 'non-lues' && !n.lu))
   const nonLues   = notifs.filter(n => !n.lu).length
 
-  const markRead    = (id: string) => setNotifs(p => p.map(n => n.id === id ? { ...n, lu: true } : n))
-  const markAllRead = ()           => setNotifs(p => p.map(n => ({ ...n, lu: true })))
-  const deleteNotif = (id: string) => setNotifs(p => p.filter(n => n.id !== id))
+  const markRead = (id: string) => { setNotifs(p => p.map(n => n.id === id ? { ...n, lu: true } : n)); showToast('Notification marquée comme lue.') }
+  const markAllRead = () => { setNotifs(p => p.map(n => ({ ...n, lu: true }))); showToast('Toutes les notifications sont marquées comme lues.') }
+  const deleteNotif = (id: string) => { setNotifs(p => p.filter(n => n.id !== id)); showToast('Notification supprimée.') }
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime()
@@ -118,7 +119,7 @@ export default function NotificationsPage() {
         <ConfirmDialog title="Vider toutes les notifications ?" danger
           message="Toutes les notifications seront supprimées définitivement."
           confirmLabel="Tout supprimer"
-          onConfirm={() => { setNotifs([]); setClearAll(false) }}
+          onConfirm={() => { setNotifs([]); showToast('Toutes les notifications ont été supprimées.'); setClearAll(false) }}
           onCancel={() => setClearAll(false)} />
       )}
     </div>
