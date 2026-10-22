@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Planification, Site } from '../types'
 import { mockPlanifications, mockSites } from '../data/mockData'
 import ConfirmDialog from '../components/ConfirmDialog'
-import SortableHeader from '../components/SortableHeader'
+import SortableHeader from '../components/SortableHeader'\nimport ActionsMenu from '../components/ActionsMenu'
 import { showToast } from '../components/ToastViewport'
 
 const statutStyle = {
@@ -328,10 +328,10 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{p.technicien}</td>
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
+                      <ActionsMenu>
+                        <button onClick={() => setEditItem(p) className="px-2.5 py-1 text-[10px] font-medium border border-gray-200 rounded text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
                         <button onClick={() => setDeleteItem(p)} className="px-2.5 py-1 text-[10px] font-medium border border-red-100 rounded text-red-500 hover:bg-red-50 transition-colors">Suppr.</button>
-                      </div>
+                      </ActionsMenu>
                     </td>
                   </tr>
                 ))}
