@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { requestPasswordReset, signIn, signInWithGoogle } from '../services/authService'
+import { requestPasswordReset, signIn } from '../services/authService'
 
 interface Props { onLogin: () => void; onGoRegister: () => void; onBack: () => void }
 
