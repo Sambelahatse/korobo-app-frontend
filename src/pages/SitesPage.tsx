@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { Site } from '../types'
-import { mockSites } from '../data/mockData'
 import { SearchIcon, FilterIcon, PlusIcon, EyeIcon } from '../components/Icons'
 import NewSiteModal from '../components/NewSiteModal'
 import SiteDetailModal from '../components/SiteDetailModal'
@@ -36,7 +35,9 @@ export default function SitesPage() {
     try {
       const data = await listSites()
       setSites(data)
-      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch { /* Cache facultatif. */ }
+      if (data.length > 0) {
+        try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch { /* Cache facultatif. */ }
+      }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Impossible de charger les sites.')
     } finally {
