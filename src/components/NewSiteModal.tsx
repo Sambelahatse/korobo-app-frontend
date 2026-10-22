@@ -223,6 +223,10 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
         setFormError('Le numéro du contact 2 semble invalide.')
         return false
       }
+      if (instTel.trim() && !isValidPhoneNumber(instTel, 'MG')) {
+        setFormError('Le numéro de téléphone de l’installateur semble invalide.')
+        return false
+      }
     }
     if (targetStep === 2) {
       const parsedPower = Number(puissance)
