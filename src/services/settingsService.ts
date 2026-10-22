@@ -1,4 +1,4 @@
-import { changePassword as changeAccountPassword, getAccessToken, signOut } from './authService'
+import { changePassword as changeAccountPassword, getAccessToken } from './authService'
 
 export interface AccountProfile {
   id: string
@@ -95,7 +95,9 @@ export const settingsService = {
   },
   async deleteAccount(email: string, currentPassword?: string): Promise<void> {
     await request<void>('/account', { method: 'DELETE', body: JSON.stringify({ email, currentPassword }) })
-    await signOut()
+    window.localStorage.removeItem('korobo.access-token')
+    window.localStorage.removeItem('korobo.auth-profile')
+    window.dispatchEvent(new Event('korobo:logout'))
   },
   changePassword: changeAccountPassword,
 }
