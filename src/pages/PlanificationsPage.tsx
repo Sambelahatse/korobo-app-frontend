@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import type { Planification, Site } from '../types'
 import { mockPlanifications, mockSites } from '../data/mockData'
 import ConfirmDialog from '../components/ConfirmDialog'
-import SortableHeader from '../components/SortableHeader'\nimport ActionsMenu from '../components/ActionsMenu'
+import SortableHeader from '../components/SortableHeader'
+import ActionsMenu from '../components/ActionsMenu'
 import { showToast } from '../components/ToastViewport'
 
 const statutStyle = {
