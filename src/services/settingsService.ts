@@ -100,5 +100,8 @@ export const settingsService = {
     window.localStorage.removeItem('korobo.auth-profile')
     window.dispatchEvent(new Event('korobo:logout'))
   },
-  async setPassword(password: string): Promise<void> {\n    await request('/auth/password/set', { method: 'POST', body: JSON.stringify({ password }) })\n  },\n  changePassword: changeAccountPassword,
+  async setPassword(password: string): Promise<void> {
+    await request('/auth/password/set', { method: 'POST', body: JSON.stringify({ password }) })
+  },
+  changePassword: changeAccountPassword,
 }
