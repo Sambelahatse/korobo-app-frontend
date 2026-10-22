@@ -74,6 +74,7 @@ export const settingsService = {
   },
   async updateProfile(input: Pick<AccountProfile, 'fullName' | 'phone'>): Promise<AccountProfile> {
     const result = await request<{ data: AccountProfile }>('/account/profile', { method: 'PATCH', body: JSON.stringify(input) })
+    window.dispatchEvent(new Event('korobo:auth-changed'))
     return result.data
   },
   async savePreferences(preferences: AccountPreferences): Promise<AccountPreferences> {
