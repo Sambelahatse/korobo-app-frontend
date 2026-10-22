@@ -7,20 +7,11 @@ import SiteDetailModal from '../components/SiteDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
 import SortableHeader from '../components/SortableHeader'
+import { createSite, deleteSite as deleteSiteFromApi, listSites, updateSite } from '../services/siteService'
 
 const ITEMS_PER_PAGE = 8
 const STORAGE_KEY = 'korobo.sites.v1'
 
-function loadSites(): Site[] {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (!stored) return mockSites
-    const parsed: unknown = JSON.parse(stored)
-    return Array.isArray(parsed) ? parsed as Site[] : mockSites
-  } catch {
-    return mockSites
-  }
-}
 
 const statutStyle = {
   actif:       'bg-green-100 text-green-700',
@@ -36,15 +27,23 @@ function TrashIcon() {
 }
 
 export default function SitesPage() {
-  const [sites, setSites]         = useState<Site[]>(loadSites)
-
-  useEffect(() => {
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const refreshSites = async () => {
+    setLoading(true)
+    setLoadError('')
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sites))
+      const data = await listSites()
+      setSites(data)
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch { /* Cache facultatif. */ }
     } catch (error) {
-      console.error('Impossible de sauvegarder les sites localement.', error)
+      setLoadError(error instanceof Error ? error.message : 'Impossible de charger les sites.')
+    } finally {
+      setLoading(false)
     }
-  }, [sites])
+  }
+  useEffect(() => { void refreshSites() }, [])
   const [search, setSearch]       = useState('')
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
@@ -86,6 +85,7 @@ export default function SitesPage() {
     <div className="p-4 sm:p-6 lg:p-8">
 
       {/* ── Toolbar ── */}
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError} <button onClick={() => void refreshSites()} className="ml-2 font-semibold underline">Réessayer</button></div>}
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Search */}
@@ -158,8 +158,10 @@ export default function SitesPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">Aucun site trouvé</td></tr>
+              {loading ? (
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">Chargement des sites…</td></tr>
+              ) : paginated.length === 0 ? (
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">{loadError ? 'Les sites n’ont pas pu être chargés.' : 'Aucun site trouvé'}</td></tr>
               ) : paginated.map((site, i) => (
                 <tr key={site.id} className={`border-b border-gray-50 hover:bg-[#f0f7eb] transition-colors ${i % 2 === 1 ? 'bg-[#f9fbf7]' : 'bg-white'}`}>
                   <td className="px-3 lg:px-4 py-3 font-mono text-xs text-gray-500">{site.id}</td>
@@ -216,14 +218,14 @@ export default function SitesPage() {
         )}
       </div>
 
-      {showNewModal && <NewSiteModal onClose={() => setShowNewModal(false)} onSave={site => { setSites(current => [site, ...current]); showToast('Site créé avec succès.'); setPage(1) }} />}
+      {showNewModal && <NewSiteModal onClose={() => setShowNewModal(false)} onSave={async site => { const created = await createSite(site); setSites(current => [created, ...current.filter(item => item.id !== created.id)]); showToast('Site créé avec succès.'); setPage(1) }} />}
       {viewSite      && <SiteDetailModal site={viewSite} onClose={() => setViewSite(null)} onEdit={() => { setEditSite(viewSite); setViewSite(null) }} />}
-      {editSite && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} onSave={updated => { setSites(current => current.map(item => item.id === updated.id ? updated : item)); showToast('Site modifié avec succès.') }} />}
+      {editSite && <NewSiteModal site={editSite} onClose={() => setEditSite(null)} onSave={async updated => { const saved = await updateSite(updated); setSites(current => current.map(item => item.id === saved.id ? saved : item)); setEditSite(null); showToast('Site modifié avec succès.') }} />}
       {deleteSite && (
         <ConfirmDialog title="Supprimer ce site ?" danger
           message={`Supprimer "${deleteSite.nom}" ? Cette action est irréversible.`}
           confirmLabel="Supprimer"
-          onConfirm={() => { setSites(current => current.filter(s => s.id !== deleteSite.id)); showToast('Site supprimé.'); setPage(1); setDeleteSite(null) }}
+          onConfirm={async () => { try { await deleteSiteFromApi(deleteSite.id); setSites(current => current.filter(s => s.id !== deleteSite.id)); showToast('Site supprimé.'); setPage(1); setDeleteSite(null) } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible de supprimer le site.') } }}
           onCancel={() => setDeleteSite(null)} />
       )}
     </div>
