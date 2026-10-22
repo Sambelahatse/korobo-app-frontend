@@ -74,8 +74,8 @@ function toIsoDate(value: string | undefined): string | null {
 }
 
 async function migrateLocalSites(): Promise<void> {
-  let profile
-  try { profile = await getMyProfile() } catch { return }
+  // Do not silently continue when profile loading fails: that can leave the equipment form without sites.
+  const profile = await getMyProfile()
   if (profile.role !== 'admin' && profile.role !== 'manager') return
   let localSites: Array<Record<string, unknown>> = []
   try {
