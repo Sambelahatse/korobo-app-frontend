@@ -64,6 +64,7 @@ export default function SettingsPage() {
     } finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
+  useEffect(() => { document.documentElement.dataset.theme = preferences.theme.toLowerCase() }, [preferences.theme])
 
   const run = async (action: () => Promise<void>, success: string) => {
     setBusy(true); setError(''); setMessage('')
