@@ -90,6 +90,7 @@ export default function App() {
       setAuthChecked(true)
     }
     const onAuthChanged = () => {
+      setAuthChecked(false)
       void getMyProfile().then(async nextProfile => {
         if (disposed) return
         setVerifiedProfile(nextProfile)
