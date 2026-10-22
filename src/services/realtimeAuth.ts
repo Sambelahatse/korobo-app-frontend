@@ -20,7 +20,7 @@ function socketUrl(): string {
 
 /**
  * Opens an authenticated Socket.IO connection and resolves only after the API
- * has validated the Supabase token and returned the server-owned profile.
+ * has validated the API-issued access token and returned the server-owned profile.
  */
 export function verifySessionWithSocket(accessToken: string): Promise<AuthProfile> {
   if (socket?.connected && connectedToken === accessToken && verifiedProfile) {
@@ -70,7 +70,7 @@ export function verifySessionWithSocket(accessToken: string): Promise<AuthProfil
     })
 
     currentSocket.on('disconnect', () => {
-      // Keep Supabase as the source of truth if the realtime connection drops.
+      // The API-issued token remains the source of truth if the realtime connection drops.
       // Socket.IO will attempt to reconnect automatically.
     })
   })
