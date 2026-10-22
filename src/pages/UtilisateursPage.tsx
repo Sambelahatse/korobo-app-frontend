@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ModernIcon } from '../components/Icons'\nimport ActionsMenu from '../components/ActionsMenu'
+import { ModernIcon } from '../components/Icons'
+import ActionsMenu from '../components/ActionsMenu'
 import Modal from '../components/Modal'
 import SortableHeader from '../components/SortableHeader'
 import PhoneNumberField from '../components/PhoneNumberField'
