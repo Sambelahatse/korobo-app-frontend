@@ -79,6 +79,7 @@ export default function EquipementsPage() {
   const [serial, setSerial] = useState('')
   const [formStatus, setFormStatus] = useState<EquipmentStatus>('Opérationnel')
   const [formError, setFormError] = useState('')
+  useEffect(() => { if (formError) showToast(formError, 'error') }, [formError])
 
   const openCreate = () => {
     setEditing(null); setName(''); setSite('Site Andohalo A'); setCategory('Onduleur')
@@ -143,7 +144,6 @@ export default function EquipementsPage() {
           <label className="text-sm font-semibold text-gray-700">Puissance / capacité<input required value={power} onChange={e=>setPower(e.target.value)} className={inputCls} placeholder="Ex. 10 kW"/></label>
           <label className="text-sm font-semibold text-gray-700">État<select value={formStatus} onChange={e=>setFormStatus(e.target.value as EquipmentStatus)} className={inputCls}><option>Opérationnel</option><option>À surveiller</option><option>En panne</option></select></label>
         </div>
-        {formError && <p role="alert" className="text-sm text-rose-600">{formError}</p>}
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={closeForm} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button><button type="submit" className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3d672f]">{editing ? 'Enregistrer les modifications' : 'Ajouter l’équipement'}</button></div>
       </form>
     </Modal>}
