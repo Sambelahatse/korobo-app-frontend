@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-
 export interface AuthProfile {
   id: string
   fullName: string
@@ -8,154 +6,76 @@ export interface AuthProfile {
   phone: string | null
   isActive: boolean
 }
-
-let client: ReturnType<typeof createClient> | undefined
-
-export function getSupabaseClient() {
-  if (client) return client
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
-  if (!url || !key) {
-    throw new Error('La configuration Supabase manque (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY).')
-  }
-
-  // Supabase's standard browser key is "sb-<project-ref>-auth-token".
-  // Older KOROBO sessions may still exist under "<project-ref>-auth-token".
-  // Read and migrate that legacy value once instead of silently treating the user as signed out.
-  const projectRef = new URL(url).hostname.split('.')[0]
-  const storageKey = `sb-${projectRef}-auth-token`
-  const legacyStorageKey = `${projectRef}-auth-token`
-  const compatibleStorage = {
-    getItem(key: string): string | null {
-      try {
-        const current = window.localStorage.getItem(key)
-        if (current !== null || key !== storageKey) return current
-
-        const legacy = window.localStorage.getItem(legacyStorageKey)
-        if (legacy === null) return null
-
-        window.localStorage.setItem(storageKey, legacy)
-        return legacy
-      } catch {
-        return null
-      }
-    },
-    setItem(key: string, value: string): void {
-      window.localStorage.setItem(key, value)
-    },
-    removeItem(key: string): void {
-      window.localStorage.removeItem(key)
-      if (key === storageKey) window.localStorage.removeItem(legacyStorageKey)
-    }
-  }
-
-  client = createClient(url, key, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey,
-      storage: compatibleStorage
-    }
-  })
-  return client
-}
-
+type AuthResponse = { data: AuthProfile; accessToken: string; tokenType: 'Bearer'; expiresIn: string }
+const TOKEN_KEY = 'korobo.access-token'
+const PROFILE_KEY = 'korobo.auth-profile'
 function apiUrl() {
   return ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '')
 }
-
+export function getAccessToken(): string | null {
+  try { return window.localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+function saveSession(result: AuthResponse): AuthProfile {
+  window.localStorage.setItem(TOKEN_KEY, result.accessToken)
+  window.localStorage.setItem(PROFILE_KEY, JSON.stringify(result.data))
+  window.dispatchEvent(new Event('korobo:auth-changed'))
+  return result.data
+}
+function clearSession(): void {
+  window.localStorage.removeItem(TOKEN_KEY)
+  window.localStorage.removeItem(PROFILE_KEY)
+  window.dispatchEvent(new Event('korobo:logout'))
+}
 async function readError(response: Response): Promise<string> {
-  const payload = await response.json().catch(() => ({})) as {
-    error?: { message?: string }
-  }
+  const payload = await response.json().catch(() => ({})) as { error?: { message?: string } }
   return payload.error?.message || 'Une erreur est survenue. Réessayez.'
 }
-
-export async function getMyProfile(): Promise<AuthProfile> {
-  const supabase = getSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
-
-  const response = await fetch(`${apiUrl()}/auth/me`, {
-    // Authentication responses are user-specific and must never be reused from cache.
+async function apiRequest<T>(path: string, init: RequestInit = {}, authenticated = false): Promise<T> {
+  const token = getAccessToken()
+  const response = await fetch(`${apiUrl()}${path}`, {
+    ...init,
     cache: 'no-store',
     headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      'Cache-Control': 'no-cache',
-      Pragma: 'no-cache'
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(authenticated && token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers
     }
   })
   if (!response.ok) throw new Error(await readError(response))
-  const result = await response.json() as { data: AuthProfile }
+  if (response.status === 204) return undefined as T
+  return response.json() as Promise<T>
+}
+export async function getMyProfile(): Promise<AuthProfile> {
+  if (!getAccessToken()) throw new Error('Votre session a expiré. Connectez-vous à nouveau.')
+  const result = await apiRequest<{ data: AuthProfile }>('/auth/me', {}, true)
+  window.localStorage.setItem(PROFILE_KEY, JSON.stringify(result.data))
   return result.data
 }
-
 export async function signIn(email: string, password: string): Promise<AuthProfile> {
-  const supabase = getSupabaseClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(error.message)
-  try {
-    return await getMyProfile()
-  } catch (error) {
-    await supabase.auth.signOut()
-    throw error
-  }
+  const result = await apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  return saveSession(result)
 }
-
-export async function signInWithGoogle(): Promise<void> {
-  const { error } = await getSupabaseClient().auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin }
-  })
-  if (error) throw new Error(error.message)
-}
-
-export async function bootstrapOwner(input: {
-  fullName: string
-  email: string
-  password: string
-  phone?: string
-  setupToken: string
-}): Promise<AuthProfile> {
-  const response = await fetch(`${apiUrl()}/auth/bootstrap-owner`, {
+export async function bootstrapOwner(input: { fullName: string; email: string; password: string; phone?: string; setupToken: string }): Promise<AuthProfile> {
+  const result = await apiRequest<AuthResponse>('/auth/bootstrap-owner', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-owner-bootstrap-token': input.setupToken
-    },
-    body: JSON.stringify({
-      fullName: input.fullName,
-      email: input.email,
-      password: input.password,
-      phone: input.phone
-    })
+    headers: { 'x-owner-bootstrap-token': input.setupToken },
+    body: JSON.stringify({ fullName: input.fullName, email: input.email, password: input.password, phone: input.phone })
   })
-  if (!response.ok) throw new Error(await readError(response))
-
-  // The owner endpoint creates the first confirmed Auth user. Sign in through Supabase,
-  // then let the API validate the token and return the server-owned profile and role.
-  return signIn(input.email, input.password)
+  return saveSession(result)
 }
-
 export async function requestPasswordReset(email: string): Promise<void> {
-  const normalizedEmail = email.trim()
-  if (!normalizedEmail) throw new Error('Saisissez votre adresse e-mail.')
-  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizedEmail, {
-    redirectTo: `${window.location.origin}/?auth=reset-password`
-  })
-  if (error) throw new Error(error.message)
+  if (!email.trim()) throw new Error('Saisissez votre adresse e-mail.')
+  await apiRequest('/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email: email.trim() }) })
 }
-
 export async function updatePassword(password: string): Promise<void> {
-  const { data: { session }, error: sessionError } = await getSupabaseClient().auth.getSession()
-  if (sessionError) throw new Error(sessionError.message)
-  if (!session) throw new Error('Le lien de réinitialisation est invalide ou a expiré. Demandez un nouveau lien.')
-  const { error } = await getSupabaseClient().auth.updateUser({ password })
-  if (error) throw new Error(error.message)
+  const token = new URLSearchParams(window.location.search).get('token') || new URLSearchParams(window.location.hash.split('?')[1] || '').get('token')
+  if (!token) throw new Error('Le lien est incomplet. Demandez une nouvelle invitation ou réinitialisation.')
+  await apiRequest('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) })
+  clearSession()
 }
-
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiRequest('/auth/password/change', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }, true)
+}
 export async function signOut(): Promise<void> {
-  const { error } = await getSupabaseClient().auth.signOut()
-  if (error) throw new Error(error.message)
+  try { await apiRequest('/auth/logout', { method: 'POST' }, true) } finally { clearSession() }
 }

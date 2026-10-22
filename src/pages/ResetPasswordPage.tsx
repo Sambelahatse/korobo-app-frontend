@@ -38,8 +38,8 @@ export default function ResetPasswordPage({ onDone }: Props) {
     <main className="flex min-h-screen items-center justify-center bg-[#f3f6f1] px-4 py-10">
       <section className="w-full max-w-md rounded-3xl border border-gray-100 bg-white p-6 shadow-xl shadow-[#171a18]/5 sm:p-9">
         <p className="mb-3 text-sm font-extrabold tracking-[0.2em] text-[#4A7A3B]">KOROBO</p>
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">Réinitialiser le mot de passe</h1>
-        <p className="mb-6 text-sm text-gray-500">Choisissez un nouveau mot de passe d’au moins 12 caractères.</p>
+        <h1 className="mb-2 text-2xl font-bold text-gray-900">Définir un nouveau mot de passe</h1>
+        <p className="mb-6 text-sm text-gray-500">Choisissez un mot de passe d’au moins 12 caractères. Le lien doit être valide et non expiré.</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-gray-700">
             Nouveau mot de passe
