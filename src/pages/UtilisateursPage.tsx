@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ModernIcon } from '../components/Icons'
 import Modal from '../components/Modal'
+import SortableHeader from '../components/SortableHeader'
+import PhoneNumberField from '../components/PhoneNumberField'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 
 type ApiRole = 'admin' | 'manager' | 'technician' | 'viewer'
 type UserStatus = 'Actif' | 'Invitation en attente' | 'Suspendu'
@@ -60,15 +63,15 @@ function displayDate(value: string | null) {
   if (!value) return 'Jamais connecté'
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
-function initials(name: string) {
-  return name.trim().split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase()
-}
 
 export default function UtilisateursPage() {
   const [users, setUsers] = useState<TeamUser[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('Tous')
+  const [statusFilter, setStatusFilter] = useState('Tous')
+  const [sortKey, setSortKey] = useState('createdAt')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<TeamUser | null>(null)
   const [name, setName] = useState('')
@@ -95,10 +98,34 @@ export default function UtilisateursPage() {
 
   useEffect(() => { void loadUsers() }, [loadUsers])
 
-  const filtered = useMemo(() => users.filter(user =>
-    (roleFilter === 'Tous' || user.role === roleFilter) &&
-    [user.fullName, user.email].some(value => value.toLowerCase().includes(query.toLowerCase()))
-  ), [users, roleFilter, query])
+  const filtered = useMemo(() => {
+    const matching = users.filter(user =>
+      (roleFilter === 'Tous' || user.role === roleFilter) &&
+      (statusFilter === 'Tous' || userStatus(user) === statusFilter) &&
+      [user.fullName, user.email, user.phone || ''].some(value => value.toLowerCase().includes(query.toLowerCase()))
+    )
+    const valueFor = (user: TeamUser): string | number => {
+      if (sortKey === 'status') return userStatus(user)
+      if (sortKey === 'role') return roleLabels[user.role]
+      if (sortKey === 'lastSeenAt') return user.lastSeenAt ? new Date(user.lastSeenAt).getTime() : 0
+      if (sortKey === 'createdAt') return new Date(user.createdAt).getTime()
+      if (sortKey === 'phone') return user.phone || ''
+      if (sortKey === 'email') return user.email
+      return user.fullName
+    }
+    return matching.sort((a, b) => {
+      const left = valueFor(a), right = valueFor(b)
+      const result = typeof left === 'number' && typeof right === 'number'
+        ? left - right
+        : String(left).localeCompare(String(right), 'fr', { sensitivity: 'base', numeric: true })
+      return sortDirection === 'asc' ? result : -result
+    })
+  }, [users, roleFilter, statusFilter, query, sortKey, sortDirection])
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDirection(previous => previous === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDirection(key === 'createdAt' || key === 'lastSeenAt' ? 'desc' : 'asc') }
+  }
 
   const openCreate = () => {
     setEditing(null); setName(''); setEmail(''); setPhone(''); setRole('technician')
@@ -113,6 +140,10 @@ export default function UtilisateursPage() {
   const saveUser = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
+    if (phone.trim() && !isValidPhoneNumber(phone, 'MG')) {
+      setError('Veuillez saisir un numéro de téléphone international valide.')
+      return
+    }
     setSaving(true)
     try {
       if (editing) {
@@ -123,14 +154,12 @@ export default function UtilisateursPage() {
         setUsers(previous => previous.map(user => user.id === editing.id ? { ...user, ...result.data } : user))
         setFeedback('Les informations et le rôle ont été mis à jour.')
       } else {
-        const result = await request<ApiEnvelope<TeamUser> & { activationLink: string; emailSent: boolean }>('/auth/invite', {
+        const result = await request<ApiEnvelope<TeamUser> & { activationLink: string }>('/auth/users', {
           method: 'POST',
           body: JSON.stringify({ fullName: name.trim(), email: email.trim(), phone: phone.trim() || undefined, role }),
         })
         setActivationLink(result.activationLink)
-        setFeedback(result.emailSent
-          ? `Compte créé et invitation envoyée à ${email.trim()}. Vous pouvez aussi copier le lien ci-dessous.`
-          : `Compte créé, mais l’e-mail n’a pas pu être envoyé. Copiez le lien d’activation ci-dessous pour le partager.`)
+        setFeedback(`Compte créé sans envoi d’e-mail. Copiez le lien d’activation ci-dessous pour le partager à ${email.trim()}.`)
         await loadUsers()
       }
       closeForm()
@@ -199,27 +228,63 @@ export default function UtilisateursPage() {
     <div className="grid gap-3 sm:grid-cols-3">
       {[{ label: 'Membres', value: users.length, icon: 'user-round' as const }, { label: 'Comptes actifs', value: activeCount, icon: 'check-circle' as const }, { label: 'Invitations en attente', value: pendingCount, icon: 'bell' as const }].map(item => <div key={item.label} className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf4e9] text-[#4A7A3B]"><ModernIcon name={item.icon} size={22} /></div><div><p className="text-sm text-gray-500">{item.label}</p><p className="mt-1 text-2xl font-bold text-gray-900">{loading ? '—' : item.value}</p></div></div>)}
     </div>
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)]">
+    <div className="grid gap-4">
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-bold text-gray-900">Membres de l’équipe</h2><p className="mt-1 text-xs text-gray-500">{loading ? 'Chargement…' : `${filtered.length} compte(s)`}</p></div><div className="flex flex-col gap-2 sm:flex-row"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Rechercher un nom ou un e-mail" className="min-w-0 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]" /><select value={roleFilter} onChange={event => setRoleFilter(event.target.value)} className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]"><option value="Tous">Tous les rôles</option>{allRoles.map(item => <option key={item} value={item}>{roleLabels[item]}</option>)}</select></div></div>
-        {loading ? <div className="p-10 text-center text-sm text-gray-500">Chargement des utilisateurs…</div> : <div className="divide-y divide-gray-100">
-          {filtered.map(user => {
-            const status = userStatus(user)
-            return <div key={user.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#edf4e9] text-xs font-bold text-[#426b36]">{initials(user.fullName)}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-gray-900">{user.fullName}</p><p className="truncate text-xs text-gray-500">{user.email}</p><p className="mt-1 text-[11px] text-gray-400">Dernière activité : {displayDate(user.lastSeenAt)}</p></div></div>
-              <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>{status}</span><span className="max-w-[210px] rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600">{roleLabels[user.role]}</span><button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>{status === 'Invitation en attente' && <button onClick={() => void resendInvitation(user)} className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Renvoyer l’invitation</button>}{user.id !== currentUserId && <button onClick={() => void toggleStatus(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}</div>
-            </div>
-          })}
-          {filtered.length === 0 && <p className="p-8 text-center text-sm text-gray-500">Aucun utilisateur trouvé.</p>}
+        <div className="flex flex-col gap-3 border-b border-gray-100 p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 className="font-bold text-gray-900">Membres de l’équipe</h2><p className="mt-1 text-xs text-gray-500">{loading ? 'Chargement…' : `${filtered.length} compte(s)`}</p></div>
+            <button onClick={() => { setQuery(''); setRoleFilter('Tous'); setStatusFilter('Tous') }} className="self-start text-xs font-semibold text-[#4A7A3B] hover:underline">Réinitialiser les filtres</button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Rechercher nom, e-mail ou téléphone" aria-label="Rechercher un utilisateur" className="min-w-0 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]" />
+            <select value={roleFilter} onChange={event => setRoleFilter(event.target.value)} aria-label="Filtrer par rôle" className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]"><option value="Tous">Tous les rôles</option>{allRoles.map(item => <option key={item} value={item}>{roleLabels[item]}</option>)}</select>
+            <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} aria-label="Filtrer par statut" className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5C8A42]"><option value="Tous">Tous les statuts</option><option value="Actif">Actif</option><option value="Invitation en attente">Invitation en attente</option><option value="Suspendu">Suspendu</option></select>
+          </div>
+        </div>
+        {loading ? <div className="p-10 text-center text-sm text-gray-500">Chargement des utilisateurs…</div> : <div className="overflow-x-auto">
+          <table className="w-full min-w-[1050px] border-collapse text-left text-sm">
+            <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <tr>
+                <SortableHeader label="Nom" sortKey="fullName" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="E-mail" sortKey="email" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="Téléphone" sortKey="phone" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="Rôle" sortKey="role" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="Statut" sortKey="status" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="Créé le" sortKey="createdAt" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <SortableHeader label="Dernière activité" sortKey="lastSeenAt" activeKey={sortKey} direction={sortDirection} onSort={handleSort} className="px-4 py-3" />
+                <th scope="col" className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filtered.map(user => {
+                const status = userStatus(user)
+                return <tr key={user.id} className="align-middle hover:bg-gray-50/70">
+                  <td className="px-4 py-3 font-semibold text-gray-900">{user.fullName}</td>
+                  <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                  <td className="px-4 py-3 text-gray-600">{user.phone || '—'}</td>
+                  <td className="px-4 py-3"><span className="inline-block max-w-[190px] rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600">{roleLabels[user.role]}</span></td>
+                  <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>{status}</span></td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(user.createdAt))}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{displayDate(user.lastSeenAt)}</td>
+                  <td className="px-4 py-3"><div className="flex justify-end gap-2">
+                    <button onClick={() => openEdit(user)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-[#5C8A42] hover:text-[#4A7A3B]">Modifier</button>
+                    {status === 'Invitation en attente' && <button onClick={() => void resendInvitation(user)} className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Renvoyer l’invitation</button>}
+                    {user.id !== currentUserId && <button onClick={() => void toggleStatus(user)} className="whitespace-nowrap rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-rose-200 hover:text-rose-600">{user.isActive ? 'Suspendre' : 'Réactiver'}</button>}
+                  </div></td>
+                </tr>
+              })}
+              {filtered.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-sm text-gray-500">Aucun utilisateur trouvé.</td></tr>}
+            </tbody>
+          </table>
         </div>}
       </section>
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><ModernIcon name="shield-check" size={20} /><h2 className="font-bold text-gray-900">Rôles et permissions</h2></div><p className="mb-4 text-sm leading-6 text-gray-500">Les permissions sont contrôlées côté API. L’interface ne remplace pas les vérifications d’accès du serveur.</p><div className="space-y-3">{allRoles.map(item => <div key={item} className="rounded-xl border border-gray-100 p-3"><div className="flex items-start gap-2"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#5C8A42]" /><div><p className="text-sm font-semibold text-gray-800">{roleLabels[item]}</p><p className="mt-1 text-xs leading-5 text-gray-500">{roleDescriptions[item]}</p></div></div></div>)}</div><div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Un administrateur actif doit toujours être conservé. Un compte suspendu ne peut plus utiliser ses sessions existantes.</div></section>
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><ModernIcon name="shield-check" size={20} /><h2 className="font-bold text-gray-900">Rôles et permissions</h2></div><p className="mb-4 text-sm leading-6 text-gray-500">Les permissions sont contrôlées côté API. L’interface ne remplace pas les vérifications d’accès du serveur.</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{allRoles.map(item => <div key={item} className="rounded-xl border border-gray-100 p-3"><p className="text-sm font-semibold text-gray-800">{roleLabels[item]}</p><p className="mt-1 text-xs leading-5 text-gray-500">{roleDescriptions[item]}</p></div>)}</div><div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Un administrateur actif doit toujours être conservé. Un compte suspendu ne peut plus utiliser ses sessions existantes.</div></section>
     </div>
-    {showForm && <Modal title={editing ? 'Modifier un utilisateur' : 'Inviter un utilisateur'} onClose={closeForm}>
+    {showForm && <Modal title={editing ? 'Modifier un utilisateur' : 'Créer un utilisateur'} onClose={closeForm}>
       <form onSubmit={saveUser} className="space-y-4 p-1">
         <label className="block text-sm font-semibold text-gray-700">Nom complet<input required minLength={2} maxLength={160} value={name} onChange={event => setName(event.target.value)} placeholder="Nom et prénom" className={inputCls} /></label>
         <label className="block text-sm font-semibold text-gray-700">Adresse e-mail<input required type="email" maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="nom@entreprise.com" className={inputCls} /></label>
-        <label className="block text-sm font-semibold text-gray-700">Téléphone (facultatif)<input value={phone} onChange={event => setPhone(event.target.value)} maxLength={40} placeholder="+261…" className={inputCls} /></label>
+        <label className="block text-sm font-semibold text-gray-700">Téléphone (facultatif)<div className="mt-1.5"><PhoneNumberField value={phone} onChange={setPhone} placeholder="Numéro de téléphone" /></div></label>
         <label className="block text-sm font-semibold text-gray-700">Rôle<select value={role} onChange={event => setRole(event.target.value as ApiRole)} className={inputCls}>{(editing ? allRoles : inviteRoles).map(item => <option key={item} value={item}>{roleLabels[item]}</option>)}</select></label>
         {!editing && <p className="rounded-xl border border-[#4A7A3B]/20 bg-[#f4f8f1] p-3 text-xs leading-5 text-gray-600">Le compte sera créé en attente d’activation. Vous pourrez copier le lien d’activation, le partager vous-même et renvoyer une invitation à tout moment tant que le compte n’est pas activé.</p>}
         {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}

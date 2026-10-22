@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import PhoneNumberField from '../components/PhoneNumberField'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 import {
   defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
@@ -74,6 +76,7 @@ export default function SettingsPage() {
   }
   const saveProfile = () => run(async () => {
     if (draftName.trim().length < 2) throw new Error('Le nom complet doit contenir au moins 2 caractères.')
+    if (draftPhone.trim() && !isValidPhoneNumber(draftPhone, 'MG')) throw new Error('Veuillez saisir un numéro de téléphone valide.')
     const updated = await settingsService.updateProfile({ fullName: draftName.trim(), phone: draftPhone.trim() || null })
     setProfile(updated); setDraftName(updated.fullName); setDraftPhone(updated.phone || '')
   }, 'Les informations personnelles ont été enregistrées.')
@@ -135,7 +138,7 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-xs text-gray-500">{profile?.role}</p></div></div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold text-gray-700">Nom complet<input className={inputClass} autoComplete="name" maxLength={160} value={draftName} onChange={e => setDraftName(e.target.value)} /></label>
-        <label className="block text-sm font-semibold text-gray-700">Téléphone<input className={inputClass} type="tel" autoComplete="tel" maxLength={40} value={draftPhone} onChange={e => setDraftPhone(e.target.value)} /></label>
+        <label className="block text-sm font-semibold text-gray-700">Téléphone<div className="mt-1.5"><PhoneNumberField value={draftPhone} onChange={setDraftPhone} /></div></label>
         <label className="block text-sm font-semibold text-gray-700 sm:col-span-2">Adresse e-mail<input className={inputClass + ' bg-gray-50 text-gray-500'} value={profile?.email || ''} readOnly /><span className="mt-1 block text-xs font-normal text-gray-400">L’adresse e-mail est protégée. Sa modification nécessite une procédure de vérification distincte.</span></label>
       </div>
       <button disabled={busy} onClick={() => void saveProfile()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer le profil</button>
