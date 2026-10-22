@@ -61,7 +61,7 @@ src/
 
 ## 🔐 Authentification (API KOROBO + Neon PostgreSQL)
 
-L’authentification est gérée par l’API KOROBO. Les profils, hash de mots de passe et jetons temporaires sont stockés dans Neon PostgreSQL. Le navigateur conserve uniquement un jeton d’accès de durée limitée. Aucun identifiant de base de données ni secret serveur ne doit être exposé dans le frontend.
+L’authentification est gérée par l’API KOROBO. Les profils, hash de mots de passe et jetons temporaires sont stockés dans Neon PostgreSQL. La connexion Google passe par l’API, qui vérifie l’adresse Google puis recherche un compte KOROBO actif dans Neon. Google ne stocke pas les profils KOROBO et ne décide pas des rôles. Le navigateur conserve uniquement un jeton d’accès de durée limitée. Aucun identifiant de base de données ni secret serveur ne doit être exposé dans le frontend.
 
 ### Configuration locale
 

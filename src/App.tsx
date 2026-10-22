@@ -50,6 +50,13 @@ export default function App() {
     let disposed = false
     const generation = ++authGeneration.current
     const verify = async () => {
+      const hashQuery = window.location.hash.includes("?") ? window.location.hash.split("?").slice(1).join("?") : ""
+      const callbackParams = new URLSearchParams(hashQuery)
+      const googleToken = callbackParams.get("google_token")
+      if (googleToken) {
+        window.localStorage.setItem("korobo.access-token", googleToken)
+        window.history.replaceState(null, "", window.location.pathname + "#/login")
+      }
       const token = getAccessToken()
       if (!token) {
         disconnectAuthSocket()

@@ -22,7 +22,19 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
+  const [error,    setError]    = useState(() => {
+    const query = new URLSearchParams(window.location.hash.split("?")[1] || "")
+    const code = query.get("google_error")
+    const messages: Record<string, string> = {
+      google_not_configured: "La connexion Google n'est pas encore configurée sur le serveur.",
+      google_callback_invalid: "La réponse de Google est invalide. Réessayez.",
+      google_state_invalid: "La vérification de sécurité Google a échoué. Réessayez.",
+      google_email_unverified: "Google n'a pas confirmé cette adresse e-mail.",
+      google_account_not_allowed: "Aucun compte KOROBO actif ne correspond à cette adresse Google. Contactez un administrateur.",
+      google_auth_failed: "La connexion Google a échoué. Réessayez."
+    }
+    return code ? (messages[code] || "Connexion Google impossible. Réessayez.") : ""
+  })
   const [resetMessage, setResetMessage] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
 
@@ -108,6 +120,18 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
             <h1 className="font-syne font-bold text-2xl sm:text-3xl text-gray-900 mb-2">Bon retour 👋</h1>
             <p className="text-gray-500 text-sm">Connectez-vous à votre compte KOROBO</p>
           </div>
+
+          <button type="button" onClick={() => window.location.assign(((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '') + '/auth/google')}
+            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-lg bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.01 13.22l7.98 6.19C11.88 13.72 17.43 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.73 7.18l7.65 5.94c4.46-4.13 7.12-10.2 7.12-17.59z"/>
+              <path fill="#FBBC05" d="M9.99 28.59A14.4 14.4 0 0 1 9.2 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.57 10.78l7.42-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.81l-7.65-5.94c-2.13 1.43-4.84 2.28-8.25 2.28-6.57 0-12.13-4.22-14.02-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Se connecter avec Google
+          </button>
+          <div className="flex items-center gap-3 my-4 text-xs text-gray-400"><span className="h-px bg-gray-200 flex-1" /><span>OU AVEC VOTRE E-MAIL</span><span className="h-px bg-gray-200 flex-1" /></div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && <div role="alert" className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
