@@ -123,14 +123,12 @@ export default function UtilisateursPage() {
         setUsers(previous => previous.map(user => user.id === editing.id ? { ...user, ...result.data } : user))
         setFeedback('Les informations et le rôle ont été mis à jour.')
       } else {
-        const result = await request<ApiEnvelope<TeamUser> & { activationLink: string; emailSent: boolean }>('/auth/invite', {
+        const result = await request<ApiEnvelope<TeamUser> & { activationLink: string }>('/auth/users', {
           method: 'POST',
           body: JSON.stringify({ fullName: name.trim(), email: email.trim(), phone: phone.trim() || undefined, role }),
         })
         setActivationLink(result.activationLink)
-        setFeedback(result.emailSent
-          ? `Compte créé et invitation envoyée à ${email.trim()}. Vous pouvez aussi copier le lien ci-dessous.`
-          : `Compte créé, mais l’e-mail n’a pas pu être envoyé. Copiez le lien d’activation ci-dessous pour le partager.`)
+        setFeedback(`Compte créé sans envoi d’e-mail. Copiez le lien d’activation ci-dessous pour le partager à ${email.trim()}.`)
         await loadUsers()
       }
       closeForm()
@@ -215,7 +213,7 @@ export default function UtilisateursPage() {
       </section>
       <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><ModernIcon name="shield-check" size={20} /><h2 className="font-bold text-gray-900">Rôles et permissions</h2></div><p className="mb-4 text-sm leading-6 text-gray-500">Les permissions sont contrôlées côté API. L’interface ne remplace pas les vérifications d’accès du serveur.</p><div className="space-y-3">{allRoles.map(item => <div key={item} className="rounded-xl border border-gray-100 p-3"><div className="flex items-start gap-2"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#5C8A42]" /><div><p className="text-sm font-semibold text-gray-800">{roleLabels[item]}</p><p className="mt-1 text-xs leading-5 text-gray-500">{roleDescriptions[item]}</p></div></div></div>)}</div><div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Un administrateur actif doit toujours être conservé. Un compte suspendu ne peut plus utiliser ses sessions existantes.</div></section>
     </div>
-    {showForm && <Modal title={editing ? 'Modifier un utilisateur' : 'Inviter un utilisateur'} onClose={closeForm}>
+    {showForm && <Modal title={editing ? 'Modifier un utilisateur' : 'Créer un utilisateur'} onClose={closeForm}>
       <form onSubmit={saveUser} className="space-y-4 p-1">
         <label className="block text-sm font-semibold text-gray-700">Nom complet<input required minLength={2} maxLength={160} value={name} onChange={event => setName(event.target.value)} placeholder="Nom et prénom" className={inputCls} /></label>
         <label className="block text-sm font-semibold text-gray-700">Adresse e-mail<input required type="email" maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="nom@entreprise.com" className={inputCls} /></label>
