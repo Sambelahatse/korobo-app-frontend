@@ -4,6 +4,7 @@ import SortableHeader from '../components/SortableHeader'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { mockSites } from '../data/mockData'
+import { showToast } from '../components/ToastViewport'
 import type { Site } from '../types'
 
 type EquipmentStatus = 'Opérationnel' | 'À surveiller' | 'En panne'
@@ -112,8 +113,8 @@ export default function EquipementsPage() {
     e.preventDefault()
     if (!name.trim() || !serial.trim() || !power.trim()) { setFormError('Renseignez le nom, la référence et la puissance.'); return }
     const values = { name: name.trim(), category, site, serial: serial.trim(), power: power.trim(), status: formStatus, updated: new Date().toLocaleDateString('fr-FR') }
-    if (editing) setItems(prev => prev.map(item => item.id === editing.id ? { ...item, ...values } : item))
-    else setItems(prev => [{ id: `EQ-${String(Math.max(0, ...prev.map(item => Number(item.id.split('-')[1]) || 0)) + 1).padStart(3, '0')}`, ...values }, ...prev])
+    if (editing) { setItems(prev => prev.map(item => item.id === editing.id ? { ...item, ...values } : item)); showToast('Équipement modifié avec succès.') }
+    else { setItems(prev => [{ id: `EQ-${String(Math.max(0, ...prev.map(item => Number(item.id.split('-')[1]) || 0)) + 1).padStart(3, '0')}`, ...values }, ...prev]); showToast('Équipement ajouté avec succès.') }
     closeForm()
   }
 
@@ -131,7 +132,7 @@ export default function EquipementsPage() {
       {filtered.length===0 && <div className="p-10 text-center text-sm text-gray-500">Aucun équipement ne correspond à votre recherche.</div>}
     </div>
     <p className="text-xs text-gray-400">Données de démonstration : les modifications sont conservées sur cet appareil et ne sont pas synchronisées avec une API.</p>
-    {deleteTarget && <ConfirmDialog title="Supprimer cet équipement ?" message={`Voulez-vous vraiment supprimer « ${deleteTarget.name} » ? Cette action est irréversible sur cet appareil.`} confirmLabel="Supprimer" danger onConfirm={() => { setItems(prev => prev.filter(item => item.id !== deleteTarget.id)); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} />}
+    {deleteTarget && <ConfirmDialog title="Supprimer cet équipement ?" message={`Voulez-vous vraiment supprimer « ${deleteTarget.name} » ? Cette action est irréversible sur cet appareil.`} confirmLabel="Supprimer" danger onConfirm={() => { setItems(prev => prev.filter(item => item.id !== deleteTarget.id)); showToast('Équipement supprimé.'); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} />}
     {showForm && <Modal title={editing ? 'Modifier un équipement' : 'Ajouter un équipement'} description="Renseignez les informations de l’équipement." onClose={closeForm} size="lg">
       <form onSubmit={saveEquipment} className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
