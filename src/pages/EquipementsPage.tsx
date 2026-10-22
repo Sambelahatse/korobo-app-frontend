@@ -282,7 +282,7 @@ export default function EquipementsPage() {
               <td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status]}`}>{statusLabels[item.status]}</span></td>
               <td className="px-5 py-4 text-gray-600">{item.assignedTo?.fullName ?? '—'}</td>
               <td className="px-5 py-4"><ActionsMenu>
-                <button onClick={() => void openDetails(item) className={buttonCls}>Historique</button>
+                <button onClick={() => void openDetails(item)} className={buttonCls}>Historique</button>
                 <button onClick={() => openMovement(item)} className={buttonCls}>Mouvement</button>
                 <button onClick={() => openMaintenance(item)} className={buttonCls}>Maintenance</button>
                 <button onClick={() => openEdit(item)} className={buttonCls}>Modifier</button>
