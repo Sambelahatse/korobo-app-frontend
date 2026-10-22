@@ -23,7 +23,6 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
-  const [googleError, setGoogleError] = useState('')
   const [resetMessage, setResetMessage] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
 
@@ -57,17 +56,6 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
       setError(err instanceof Error ? err.message : 'Impossible d’envoyer le lien de réinitialisation.')
     } finally {
       setResetLoading(false)
-    }
-  }
-
-  const handleGoogleLogin = async () => {
-    setGoogleError('')
-    setLoading(true)
-    try {
-      await signInWithGoogle()
-    } catch (err) {
-      setGoogleError(err instanceof Error ? err.message : 'Connexion Google impossible.')
-      setLoading(false)
     }
   }
 
@@ -165,17 +153,6 @@ export default function LoginPage({ onLogin, onGoRegister, onBack }: Props) {
               ) : 'Se connecter'}
             </button>
           </form>
-
-          <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px bg-gray-100"/><span className="text-xs text-gray-400 font-medium">ou</span><div className="flex-1 h-px bg-gray-100"/></div>
-
-          <div className="mt-4 mb-4 flex flex-col items-center gap-2">
-            <button type="button" onClick={handleGoogleLogin} disabled={loading}
-              className="w-full rounded-lg border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50">
-              Continuer avec Google
-            </button>
-            <p className="text-center text-xs text-gray-400">Connexion sécurisée via Supabase Auth.</p>
-            {googleError && <p role="alert" className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-600">{googleError}</p>}
-          </div>
 
           <p className="text-center text-sm text-gray-500">
             Pas encore de compte ?{' '}
