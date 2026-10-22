@@ -32,6 +32,7 @@ export interface AccountSession {
 export interface AccountSettings {
   profile: AccountProfile
   googleLinked: boolean
+  hasPassword: boolean
   preferences: AccountPreferences | null
 }
 export const defaultPreferences: AccountPreferences = {
@@ -99,5 +100,5 @@ export const settingsService = {
     window.localStorage.removeItem('korobo.auth-profile')
     window.dispatchEvent(new Event('korobo:logout'))
   },
-  changePassword: changeAccountPassword,
+  async setPassword(password: string): Promise<void> {\n    await request('/auth/password/set', { method: 'POST', body: JSON.stringify({ password }) })\n  },\n  changePassword: changeAccountPassword,
 }
