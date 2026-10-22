@@ -143,7 +143,7 @@ export default function UtilisateursPage() {
   const saveUser = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
-    if (phone.trim() && !isValidPhoneNumber(phone)) {
+    if (phone.trim() && !isValidPhoneNumber(phone, 'MG')) {
       setError('Veuillez saisir un numéro de téléphone international valide.')
       return
     }
