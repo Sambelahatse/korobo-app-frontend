@@ -8,7 +8,7 @@ import type { ListItem } from '../types'
 import { XIcon, PlusIcon, FolderIcon, LocationIcon } from './Icons'
 
 import type { Site } from "../types"
-interface Props { onClose: () => void; onSave: (site: Site) => void; site?: Site }
+interface Props { onClose: () => void; onSave: (site: Site) => void | Promise<void>; site?: Site }
 
 /* ─── Reusable sub-components ─────────────────────────────────────────── */
 
@@ -242,11 +242,11 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
     return true
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateStep(1)) { setStep(1); return }
     if (!validateStep(2)) { setStep(2); return }
     const parsedPower = Number(puissance)
-    onSave({
+    const nextSite: Site = {
       id: site?.id ?? String(Date.now()),
       nom: nomSite.trim(),
       localisation: lieuSite.trim(),
@@ -270,8 +270,13 @@ export default function NewSiteModal({ onClose, onSave, site }: Props) {
       controllers: controllers.map(item => ({ ...item })),
       groupeInfo: groupeInfo.trim(),
       contratSav: contratSav.trim(),
-    })
-    onClose()
+    }
+    try {
+      await onSave(nextSite)
+      onClose()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Impossible d’enregistrer le site. Réessayez.')
+    }
   }
 
   /* ─── Step renderers ── */
