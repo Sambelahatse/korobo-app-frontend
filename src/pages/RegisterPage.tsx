@@ -95,12 +95,12 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
     (errors[f] ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100' : 'border-gray-200 focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10')
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (telephone.trim() && !isValidPhoneNumber(telephone, 'MG')) {
       setErrors(previous => ({ ...previous, telephone: 'Veuillez saisir un numéro de téléphone valide.' }))
       return
     }
-
-    e.preventDefault()
+    setErrors(previous => { const next = { ...previous }; delete next.telephone; return next })
     setSubmitError('')
     if (!validate2()) return
     setLoading(true)
@@ -212,7 +212,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-gray-700">Téléphone <span className="text-gray-400 font-normal">(optionnel)</span></label>
-                <PhoneNumberField value={telephone} onChange={setTelephone} placeholder="Numéro de téléphone" className={errors.telephone ? 'border-red-400' : ''} />
+                <PhoneNumberField value={telephone} onChange={value => { setTelephone(value); setErrors(previous => { const next = { ...previous }; delete next.telephone; return next }) }} placeholder="Numéro de téléphone" className={errors.telephone ? 'border-red-400' : ''} />
               </div>
               <div className="flex items-start gap-3 rounded-xl border border-[#dce8d5] bg-[#f4f8f1] p-4">
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#e3eedc] text-[#4A7A3B]">
