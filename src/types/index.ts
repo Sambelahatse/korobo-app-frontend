@@ -74,4 +74,5 @@ export interface Rapport {
   technicien: string
   statut: 'brouillon' | 'validé'
   notes: string
+  planificationId?: string
 }

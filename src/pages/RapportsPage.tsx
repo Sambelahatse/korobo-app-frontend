@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { mockPlanifications, mockRapports, mockSites } from '../data/mockData'
+import { createReport, deleteReport, loadReportsData, setReportStatus, updateReport } from '../services/rapportService'
 import type { Planification, Rapport, Site } from '../types'
+type Technician = { id: string; fullName: string; email?: string; role?: string }
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
 
@@ -21,36 +22,12 @@ export default function RapportsPage() {
   const today = new Date()
   const [year,     setYear]     = useState(today.getFullYear())
   const [month,    setMonth]    = useState(today.getMonth())
-  const [rapports, setRapports] = useState<Rapport[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.rapports.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Rapport[]
-      }
-    } catch { /* Fall back to demo reports. */ }
-    return mockRapports
-  })
-  const [sites, setSites] = useState<Site[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.sites.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Site[]
-      }
-    } catch { /* Fall back to demo sites. */ }
-    return mockSites
-  })
-  const [interventions, setInterventions] = useState<Planification[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.planifications.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Planification[]
-      }
-    } catch { /* Fall back to demo interventions. */ }
-    return mockPlanifications
-  })
+  const [rapports, setRapports] = useState<Rapport[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [interventions, setInterventions] = useState<Planification[]>([])
+  const [technicians, setTechnicians] = useState<Technician[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [deleteItem, setDeleteItem] = useState<Rapport | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -58,26 +35,15 @@ export default function RapportsPage() {
   const [form,     setForm]     = useState<Partial<Rapport>>({})
   const [panelOpen, setPanelOpen] = useState(false) // mobile panel
 
-  useEffect(() => {
-    try { localStorage.setItem('korobo.rapports.v1', JSON.stringify(rapports)) } catch { /* Storage may be unavailable. */ }
-  }, [rapports])
-
-  useEffect(() => {
-    const refreshLocalData = () => {
-      try {
-        const savedSites = localStorage.getItem('korobo.sites.v1')
-        setSites(savedSites === null ? mockSites : JSON.parse(savedSites) as Site[])
-        const savedInterventions = localStorage.getItem('korobo.planifications.v1')
-        setInterventions(savedInterventions === null ? mockPlanifications : JSON.parse(savedInterventions) as Planification[])
-      } catch { setSites(mockSites); setInterventions(mockPlanifications) }
-      try {
-        const savedReports = localStorage.getItem('korobo.rapports.v1')
-        if (savedReports !== null) setRapports(JSON.parse(savedReports) as Rapport[])
-      } catch { /* Keep current reports if stored data is invalid. */ }
-    }
-    window.addEventListener('storage', refreshLocalData)
-    return () => window.removeEventListener('storage', refreshLocalData)
-  }, [])
+  const refresh = async () => {
+    setLoading(true); setLoadError('')
+    try {
+      const result = await loadReportsData()
+      setRapports(result.rapports); setSites(result.sites); setInterventions(result.interventions); setTechnicians(result.technicians)
+    } catch (error) { setLoadError(error instanceof Error ? error.message : 'Impossible de charger les rapports.') }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { void refresh() }, [])
 
   // Calendar
   const firstDay    = new Date(year, month, 1)
@@ -106,24 +72,14 @@ export default function RapportsPage() {
   const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y-1) } else setMonth(m => m-1) }
   const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y+1) } else setMonth(m => m+1) }
 
-  const handleSaveForm = () => {
-    if (!form.siteNom?.trim() || !form.date || !form.technicien?.trim()) return
-    const site = sites.find(item => item.id === form.siteId || item.nom === form.siteNom)
-    const values: Rapport = {
-      id: editingReport?.id || 'R' + Date.now(),
-      siteId: site?.id || form.siteId || '',
-      siteNom: site?.nom || form.siteNom!.trim(),
-      date: form.date,
-      type: form.type || 'mensuel',
-      technicien: form.technicien!.trim(),
-      statut: editingReport?.statut || 'brouillon',
-      notes: form.notes || '',
-    }
-    setRapports(prev => editingReport
-      ? prev.map(item => item.id === editingReport.id ? values : item)
-      : [values, ...prev])
-    showToast(editingReport ? 'Rapport mis à jour.' : 'Rapport créé.')
-    setShowForm(false); setEditingReport(null); setForm({})
+  const handleSaveForm = async () => {
+    if (!form.siteId || !form.date || !form.technicien?.trim()) { showToast('Renseignez le site, la date et le technicien.', 'error'); return }
+    try {
+      const saved = editingReport ? await updateReport({ ...editingReport, ...form } as Rapport, technicians) : await createReport(form, technicians)
+      setRapports(prev => editingReport ? prev.map(item => item.id === editingReport.id ? saved : item) : [saved, ...prev])
+      showToast(editingReport ? 'Rapport mis à jour.' : 'Rapport créé.')
+      setShowForm(false); setEditingReport(null); setForm({})
+    } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer le rapport.', 'error') }
   }
 
   const openEditForm = (report: Rapport) => {
@@ -138,11 +94,12 @@ export default function RapportsPage() {
     setForm({})
   }
 
-  const toggleReportStatus = (report: Rapport) => {
-    setRapports(prev => prev.map(item => item.id === report.id
-      ? { ...item, statut: item.statut === 'validé' ? 'brouillon' : 'validé' }
-      : item))
-    showToast(report.statut === 'validé' ? 'Le rapport est repassé en brouillon.' : 'Rapport validé.')
+  const toggleReportStatus = async (report: Rapport) => {
+    try {
+      const updated = await setReportStatus(report, report.statut === 'validé' ? 'brouillon' : 'validé')
+      setRapports(prev => prev.map(item => item.id === report.id ? updated : item))
+      showToast(updated.statut === 'validé' ? 'Rapport validé.' : 'Le rapport est repassé en brouillon.')
+    } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible de modifier le statut.', 'error') }
   }
 
   const linkIntervention = (id: string) => {
@@ -155,6 +112,7 @@ export default function RapportsPage() {
       date: intervention.date,
       technicien: intervention.technicien,
       type: 'intervention',
+      planificationId: intervention.id,
       notes: current.notes || intervention.description,
     }))
   }
@@ -181,6 +139,8 @@ export default function RapportsPage() {
         </div>
       </div>
 
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError} <button className="ml-2 font-semibold underline" onClick={() => void refresh()}>Réessayer</button></div>}
+      {loading && <div className="mb-4 rounded-lg bg-white px-4 py-3 text-sm text-gray-500">Chargement des rapports…</div>}
       {/* Layout: calendar + panel stacked on mobile, side-by-side on xl */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
 
@@ -337,7 +297,7 @@ export default function RapportsPage() {
                     <option value="intervention">Intervention</option>
                   </select></div>
                 <div><label className="text-xs font-semibold text-gray-600">Technicien *</label>
-                  <input className={inputCls} value={form.technicien||''} onChange={e => setForm(f=>({...f,technicien:e.target.value}))} placeholder="Nom" /></div>
+                  <select className={inputCls} value={form.technicien||''} onChange={e => setForm(f=>({...f,technicien:e.target.value}))}><option value="">Sélectionner un technicien</option>{technicians.map(user => <option key={user.id} value={user.fullName}>{user.fullName}</option>)}</select></div>
               </div>
               <div><label className="text-xs font-semibold text-gray-600">Notes</label>
                 <textarea className={inputCls+' resize-none'} rows={3} value={form.notes||''} onChange={e => setForm(f=>({...f,notes:e.target.value}))} placeholder="Observations..." /></div>
@@ -354,7 +314,7 @@ export default function RapportsPage() {
         <ConfirmDialog title="Supprimer ce rapport ?" danger
           message={'Supprimer "' + deleteItem.siteNom + '" du ' + new Date(deleteItem.date).toLocaleDateString('fr-FR') + ' ?'}
           confirmLabel="Supprimer"
-          onConfirm={() => { setRapports(p => p.filter(r => r.id !== deleteItem.id)); showToast('Rapport supprimé.'); setDeleteItem(null) }}
+          onConfirm={async () => { try { await deleteReport(deleteItem.id); setRapports(p => p.filter(r => r.id !== deleteItem.id)); showToast('Rapport supprimé.'); setDeleteItem(null) } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible de supprimer le rapport.', 'error') } }}
           onCancel={() => setDeleteItem(null)} />
       )}
     </div>
