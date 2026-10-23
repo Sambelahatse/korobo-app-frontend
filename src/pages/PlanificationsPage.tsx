@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Planification, Site } from '../types'
-import { mockPlanifications, mockSites } from '../data/mockData'
+import { createPlanification, deletePlanification, listPlanificationSites, listPlanificationTechnicians, listPlanifications, updatePlanification } from '../services/planificationService'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
 import ActionsMenu from '../components/ActionsMenu'
@@ -23,10 +23,11 @@ const prioStyle = { haute: 'text-red-500', moyenne: 'text-amber-500', basse: 'te
 const prioIcon  = { haute: '▲▲', moyenne: '▲', basse: '▼' } as const
 
 function PlanifModal({
-  planif, sites, onClose, onSave,
+  planif, sites, technicians, onClose, onSave,
 }: {
   planif: Partial<Planification>
   sites: Site[]
+  technicians: Array<{ id: string; fullName: string }>
   onClose: () => void
   onSave: (p: Planification) => void
 }) {
@@ -123,7 +124,10 @@ function PlanifModal({
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-600">Technicien *</label>
-            <input className={inputCls(errors.technicien)} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)} placeholder="Nom du technicien" />
+            <select className={inputCls(errors.technicien) + ' bg-white'} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)}>
+              <option value="">Sélectionner un technicien</option>
+              {technicians.map(technician => <option key={technician.id} value={technician.fullName}>{technician.fullName}</option>)}
+            </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
@@ -141,41 +145,27 @@ function PlanifModal({
 }
 
 export default function PlanificationsPage() {
-  const [items, setItems] = useState<Planification[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.planifications.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Planification[]
-      }
-    } catch { /* Use demo data if local storage is unavailable or invalid. */ }
-    return mockPlanifications
-  })
-  const [sites, setSites] = useState<Site[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.sites.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Site[]
-      }
-    } catch { /* Fall back to demo sites. */ }
-    return mockSites
-  })
+  const [items, setItems] = useState<Planification[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [technicians, setTechnicians] = useState<Array<{ id: string; fullName: string }>>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
-  useEffect(() => {
-    try { localStorage.setItem('korobo.planifications.v1', JSON.stringify(items)) } catch { /* Storage may be unavailable. */ }
-  }, [items])
-
-  useEffect(() => {
-    const refreshSites = () => {
-      try {
-        const saved = localStorage.getItem('korobo.sites.v1')
-        setSites(saved === null ? mockSites : JSON.parse(saved) as Site[])
-      } catch { setSites(mockSites) }
+  const refresh = async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const [planifications, availableSites, availableTechnicians] = await Promise.all([listPlanifications(), listPlanificationSites(), listPlanificationTechnicians()])
+      setItems(planifications)
+      setSites(availableSites)
+      setTechnicians(availableTechnicians)
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossible de charger les planifications.')
+    } finally {
+      setLoading(false)
     }
-    window.addEventListener('storage', refreshSites)
-    return () => window.removeEventListener('storage', refreshSites)
-  }, [])
+  }
+  useEffect(() => { void refresh() }, [])
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
   const [search,       setSearch]       = useState('')
@@ -217,11 +207,16 @@ export default function PlanificationsPage() {
     return sortDirection === 'asc' ? result : -result
   })
 
-  const handleSave = (p: Planification) => {
-    const exists = items.some(x => x.id === p.id)
-    setItems(prev => prev.some(x => x.id === p.id) ? prev.map(x => x.id === p.id ? p : x) : [p, ...prev])
-    showToast(exists ? 'Planification mise à jour.' : 'Planification créée.')
-    setShowModal(false); setEditItem(null)
+  const handleSave = async (p: Planification) => {
+    try {
+      const exists = items.some(x => x.id === p.id)
+      const saved = exists ? await updatePlanification(p) : await createPlanification(p)
+      setItems(prev => exists ? prev.map(x => x.id === saved.id ? saved : x) : [saved, ...prev])
+      showToast(exists ? 'Planification mise à jour.' : 'Planification créée.')
+      setShowModal(false); setEditItem(null)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer la planification.', 'error')
+    }
   }
 
   return (
@@ -239,6 +234,8 @@ export default function PlanificationsPage() {
         </button>
       </div>
 
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError} <button className="ml-2 font-semibold underline" onClick={() => void refresh()}>Réessayer</button></div>}
+      {loading && <div className="mb-4 rounded-lg bg-white px-4 py-3 text-sm text-gray-500">Chargement des planifications…</div>}
       {/* Filters */}
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-2">
@@ -343,13 +340,13 @@ export default function PlanificationsPage() {
       )}
 
       {(showModal || editItem) && (
-        <PlanifModal planif={editItem ?? {}} sites={sites} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
+        <PlanifModal planif={editItem ?? {}} sites={sites} technicians={technicians} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
       )}
       {deleteItem && (
         <ConfirmDialog title="Supprimer cette planification ?" danger
           message={'Supprimer "' + deleteItem.siteNom + '" du ' + new Date(deleteItem.date).toLocaleDateString('fr-FR') + ' ?'}
           confirmLabel="Supprimer"
-          onConfirm={() => { setItems(p => p.filter(x => x.id !== deleteItem.id)); showToast('Planification supprimée.'); setDeleteItem(null) }}
+          onConfirm={async () => { try { await deletePlanification(deleteItem.id); setItems(p => p.filter(x => x.id !== deleteItem.id)); showToast('Planification supprimée.'); setDeleteItem(null) } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible de supprimer la planification.', 'error') } }}
           onCancel={() => setDeleteItem(null)} />
       )}
     </div>
