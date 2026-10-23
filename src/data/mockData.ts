@@ -24,18 +24,18 @@ export const mockSites: Site[] = [
 ]
 
 export const mockPlanifications: Planification[] = [
-  { id: 'P01', siteId: '01', siteNom: 'Site Andohalo A', type: 'préventive', statut: 'planifiée', date: '2026-03-15', technicien: 'Rakoto Jean', description: 'Nettoyage panneaux et vérification connexions', priorite: 'moyenne' },
-  { id: 'P02', siteId: '02', siteNom: 'Site Analakely B', type: 'corrective', statut: 'en cours', date: '2026-03-13', technicien: 'Randria Paul', description: 'Remplacement onduleur défectueux', priorite: 'haute' },
-  { id: 'P03', siteId: '05', siteNom: 'Site Sabotsy Namehana', type: 'préventive', statut: 'planifiée', date: '2026-03-20', technicien: 'Solofo Eric', description: 'Inspection générale et test batteries', priorite: 'basse' },
-  { id: 'P04', siteId: '08', siteNom: 'Site Tsimbazaza', type: 'corrective', statut: 'en cours', date: '2026-03-12', technicien: 'Heritiana Soa', description: 'Réparation câblage endommagé', priorite: 'haute' },
-  { id: 'P05', siteId: '13', siteNom: 'Site Mahamasina', type: 'urgence', statut: 'planifiée', date: '2026-03-14', technicien: 'Andriamanana T.', description: 'Panne totale système - intervention urgente', priorite: 'haute' },
-  { id: 'P06', siteId: '03', siteNom: 'Site Ambohimanarina', type: 'préventive', statut: 'terminée', date: '2026-03-05', technicien: 'Rakotondrabe K.', description: 'Entretien trimestriel complet', priorite: 'moyenne' },
-  { id: 'P07', siteId: '07', siteNom: 'Site Tanjombato', type: 'préventive', statut: 'planifiée', date: '2026-03-25', technicien: 'Razanadrakoto L.', description: 'Vérification protection parafoudre', priorite: 'basse' },
-  { id: 'P08', siteId: '12', siteNom: 'Site Ankorondrano', type: 'corrective', statut: 'planifiée', date: '2026-03-18', technicien: 'Rasoamaromaka N.', description: 'Mise à jour firmware contrôleur', priorite: 'moyenne' },
-  { id: 'P09', siteId: '14', siteNom: 'Site Ampitatafika', type: 'corrective', statut: 'en cours', date: '2026-03-11', technicien: 'Randriamahazo B.', description: 'Remplacement batterie déchargée', priorite: 'haute' },
-  { id: 'P10', siteId: '18', siteNom: 'Site Manjakaray', type: 'préventive', statut: 'planifiée', date: '2026-04-01', technicien: 'Ramanantsoa P.', description: 'Inspection annuelle complète', priorite: 'basse' },
-  { id: 'P11', siteId: '17', siteNom: 'Site Anosy', type: 'préventive', statut: 'terminée', date: '2026-02-28', technicien: 'Rakotondramanana S.', description: 'Nettoyage et test performance', priorite: 'moyenne' },
-  { id: 'P12', siteId: '19', siteNom: 'Site Ivandry', type: 'urgence', statut: 'annulée', date: '2026-03-01', technicien: 'Randrianarisoa E.', description: 'Alarme fausse positive résolue', priorite: 'haute' },
+  { id: 'P01', siteId: '01', siteNom: 'Site Andohalo A', type: 'préventive', statut: 'planifiée', date: '2026-03-15', startTime: '09:00', endTime: '10:00', technicien: 'Rakoto Jean', description: 'Nettoyage panneaux et vérification connexions', priorite: 'moyenne' },
+  { id: 'P02', siteId: '02', siteNom: 'Site Analakely B', type: 'corrective', statut: 'en cours', date: '2026-03-13', startTime: '09:00', endTime: '10:00', technicien: 'Randria Paul', description: 'Remplacement onduleur défectueux', priorite: 'haute' },
+  { id: 'P03', siteId: '05', siteNom: 'Site Sabotsy Namehana', type: 'préventive', statut: 'planifiée', date: '2026-03-20', startTime: '09:00', endTime: '10:00', technicien: 'Solofo Eric', description: 'Inspection générale et test batteries', priorite: 'basse' },
+  { id: 'P04', siteId: '08', siteNom: 'Site Tsimbazaza', type: 'corrective', statut: 'en cours', date: '2026-03-12', startTime: '09:00', endTime: '10:00', technicien: 'Heritiana Soa', description: 'Réparation câblage endommagé', priorite: 'haute' },
+  { id: 'P05', siteId: '13', siteNom: 'Site Mahamasina', type: 'urgence', statut: 'planifiée', date: '2026-03-14', startTime: '09:00', endTime: '10:00', technicien: 'Andriamanana T.', description: 'Panne totale système - intervention urgente', priorite: 'haute' },
+  { id: 'P06', siteId: '03', siteNom: 'Site Ambohimanarina', type: 'préventive', statut: 'terminée', date: '2026-03-05', startTime: '09:00', endTime: '10:00', technicien: 'Rakotondrabe K.', description: 'Entretien trimestriel complet', priorite: 'moyenne' },
+  { id: 'P07', siteId: '07', siteNom: 'Site Tanjombato', type: 'préventive', statut: 'planifiée', date: '2026-03-25', startTime: '09:00', endTime: '10:00', technicien: 'Razanadrakoto L.', description: 'Vérification protection parafoudre', priorite: 'basse' },
+  { id: 'P08', siteId: '12', siteNom: 'Site Ankorondrano', type: 'corrective', statut: 'planifiée', date: '2026-03-18', startTime: '09:00', endTime: '10:00', technicien: 'Rasoamaromaka N.', description: 'Mise à jour firmware contrôleur', priorite: 'moyenne' },
+  { id: 'P09', siteId: '14', siteNom: 'Site Ampitatafika', type: 'corrective', statut: 'en cours', date: '2026-03-11', startTime: '09:00', endTime: '10:00', technicien: 'Randriamahazo B.', description: 'Remplacement batterie déchargée', priorite: 'haute' },
+  { id: 'P10', siteId: '18', siteNom: 'Site Manjakaray', type: 'préventive', statut: 'planifiée', date: '2026-04-01', startTime: '09:00', endTime: '10:00', technicien: 'Ramanantsoa P.', description: 'Inspection annuelle complète', priorite: 'basse' },
+  { id: 'P11', siteId: '17', siteNom: 'Site Anosy', type: 'préventive', statut: 'terminée', date: '2026-02-28', startTime: '09:00', endTime: '10:00', technicien: 'Rakotondramanana S.', description: 'Nettoyage et test performance', priorite: 'moyenne' },
+  { id: 'P12', siteId: '19', siteNom: 'Site Ivandry', type: 'urgence', statut: 'annulée', date: '2026-03-01', startTime: '09:00', endTime: '10:00', technicien: 'Randrianarisoa E.', description: 'Alarme fausse positive résolue', priorite: 'haute' },
 ]
 
 export const mockNotifications: Notification[] = [
