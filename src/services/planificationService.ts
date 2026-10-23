@@ -1,6 +1,5 @@
 import { getAccessToken } from './authService'
 import type { Planification, Site } from '../types'
-import { listSites } from './siteService'
 
 type ApiUser = { id: string; fullName: string; email?: string; role?: string }
 type ApiPlanification = {
@@ -89,7 +88,12 @@ export async function deletePlanification(id: string): Promise<void> {
   await request<void>(`/planifications/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 export async function listPlanificationSites(): Promise<Site[]> {
-  return listSites()
+  const result = await request<ApiResponse<Array<{ id: string; name: string; location: string; ownerName: string }>>>('/sites')
+  return result.data.map(site => ({
+    id: site.id, nom: site.name, localisation: site.location, proprietaire: site.ownerName,
+    contact1Nom: site.ownerName, contact1Tel: '', contact2Nom: '', contact2Tel: '',
+    annee: '', statut: 'actif', typeInstallation: '', puissance: 0, gps: '',
+  }))
 }
 
 export async function listPlanificationTechnicians(): Promise<ApiUser[]> {
