@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ModernIcon } from '../components/Icons'
-import { mockSites, mockPlanifications, mockNotifications } from '../data/mockData'
 import SortableHeader from '../components/SortableHeader'
 import type { Site, Planification, Notification } from '../types'
 import { listSites } from '../services/siteService'
