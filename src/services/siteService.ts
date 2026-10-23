@@ -1,6 +1,5 @@
 import { getAccessToken, getMyProfile } from './authService'
 import type { Site } from '../types'
-import { mockSites } from '../data/mockData'
 
 interface ApiSite {
   id: string; publicId?: string; name: string; location: string; ownerName: string; caseNumber?: string | null
@@ -76,7 +75,6 @@ export async function listSites(): Promise<Site[]> {
           const parsed: unknown = raw ? JSON.parse(raw) : null
           if (Array.isArray(parsed)) legacySites = parsed as Site[]
         } catch { /* Use the initial sample data if the legacy cache is unreadable. */ }
-        if (legacySites.length === 0) legacySites = mockSites
         for (const legacySite of legacySites) {
           try { await createSite(legacySite) }
           catch (error) {
