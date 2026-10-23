@@ -80,7 +80,6 @@ export default function CalendrierPage() {
   )
   const selectedEvents = monthEvents.filter(event => event.date === selected)
   const activeYearCount = yearEvents.filter(event => event.status !== 'Annulée').length
-  const completedYearCount = yearEvents.filter(event => event.status === 'Terminée').length
   const overdueCount = filteredEvents.filter(event => event.date < dateKey(new Date()) && !['Terminée', 'Annulée'].includes(event.status)).length
 
   const firstDay = new Date(month.getFullYear(), month.getMonth(), 1)
