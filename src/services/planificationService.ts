@@ -89,7 +89,7 @@ export async function deletePlanification(id: string): Promise<void> {
 }
 export async function listPlanificationSites(): Promise<Site[]> {
   const result = await request<ApiResponse<Array<{ id: string; name: string; location: string; ownerName: string }>>>('/sites')
-  return result.data.map(site => ({
+  return result.data.map((site): Site => ({
     id: site.id, nom: site.name, localisation: site.location, proprietaire: site.ownerName,
     contact1Nom: site.ownerName, contact1Tel: '', contact2Nom: '', contact2Tel: '',
     annee: '', statut: 'actif', typeInstallation: '', puissance: 0, gps: '',
