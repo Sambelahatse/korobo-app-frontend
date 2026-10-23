@@ -5,19 +5,9 @@ import type { Site, Planification, Notification } from '../types'
 import { listSites } from '../services/siteService'
 import { listPlanifications } from '../services/planificationService'
 import { listNotifications } from '../services/notificationService'
+import { listEquipment } from '../services/equipmentService'
 
 type DashboardEquipment = { id: string; name: string; status: 'Opérationnel' | 'À surveiller' | 'En panne' }
-
-function readLocalArray<T>(key: string, fallback: T[]): T[] {
-  try {
-    const stored = window.localStorage.getItem(key)
-    if (!stored) return fallback
-    const parsed: unknown = JSON.parse(stored)
-    return Array.isArray(parsed) ? parsed as T[] : fallback
-  } catch {
-    return fallback
-  }
-}
 
 function StatCard({ label, value, sub, color, icon, iconTone, surface }: { label: string; value: string | number; sub: string; color: string; icon: ReactNode; iconTone: string; surface: string }) {
   return (
@@ -38,18 +28,19 @@ export default function DashboardPage() {
   const [sites, setSites] = useState<Site[]>([])
   const [planifications, setPlanifications] = useState<Planification[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [equipment, setEquipment] = useState<DashboardEquipment[]>([])
   const [loading, setLoading] = useState(true)
   const [loadErrors, setLoadErrors] = useState<string[]>([])
-  const equipment = useMemo(() => readLocalArray<DashboardEquipment>('korobo.equipment.v1', []), [])
 
   useEffect(() => {
     let active = true
     async function loadDashboardData() {
       setLoading(true)
-      const [sitesResult, planificationsResult, notificationsResult] = await Promise.allSettled([
+      const [sitesResult, planificationsResult, notificationsResult, equipmentResult] = await Promise.allSettled([
         listSites(),
         listPlanifications(),
         listNotifications(),
+        listEquipment(),
       ])
       if (!active) return
       const errors: string[] = []
@@ -59,6 +50,13 @@ export default function DashboardPage() {
       else errors.push('interventions')
       if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value.notifications)
       else errors.push('notifications')
+      if (equipmentResult.status === 'fulfilled') {
+        setEquipment(equipmentResult.value.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          status: item.status === 'faulty' ? 'En panne' : item.status === 'warning' || item.status === 'under_maintenance' ? 'À surveiller' : 'Opérationnel',
+        })))
+      } else errors.push('équipements')
       setLoadErrors(errors)
       setLoading(false)
     }
@@ -208,7 +206,7 @@ export default function DashboardPage() {
         {loadErrors.length > 0 && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           Certaines données n’ont pas pu être chargées ({loadErrors.join(', ')}). Les sections concernées peuvent être incomplètes ; vérifiez votre connexion puis rechargez la page.
         </div>}
-        <p className="text-xs text-gray-400">Sites, interventions et notifications proviennent de l’API Korobo. Les indicateurs d’équipements utilisent encore les données enregistrées dans ce navigateur.</p>
+        <p className="text-xs text-gray-400">Sites, interventions, notifications et équipements sont chargés depuis l’API Korobo.</p>
       </div>
 
       {/* Interventions table — scrollable on mobile */}
