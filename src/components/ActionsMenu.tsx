@@ -1,6 +1,6 @@
 import { Children, Fragment, cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 
-type ActionElement = ReactElement<{ className?: string; title?: string; 'aria-label'?: string; children?: ReactNode }>
+type ActionElement = ReactElement<{ className?: string; title?: string; role?: string; 'aria-label'?: string; children?: ReactNode }>
 
 function flattenActions(children: ReactNode): ReactNode[] {
   return Children.toArray(children).flatMap(child => {
@@ -52,7 +52,6 @@ export default function ActionsMenu({ children }: { children: ReactNode }) {
   if (actions.length === 1) {
     const action = actions[0]
     const label = actionLabel(action)
-    const hasText = Children.toArray(action.props.children).some(child => typeof child === 'string' || typeof child === 'number')
     return <div className="flex items-center justify-end">
       {cloneElement(action, {
         className: `${action.props.className ?? ''} !inline-flex !min-h-8 !items-center !justify-center !gap-2 !rounded-lg !border !border-gray-200 !px-2.5 !py-1.5 !text-xs !font-medium !text-gray-600 !shadow-none !transition-colors hover:!border-[#dce8d5] hover:!bg-[#f0f7eb] hover:!text-[#4A7A3B] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#4A7A3B]/30`,
