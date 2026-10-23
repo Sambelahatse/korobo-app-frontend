@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Planification, Site } from '../types'
-import { mockPlanifications, mockSites } from '../data/mockData'
+import { createPlanification, deletePlanification, listPlanificationSites, listPlanifications, updatePlanification } from '../services/planificationService'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
 import ActionsMenu from '../components/ActionsMenu'
@@ -141,41 +141,26 @@ function PlanifModal({
 }
 
 export default function PlanificationsPage() {
-  const [items, setItems] = useState<Planification[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.planifications.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Planification[]
-      }
-    } catch { /* Use demo data if local storage is unavailable or invalid. */ }
-    return mockPlanifications
-  })
-  const [sites, setSites] = useState<Site[]>(() => {
-    try {
-      const saved = localStorage.getItem('korobo.sites.v1')
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved)
-        if (Array.isArray(parsed)) return parsed as Site[]
-      }
-    } catch { /* Fall back to demo sites. */ }
-    return mockSites
-  })
+  const [items, setItems] = useState<Planification[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    try { localStorage.setItem('korobo.planifications.v1', JSON.stringify(items)) } catch { /* Storage may be unavailable. */ }
-  }, [items])
-
-  useEffect(() => {
-    const refreshSites = () => {
-      try {
-        const saved = localStorage.getItem('korobo.sites.v1')
-        setSites(saved === null ? mockSites : JSON.parse(saved) as Site[])
-      } catch { setSites(mockSites) }
+  const refresh = async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const [planifications, availableSites] = await Promise.all([listPlanifications(), listPlanificationSites()])
+      setItems(planifications)
+      setSites(availableSites)
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossible de charger les planifications.')
+    } finally {
+      setLoading(false)
     }
-    window.addEventListener('storage', refreshSites)
-    return () => window.removeEventListener('storage', refreshSites)
-  }, [])
+  }
+  useEffect(() => { void refresh() }, [])
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
   const [search,       setSearch]       = useState('')
@@ -217,11 +202,17 @@ export default function PlanificationsPage() {
     return sortDirection === 'asc' ? result : -result
   })
 
-  const handleSave = (p: Planification) => {
-    const exists = items.some(x => x.id === p.id)
-    setItems(prev => prev.some(x => x.id === p.id) ? prev.map(x => x.id === p.id ? p : x) : [p, ...prev])
-    showToast(exists ? 'Planification mise à jour.' : 'Planification créée.')
-    setShowModal(false); setEditItem(null)
+  const handleSave = async (p: Planification) => {
+    setSaving(true)
+    try {
+      const exists = items.some(x => x.id === p.id)
+      const saved = exists ? await updatePlanification(p) : await createPlanification(p)
+      setItems(prev => exists ? prev.map(x => x.id === saved.id ? saved : x) : [saved, ...prev])
+      showToast(exists ? 'Planification mise à jour.' : 'Planification créée.')
+      setShowModal(false); setEditItem(null)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer la planification.', 'error')
+    } finally { setSaving(false) }
   }
 
   return (
@@ -239,6 +230,8 @@ export default function PlanificationsPage() {
         </button>
       </div>
 
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError} <button className="ml-2 font-semibold underline" onClick={() => void refresh()}>Réessayer</button></div>}
+      {loading && <div className="mb-4 rounded-lg bg-white px-4 py-3 text-sm text-gray-500">Chargement des planifications…</div>}
       {/* Filters */}
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-2">
@@ -349,7 +342,7 @@ export default function PlanificationsPage() {
         <ConfirmDialog title="Supprimer cette planification ?" danger
           message={'Supprimer "' + deleteItem.siteNom + '" du ' + new Date(deleteItem.date).toLocaleDateString('fr-FR') + ' ?'}
           confirmLabel="Supprimer"
-          onConfirm={() => { setItems(p => p.filter(x => x.id !== deleteItem.id)); showToast('Planification supprimée.'); setDeleteItem(null) }}
+          onConfirm={async () => { try { await deletePlanification(deleteItem.id); setItems(p => p.filter(x => x.id !== deleteItem.id)); showToast('Planification supprimée.'); setDeleteItem(null) } catch (error) { showToast(error instanceof Error ? error.message : 'Impossible de supprimer la planification.', 'error') } }}
           onCancel={() => setDeleteItem(null)} />
       )}
     </div>
