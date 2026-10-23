@@ -6,6 +6,8 @@ import { listPlanifications } from '../services/planificationService'
 type EventItem = {
   id: string
   date: string
+  startTime: string
+  endTime: string
   title: string
   site: string
   kind: 'Préventive' | 'Corrective' | 'Urgence'
@@ -61,6 +63,8 @@ export default function CalendrierPage() {
   const events = useMemo<EventItem[]>(() => items.map(item => ({
     id: item.id,
     date: item.date,
+    startTime: item.startTime || "09:00",
+    endTime: item.endTime || "10:00",
     title: item.description.trim() || `Intervention ${kindLabel(item.type).toLowerCase()}`,
     site: item.siteNom,
     kind: kindLabel(item.type),
@@ -205,7 +209,7 @@ export default function CalendrierPage() {
         <div className="space-y-3 p-4">
           {selectedEvents.length ? selectedEvents.map(event => <article key={event.id} className="rounded-xl border border-gray-100 p-4">
             <div className="flex items-start justify-between gap-2"><span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${colors[event.kind]}`}>{event.kind}</span><span className="text-[11px] text-gray-400">{event.status}</span></div>
-            <h3 className="mt-3 text-sm font-bold text-gray-900">{event.title}</h3><p className="mt-1 text-xs text-gray-500">{event.site}</p>
+            <h3 className="mt-3 text-sm font-bold text-gray-900">{event.title}</h3><p className="mt-1 text-xs font-semibold text-[#4A7A3B]">{event.startTime}–{event.endTime}</p><p className="mt-1 text-xs text-gray-500">{event.site}</p>
             <div className="mt-3 flex items-center gap-2 text-xs text-gray-600"><ModernIcon name="user-round" size={15} />{event.technician}</div>
             <button onClick={() => openForEdit(event.id)} className="mt-4 w-full rounded-lg border border-[#4A7A3B]/30 px-3 py-2 text-xs font-semibold text-[#4A7A3B] transition hover:bg-[#edf4e9]">Modifier l’intervention</button>
           </article>) : <div className="rounded-xl border border-dashed border-gray-200 p-7 text-center"><div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-400"><ModernIcon name="calendar-check" size={21} /></div><p className="mt-3 text-sm font-semibold text-gray-700">Aucune intervention prévue</p><p className="mt-1 text-xs text-gray-500">Aucune intervention correspondant aux filtres pour cette date.</p></div>}
