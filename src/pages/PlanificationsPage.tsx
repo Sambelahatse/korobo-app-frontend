@@ -51,11 +51,10 @@ function PlanifModal({
     const e: Record<string, string> = {}
     if (!form.siteNom?.trim())    e.siteNom   = 'Champ obligatoire'
     if (!form.date)               e.date       = 'Champ obligatoire'
-    if (!form.technicien?.trim()) e.technicien = 'Champ obligatoire'
     if (!form.startTime || !form.endTime) e.time = 'Les heures de début et de fin sont obligatoires'
     else if (form.startTime >= form.endTime) e.time = 'L’heure de fin doit être postérieure à l’heure de début'
     if (Object.keys(e).length) { setErrors(e); return }
-    const hasConflict = planifications.some(existing =>
+    const hasConflict = !!form.technicien?.trim() && planifications.some(existing =>
       existing.id !== form.id &&
       existing.date === form.date &&
       existing.technicien.trim().toLocaleLowerCase() === (form.technicien || '').trim().toLocaleLowerCase() &&
@@ -151,10 +150,23 @@ function PlanifModal({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-600">Technicien *</label>
+            <label className="text-xs font-semibold text-gray-600">Technicien</label>
             <select className={inputCls(errors.technicien) + ' bg-white'} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)}>
-              <option value="">Sélectionner un technicien</option>
-              {technicians.map(technician => <option key={technician.id} value={technician.fullName}>{technician.fullName}</option>)}
+              <option value="">Non affectée — à attribuer plus tard</option>
+              {technicians.map(technician => {
+                const busy = planifications.some(existing =>
+                  existing.id !== form.id &&
+                  existing.date === (form.date || '') &&
+                  existing.technicien.trim().toLocaleLowerCase() === technician.fullName.trim().toLocaleLowerCase() &&
+                  !['terminée', 'annulée'].includes(existing.statut) &&
+                  !['terminée', 'annulée'].includes(form.statut || 'planifiée') &&
+                  (existing.startTime || '09:00') < (form.endTime || '10:00') &&
+                  (existing.endTime || '10:00') > (form.startTime || '09:00')
+                )
+                return <option key={technician.id} value={technician.fullName} disabled={busy}>
+                  {technician.fullName}{busy ? ' — déjà occupé sur ce créneau' : ' — disponible'}
+                </option>
+              })}
             </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
           </div>
@@ -195,6 +207,7 @@ export default function PlanificationsPage() {
   }
   useEffect(() => { void refresh() }, [])
   const [filterStatut, setFilterStatut] = useState('tous')
+  const [filterAffectation, setFilterAffectation] = useState<'tous' | 'a-affecter'>('tous')
   const [filterType,   setFilterType]   = useState('tous')
   const [search,       setSearch]       = useState('')
   const [showModal,    setShowModal]    = useState(false)
@@ -221,7 +234,8 @@ export default function PlanificationsPage() {
     const q = search.toLowerCase()
     return (p.siteNom.toLowerCase().includes(q) || p.technicien.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)) &&
       (filterStatut === 'tous' || p.statut === filterStatut) &&
-      (filterType   === 'tous' || p.type   === filterType)
+      (filterType   === 'tous' || p.type   === filterType) &&
+      (filterAffectation === 'tous' || (!p.technicien || !p.technicien.trim()))
   })
 
   const sorted = [...filtered].sort((a, b) => {
@@ -253,7 +267,7 @@ export default function PlanificationsPage() {
       <div className="flex items-start sm:items-center justify-between gap-3 mb-5">
         <div>
           <h2 className="font-sans font-bold text-xl text-gray-800">Planifications</h2>
-          <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{items.length} interventions</p>
+          <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{items.length} interventions · {items.filter(p => !p.technicien || !p.technicien.trim()).length} à affecter</p>
         </div>
         <button onClick={() => setShowModal(true)} className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-[#4A7A3B] hover:bg-[#5C8A42] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors flex-shrink-0">
           <span>+</span>
@@ -286,6 +300,17 @@ export default function PlanificationsPage() {
             </button>
           </div>
         </div>
+        {/* Affectation filter */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => setFilterAffectation('tous')}
+            className={'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ' + (filterAffectation === 'tous' ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400')}>
+            Toutes les interventions ({items.length})
+          </button>
+          <button onClick={() => setFilterAffectation('a-affecter')}
+            className={'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ' + (filterAffectation === 'a-affecter' ? 'bg-amber-500 text-white' : 'bg-amber-50 border border-amber-200 text-amber-700 hover:border-amber-400')}>
+            À affecter ({items.filter(p => !p.technicien || !p.technicien.trim()).length})
+          </button>
+        </div>
         {/* Statut pills — horizontal scroll mobile */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
           {(['tous','planifiée','en cours','terminée','annulée'] as const).map(s => (
@@ -316,7 +341,7 @@ export default function PlanificationsPage() {
               <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>
               <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-50">
                 <span>📅 {new Date(p.date + 'T12:00:00').toLocaleDateString('fr-FR')} · {p.startTime || '09:00'}–{p.endTime || '10:00'}</span>
-                <span className="truncate max-w-[120px]">👷 {p.technicien}</span>
+                <span className="truncate max-w-[120px]">👷 {p.technicien || 'À affecter'}</span>
               </div>
               <div className="flex gap-2 mt-3">
                 <button onClick={() => setEditItem(p)} className="flex-1 py-1.5 text-xs font-medium border border-gray-200 rounded-md text-gray-600 hover:border-[#4A7A3B] hover:text-[#4A7A3B] transition-colors">Modifier</button>
@@ -351,7 +376,7 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3"><span className={'text-[10px] font-semibold px-2 py-0.5 rounded-md ' + typeStyle[p.type]}>{p.type}</span></td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-bold ' + prioStyle[p.priorite]}>{p.priorite}</span></td>
                     <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{new Date(p.date + 'T12:00:00').toLocaleDateString('fr-FR')}<span className="block text-[11px] text-gray-400">{p.startTime || '09:00'}–{p.endTime || '10:00'}</span></td>
-                    <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{p.technicien}</td>
+                    <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{p.technicien || <span className="text-amber-600 font-semibold">À affecter</span>}</td>
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
                       <ActionsMenu>
