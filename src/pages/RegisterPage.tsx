@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import PhoneNumberField from '../components/PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
-import { bootstrapOwner } from '../services/authService'
+import { registerCompany, signIn } from '../services/authService'
 
 interface Props { onRegister: () => void; onGoLogin: () => void; onBack: () => void }
 
@@ -59,11 +59,11 @@ function PasswordStrength({ password }: { password: string }) {
 
 export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   const [step,      setStep]      = useState<1|2>(1)
+  const [companyName, setCompanyName] = useState('')
   const [nom,       setNom]       = useState('')
   const [prenom,    setPrenom]    = useState('')
   const [email,     setEmail]     = useState('')
   const [telephone, setTelephone] = useState('')
-  const [setupToken, setSetupToken] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [password,  setPassword]  = useState('')
   const [confirm,   setConfirm]   = useState('')
@@ -75,6 +75,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
 
   const validate1 = () => {
     const e: Record<string,string> = {}
+    if (!companyName.trim()) e.companyName = 'Nom de l’entreprise requis'
     if (!nom.trim())    e.nom    = 'Requis'
     if (!prenom.trim()) e.prenom = 'Requis'
     if (!email.trim())  e.email  = 'Requis'
@@ -84,7 +85,6 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
   const validate2 = () => {
     const e: Record<string,string> = {}
     if (password.length < 12)  e.password = 'Minimum 12 caractères'
-    if (!setupToken.trim())    e.setupToken = 'Code de configuration requis'
     if (password !== confirm)  e.confirm  = 'Ne correspondent pas'
     if (!agree)                e.agree    = 'Accepter les conditions'
     setErrors(e); return !Object.keys(e).length
@@ -105,13 +105,14 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
     if (!validate2()) return
     setLoading(true)
     try {
-      await bootstrapOwner({
+      await registerCompany({
+        companyName: companyName.trim(),
         fullName: `${prenom.trim()} ${nom.trim()}`,
         email: email.trim(),
         password,
         phone: telephone.trim() || undefined,
-        setupToken: setupToken.trim(),
       })
+      await signIn(email.trim(), password)
       onRegister()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'La création du compte a échoué.')
@@ -178,7 +179,14 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
             </p>
           </div>
 
-          <button type="button" onClick={() => window.location.assign((((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '') + '/auth/google?flow=register'))}
+          <button type="button" onClick={() => {
+            if (!companyName.trim()) {
+              setErrors(previous => ({ ...previous, companyName: 'Saisissez le nom de votre entreprise avant de continuer.' }))
+              return
+            }
+            const apiBase = ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '')
+            window.location.assign(apiBase + '/auth/google?flow=register&companyName=' + encodeURIComponent(companyName.trim()))
+          }}
             className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-lg bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.01 13.22l7.98 6.19C11.88 13.72 17.43 9.5 24 9.5z"/>
@@ -193,6 +201,11 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
           {/* STEP 1 */}
           {step === 1 && (
             <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">Nom de l’entreprise</label>
+                <input type="text" placeholder="Ex. Solar Mada" value={companyName} onChange={e => { setCompanyName(e.target.value); setErrors(previous => { const next = { ...previous }; delete next.companyName; return next }) }} className={inputCls('companyName')} />
+                {errors.companyName && <p className="text-xs text-red-500">{errors.companyName}</p>}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700">Nom</label>
@@ -256,14 +269,6 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 )}
                 {errors.confirm && <p className="text-xs text-red-500">{errors.confirm}</p>}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700">Code de configuration propriétaire</label>
-                <input type="password" autoComplete="off" placeholder="Code fourni par l’administrateur technique"
-                  value={setupToken} onChange={e => setSetupToken(e.target.value)} className={inputCls('setupToken')} />
-                <p className="text-xs leading-relaxed text-gray-500">Ce code à usage unique autorise la création du premier compte propriétaire. Il sera désactivé après la configuration.</p>
-                {errors.setupToken && <p className="text-xs text-red-500">{errors.setupToken}</p>}
-              </div>
-              {submitError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{submitError}</div>}
               <label className="flex items-start gap-2.5 cursor-pointer mt-1">
                 <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#4A7A3B] flex-shrink-0" />
                 <span className="text-sm text-gray-600 leading-relaxed">
