@@ -47,6 +47,37 @@ function PlanifModal({
     setErrors(e => ({ ...e, [k]: '', conflict: '' }))
   }
 
+  const suggestedSlots = (() => {
+    if (!form.date) return []
+    const toMinutes = (value: string) => {
+      const [hours, minutes] = value.split(':').map(Number)
+      return hours * 60 + minutes
+    }
+    const duration = Math.max(30, toMinutes(form.endTime || '10:00') - toMinutes(form.startTime || '09:00'))
+    const slots: Array<{ technician: string; start: string; end: string }> = []
+    for (const technician of technicians) {
+      for (let start = 8 * 60; start + duration <= 18 * 60; start += 30) {
+        const end = start + duration
+        const busy = planifications.some(existing =>
+          existing.id !== form.id &&
+          existing.date === form.date &&
+          existing.technicien.trim().toLocaleLowerCase() === technician.fullName.trim().toLocaleLowerCase() &&
+          !['terminée', 'annulée'].includes(existing.statut) &&
+          !['terminée', 'annulée'].includes(form.statut || 'planifiée') &&
+          toMinutes(existing.startTime || '09:00') < end &&
+          toMinutes(existing.endTime || '10:00') > start
+        )
+        if (!busy) slots.push({
+          technician: technician.fullName,
+          start: `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}`,
+          end: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`,
+        })
+        if (slots.length >= 12) return slots
+      }
+    }
+    return slots
+  })()
+
   const handleSave = () => {
     const e: Record<string, string> = {}
     if (!form.siteNom?.trim())    e.siteNom   = 'Champ obligatoire'
@@ -169,6 +200,28 @@ function PlanifModal({
               })}
             </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-gray-800">Suggestions de créneaux disponibles</p>
+              <span className="text-xs text-gray-500">Selon la durée choisie</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-600">Choisissez une proposition pour affecter automatiquement le technicien et les horaires.</p>
+            {suggestedSlots.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {suggestedSlots.slice(0, 6).map((slot, index) => (
+                  <button key={`${slot.technician}-${slot.start}-${index}`} type="button"
+                    onClick={() => {
+                      setForm(f => ({ ...f, technicien: slot.technician, startTime: slot.start, endTime: slot.end }))
+                      setErrors(e => ({ ...e, conflict: '', time: '', technicien: '' }))
+                    }}
+                    className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-left text-xs hover:border-emerald-500 hover:bg-emerald-100">
+                    <span className="block font-semibold text-gray-800">{slot.start}–{slot.end}</span>
+                    <span className="block text-gray-600">{slot.technician}</span>
+                  </button>
+                ))}
+              </div>
+            ) : <p className="mt-2 text-xs text-amber-700">Aucun créneau libre trouvé entre 08 h et 18 h pour cette durée. Essayez une autre date ou une durée plus courte.</p>}
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-600">Description</label>
