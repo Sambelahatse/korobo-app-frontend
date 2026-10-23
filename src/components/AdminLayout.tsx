@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { Page } from '../types'
 import { BellIcon, LogoutIcon, ModernIcon, type ModernIconName } from './Icons'
 import ConfirmDialog from './ConfirmDialog'
-import { mockNotifications } from '../data/mockData'
+import { listNotifications } from '../services/notificationService'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { signOut } from '../services/authService'
 import ToastViewport from './ToastViewport'
@@ -55,13 +55,14 @@ const pageMeta: Record<Page, { title: string }> = {
 
 export default function AdminLayout({ children, currentPage, onNavigate }: Props) {
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [logoutError, setLogoutError] = useState('')
   const [logoutLoading, setLogoutLoading] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { title } = pageMeta[currentPage]
   const currentIcon = pageIcons[currentPage]
-  const unreadCount = mockNotifications.filter(notification => !notification.lu).length
+  useEffect(() => { let active = true; const refresh = async () => { try { const result = await listNotifications(); if (active) setUnreadCount(result.unreadCount) } catch { if (active) setUnreadCount(0) } }; void refresh(); return () => { active = false } }, [currentPage])
 
   const handleLogout = async () => {
     setLogoutError('')
