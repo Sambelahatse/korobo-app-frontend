@@ -1,5 +1,4 @@
 import { getAccessToken, getMyProfile } from './authService'
-import { mockSites } from '../data/mockData'
 
 export type EquipmentStatus = 'operational' | 'warning' | 'faulty' | 'under_maintenance' | 'retired'
 export type TrackingMode = 'individual' | 'quantity'
@@ -73,45 +72,7 @@ function toIsoDate(value: string | undefined): string | null {
   return value.length === 10 ? `${value}T00:00:00.000Z` : value
 }
 
-async function migrateLocalSites(): Promise<void> {
-  // Do not silently continue when profile loading fails: that can leave the equipment form without sites.
-  const profile = await getMyProfile()
-  if (profile.role !== 'admin' && profile.role !== 'manager') return
-  let localSites: Array<Record<string, unknown>> = []
-  try {
-    const raw = window.localStorage.getItem('korobo.sites.v1')
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw)
-      if (Array.isArray(parsed)) localSites = parsed as Array<Record<string, unknown>>
-    }
-  } catch { return }
-  if (!localSites.length) localSites = mockSites as unknown as Array<Record<string, unknown>>
-  if (!localSites.length) return
-  const response = await request<ApiResponse<EquipmentSite[]>>('/sites')
-  const knownNames = new Set(response.data.map(site => site.name.trim().toLocaleLowerCase()))
-  for (const site of localSites) {
-    const name = String(site.nom ?? '').trim()
-    if (!name || knownNames.has(name.toLocaleLowerCase())) continue
-    const location = String(site.localisation ?? name).trim() || name
-    const ownerName = String(site.proprietaire ?? site.contact1Nom ?? 'À renseigner').trim() || 'À renseigner'
-    const year = Number(site.annee)
-    const power = Number(site.puissance)
-    await request('/sites', {
-      method: 'POST',
-      body: JSON.stringify({
-        name, location, ownerName,
-        caseNumber: typeof site.numAffaire === 'string' ? site.numAffaire : null,
-        ownerPhone: typeof site.contact1Tel === 'string' ? site.contact1Tel : null,
-        ownerEmail: typeof site.contact1Email === 'string' ? site.contact1Email : null,
-        installationYear: Number.isInteger(year) && year >= 1900 && year <= 2200 ? year : null,
-        installationType: typeof site.typeInstallation === 'string' ? site.typeInstallation : null,
-        powerKw: Number.isFinite(power) && power >= 0 ? power : null,
-        status: site.statut === 'inactif' ? 'inactive' : site.statut === 'maintenance' ? 'maintenance' : 'active',
-      }),
-    })
-    knownNames.add(name.toLocaleLowerCase())
-  }
-}
+
 async function migrateLocalEquipment(sites: EquipmentSite[]): Promise<void> {
   let profile
   try { profile = await getMyProfile() } catch { return }
@@ -152,7 +113,6 @@ async function migrateLocalEquipment(sites: EquipmentSite[]): Promise<void> {
 }
 
 export async function getEquipmentLookups(): Promise<{ sites: EquipmentSite[]; users: EquipmentUser[] }> {
-  await migrateLocalSites()
   const result = await request<ApiResponse<{ sites: EquipmentSite[]; users: EquipmentUser[] }>>('/equipment/lookups')
   await migrateLocalEquipment(result.data.sites)
   return result.data

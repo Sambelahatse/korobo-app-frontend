@@ -1,6 +1,5 @@
-import { getAccessToken, getMyProfile } from './authService'
+import { getAccessToken } from './authService'
 import type { Site } from '../types'
-import { mockSites } from '../data/mockData'
 
 interface ApiSite {
   id: string; publicId?: string; name: string; location: string; ownerName: string; caseNumber?: string | null
@@ -65,32 +64,7 @@ function toApi(site: Site) {
 }
 
 export async function listSites(): Promise<Site[]> {
-  let result = await request<ApiResponse<ApiSite[]>>('/sites')
-  if (result.data.length === 0) {
-    try {
-      const profile = await getMyProfile()
-      if (profile.role === 'admin' || profile.role === 'manager') {
-        let legacySites: Site[] = []
-        try {
-          const raw = window.localStorage.getItem('korobo.sites.v1')
-          const parsed: unknown = raw ? JSON.parse(raw) : null
-          if (Array.isArray(parsed)) legacySites = parsed as Site[]
-        } catch { /* Use the initial sample data if the legacy cache is unreadable. */ }
-        if (legacySites.length === 0) legacySites = mockSites
-        for (const legacySite of legacySites) {
-          try { await createSite(legacySite) }
-          catch (error) {
-            // A concurrent sync or duplicate name should not prevent other sites from migrating.
-            if (!(error instanceof Error) || !error.message.toLowerCase().includes('nom')) throw error
-          }
-        }
-        result = await request<ApiResponse<ApiSite[]>>('/sites')
-      }
-    } catch (error) {
-      // If migration fails, surface it instead of pretending the database has been populated.
-      throw error
-    }
-  }
+  const result = await request<ApiResponse<ApiSite[]>>('/sites')
   return result.data.map(fromApi)
 }
 export async function createSite(site: Site): Promise<Site> {
