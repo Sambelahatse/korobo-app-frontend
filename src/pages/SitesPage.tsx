@@ -70,7 +70,7 @@ export default function SitesPage() {
 
   const sorted = [...filtered].sort((a, b) => {
     const values: Record<string, (site: Site) => string | number> = {
-      id: site => site.id, nom: site => site.nom, localisation: site => site.localisation,
+      id: site => site.publicId ?? '', nom: site => site.nom, localisation: site => site.localisation,
       type: site => site.typeInstallation, puissance: site => site.puissance, statut: site => site.statut,
     }
     const get = values[sortKey] || values.nom
@@ -152,7 +152,7 @@ export default function SitesPage() {
             <thead>
               <tr className="bg-[#5a7a4a]">
                 {[
-                  { label: '#ID', key: 'id' }, { label: 'Nom du site', key: 'nom' },
+                  { label: 'ID', key: 'id' }, { label: 'Nom du site', key: 'nom' },
                   { label: 'Localisation', key: 'localisation' }, { label: 'Type', key: 'type' },
                   { label: 'kW', key: 'puissance' }, { label: 'Statut', key: 'statut' },
                 ].map(col => <SortableHeader key={col.key} label={col.label} sortKey={col.key} activeKey={sortKey} direction={sortDirection} onSort={toggleSort} className="px-3 lg:px-4 py-3 text-left text-white font-sans font-semibold text-[11px] lg:text-[12px] tracking-wide whitespace-nowrap" />)}
@@ -166,7 +166,7 @@ export default function SitesPage() {
                 <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">{loadError ? 'Les sites n’ont pas pu être chargés.' : 'Aucun site trouvé'}</td></tr>
               ) : paginated.map((site, i) => (
                 <tr key={site.id} className={`border-b border-gray-50 hover:bg-[#f0f7eb] transition-colors ${i % 2 === 1 ? 'bg-[#f9fbf7]' : 'bg-white'}`}>
-                  <td className="px-3 lg:px-4 py-3 font-mono text-xs text-gray-500">{site.id}</td>
+                  <td className="px-3 lg:px-4 py-3 font-mono text-xs text-gray-500">{site.publicId ?? '—'}</td>
                   <td className="px-3 lg:px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{site.nom}</td>
                   <td className="px-3 lg:px-4 py-3 text-gray-500 text-xs max-w-[130px] truncate">{site.localisation}</td>
                   <td className="px-3 lg:px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{site.typeInstallation}</td>

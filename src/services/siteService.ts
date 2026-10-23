@@ -3,7 +3,7 @@ import type { Site } from '../types'
 import { mockSites } from '../data/mockData'
 
 interface ApiSite {
-  id: string; name: string; location: string; ownerName: string; caseNumber?: string | null
+  id: string; publicId?: string; name: string; location: string; ownerName: string; caseNumber?: string | null
   ownerPhone?: string | null; ownerEmail?: string | null; latitude?: string | number | null; longitude?: string | number | null
   installationYear?: number | null; installationType?: string | null; powerKw?: string | number | null
   installerName?: string | null; installerPhone?: string | null; electricalInstallation?: string | null
@@ -32,7 +32,7 @@ function fromApi(site: ApiSite): Site {
   const latitude = site.latitude == null ? '' : String(site.latitude)
   const longitude = site.longitude == null ? '' : String(site.longitude)
   return {
-    id: site.id, nom: site.name, localisation: site.location, proprietaire: site.ownerName,
+    id: site.id, publicId: site.publicId, nom: site.name, localisation: site.location, proprietaire: site.ownerName,
     contact1Nom: site.ownerName, contact1Tel: site.ownerPhone ?? '', contact2Nom: '', contact2Tel: '',
     annee: site.installationYear == null ? '' : String(site.installationYear),
     statut: site.status === 'inactive' || site.status === 'terminated' ? 'inactif' : site.status === 'maintenance' ? 'maintenance' : 'actif',

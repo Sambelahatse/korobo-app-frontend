@@ -13,6 +13,7 @@ export type Page =
 
 export interface Site {
   id: string
+  publicId?: string
   nom: string
   localisation: string
   contact1Nom: string
