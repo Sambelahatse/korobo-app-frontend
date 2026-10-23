@@ -1,5 +1,4 @@
 import { getAccessToken, getMyProfile } from './authService'
-import { mockSites } from '../data/mockData'
 
 export type EquipmentStatus = 'operational' | 'warning' | 'faulty' | 'under_maintenance' | 'retired'
 export type TrackingMode = 'individual' | 'quantity'
@@ -85,7 +84,6 @@ async function migrateLocalSites(): Promise<void> {
       if (Array.isArray(parsed)) localSites = parsed as Array<Record<string, unknown>>
     }
   } catch { return }
-  if (!localSites.length) localSites = mockSites as unknown as Array<Record<string, unknown>>
   if (!localSites.length) return
   const response = await request<ApiResponse<EquipmentSite[]>>('/sites')
   const knownNames = new Set(response.data.map(site => site.name.trim().toLocaleLowerCase()))
