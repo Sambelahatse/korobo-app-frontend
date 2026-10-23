@@ -1,8 +1,11 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ModernIcon } from '../components/Icons'
 import { mockSites, mockPlanifications, mockNotifications } from '../data/mockData'
 import SortableHeader from '../components/SortableHeader'
 import type { Site, Planification, Notification } from '../types'
+import { listSites } from '../services/siteService'
+import { listPlanifications } from '../services/planificationService'
+import { listNotifications } from '../services/notificationService'
 
 type DashboardEquipment = { id: string; name: string; status: 'Opérationnel' | 'À surveiller' | 'En panne' }
 
@@ -33,10 +36,36 @@ function StatCard({ label, value, sub, color, icon, iconTone, surface }: { label
 }
 
 export default function DashboardPage() {
-  const sites = useMemo(() => readLocalArray<Site>('korobo.sites.v1', mockSites), [])
+  const [sites, setSites] = useState<Site[]>([])
+  const [planifications, setPlanifications] = useState<Planification[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadErrors, setLoadErrors] = useState<string[]>([])
   const equipment = useMemo(() => readLocalArray<DashboardEquipment>('korobo.equipment.v1', []), [])
-  const planifications = mockPlanifications as Planification[]
-  const notifications = mockNotifications as Notification[]
+
+  useEffect(() => {
+    let active = true
+    async function loadDashboardData() {
+      setLoading(true)
+      const [sitesResult, planificationsResult, notificationsResult] = await Promise.allSettled([
+        listSites(),
+        listPlanifications(),
+        listNotifications(),
+      ])
+      if (!active) return
+      const errors: string[] = []
+      if (sitesResult.status === 'fulfilled') setSites(sitesResult.value)
+      else errors.push('sites')
+      if (planificationsResult.status === 'fulfilled') setPlanifications(planificationsResult.value)
+      else errors.push('interventions')
+      if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value.notifications)
+      else errors.push('notifications')
+      setLoadErrors(errors)
+      setLoading(false)
+    }
+    void loadDashboardData()
+    return () => { active = false }
+  }, [])
   const actifs      = sites.filter(s => s.statut === 'actif').length
   const maintenance = sites.filter(s => s.statut === 'maintenance').length
   const inactifs    = sites.filter(s => s.statut === 'inactif').length
@@ -175,7 +204,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400">Les indicateurs des sites et équipements reflètent les données enregistrées dans ce navigateur. Les interventions et notifications utilisent encore les données de démonstration.</p>
+      <div className="space-y-2">
+        {loading && <p role="status" className="text-xs text-gray-500">Chargement des données du tableau de bord…</p>}
+        {loadErrors.length > 0 && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Certaines données n’ont pas pu être chargées ({loadErrors.join(', ')}). Les sections concernées peuvent être incomplètes ; vérifiez votre connexion puis rechargez la page.
+        </div>}
+        <p className="text-xs text-gray-400">Sites, interventions et notifications proviennent de l’API Korobo. Les indicateurs d’équipements utilisent encore les données enregistrées dans ce navigateur.</p>
+      </div>
 
       {/* Interventions table — scrollable on mobile */}
       <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
@@ -195,6 +230,9 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
+              {!loading && sortedRecent.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Aucune intervention en cours ou planifiée.</td></tr>
+              )}
               {sortedRecent.map((p, i) => (
                 <tr key={p.id} className={`border-t border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                   <td className="px-4 lg:px-6 py-2.5 lg:py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
