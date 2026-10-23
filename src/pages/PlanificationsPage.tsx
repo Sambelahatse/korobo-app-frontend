@@ -23,10 +23,11 @@ const prioStyle = { haute: 'text-red-500', moyenne: 'text-amber-500', basse: 'te
 const prioIcon  = { haute: '▲▲', moyenne: '▲', basse: '▼' } as const
 
 function PlanifModal({
-  planif, sites, onClose, onSave,
+  planif, sites, technicians, onClose, onSave,
 }: {
   planif: Partial<Planification>
   sites: Site[]
+  technicians: Array<{ id: string; fullName: string }>
   onClose: () => void
   onSave: (p: Planification) => void
 }) {
