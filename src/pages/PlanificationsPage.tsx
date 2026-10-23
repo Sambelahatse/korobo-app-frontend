@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Planification, Site } from '../types'
-import { createPlanification, deletePlanification, listPlanificationSites, listPlanifications, updatePlanification } from '../services/planificationService'
+import { createPlanification, deletePlanification, listPlanificationSites, listPlanificationTechnicians, listPlanifications, updatePlanification } from '../services/planificationService'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
 import ActionsMenu from '../components/ActionsMenu'
@@ -123,7 +123,10 @@ function PlanifModal({
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-600">Technicien *</label>
-            <input className={inputCls(errors.technicien)} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)} placeholder="Nom du technicien" />
+            <select className={inputCls(errors.technicien) + ' bg-white'} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)}>
+              <option value="">Sélectionner un technicien</option>
+              {technicians.map(technician => <option key={technician.id} value={technician.fullName}>{technician.fullName}</option>)}
+            </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
@@ -143,17 +146,18 @@ function PlanifModal({
 export default function PlanificationsPage() {
   const [items, setItems] = useState<Planification[]>([])
   const [sites, setSites] = useState<Site[]>([])
+  const [technicians, setTechnicians] = useState<Array<{ id: string; fullName: string }>>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [saving, setSaving] = useState(false)
 
   const refresh = async () => {
     setLoading(true)
     setLoadError('')
     try {
-      const [planifications, availableSites] = await Promise.all([listPlanifications(), listPlanificationSites()])
+      const [planifications, availableSites, availableTechnicians] = await Promise.all([listPlanifications(), listPlanificationSites(), listPlanificationTechnicians()])
       setItems(planifications)
       setSites(availableSites)
+      setTechnicians(availableTechnicians)
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Impossible de charger les planifications.')
     } finally {
@@ -203,7 +207,6 @@ export default function PlanificationsPage() {
   })
 
   const handleSave = async (p: Planification) => {
-    setSaving(true)
     try {
       const exists = items.some(x => x.id === p.id)
       const saved = exists ? await updatePlanification(p) : await createPlanification(p)
@@ -212,7 +215,7 @@ export default function PlanificationsPage() {
       setShowModal(false); setEditItem(null)
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer la planification.', 'error')
-    } finally { setSaving(false) }
+    }
   }
 
   return (
@@ -336,7 +339,7 @@ export default function PlanificationsPage() {
       )}
 
       {(showModal || editItem) && (
-        <PlanifModal planif={editItem ?? {}} sites={sites} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
+        <PlanifModal planif={editItem ?? {}} sites={sites} technicians={technicians} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
       )}
       {deleteItem && (
         <ConfirmDialog title="Supprimer cette planification ?" danger
