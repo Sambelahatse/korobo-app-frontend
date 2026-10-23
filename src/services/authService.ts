@@ -55,6 +55,13 @@ export async function signIn(email: string, password: string): Promise<AuthProfi
   const result = await apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
   return saveSession(result)
 }
+export async function registerCompany(input: { companyName: string; fullName: string; email: string; password: string; phone?: string }): Promise<AuthProfile> {
+  const result = await apiRequest<AuthResponse & { company: { id: string; name: string } }>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ companyName: input.companyName, fullName: input.fullName, email: input.email, password: input.password, phone: input.phone })
+  })
+  return saveSession(result)
+}
 export async function bootstrapOwner(input: { fullName: string; email: string; password: string; phone?: string; setupToken: string }): Promise<AuthProfile> {
   const result = await apiRequest<AuthResponse>('/auth/bootstrap-owner', {
     method: 'POST',
