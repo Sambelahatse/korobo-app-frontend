@@ -1,7 +1,7 @@
-import { Children, Fragment, cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import { Children, Fragment, cloneElement, isValidElement, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
-type ActionElement = ReactElement<{ className?: string; title?: string; role?: string; 'aria-label'?: string; children?: ReactNode }>
+type ActionElement = ReactElement<{ className?: string; title?: string; role?: string; 'aria-label'?: string; children?: ReactNode; onClick?: (event: ReactMouseEvent<HTMLElement>) => void }>
 
 function flattenActions(children: ReactNode): ReactNode[] {
   return Children.toArray(children).flatMap(child => {
@@ -117,12 +117,17 @@ export default function ActionsMenu({ children }: { children: ReactNode }) {
           const label = actionLabel(action)
           const hasText = Children.toArray(action.props.children).some(child => typeof child === 'string' || typeof child === 'number')
           const destructiveClass = isDestructive(label) ? ' hover:!bg-red-50 hover:!text-red-600' : ''
+          const originalOnClick = action.props.onClick
           return <div key={action.key ?? index} role="none">
             {cloneElement(action, {
               className: `${action.props.className ?? ''}${menuItemClassName}${destructiveClass}`,
               title: undefined,
               'aria-label': label,
               role: 'menuitem',
+              onClick: (event: ReactMouseEvent<HTMLElement>) => {
+                setOpen(false)
+                originalOnClick?.(event)
+              },
             }, <>
               {action.props.children}
               {!hasText && <span>{label}</span>}
