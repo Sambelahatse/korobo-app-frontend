@@ -51,10 +51,10 @@ function PlanifModal({
     const e: Record<string, string> = {}
     if (!form.siteNom?.trim())    e.siteNom   = 'Champ obligatoire'
     if (!form.date)               e.date       = 'Champ obligatoire'
-        if (!form.startTime || !form.endTime) e.time = 'Les heures de début et de fin sont obligatoires'
+    if (!form.startTime || !form.endTime) e.time = 'Les heures de début et de fin sont obligatoires'
     else if (form.startTime >= form.endTime) e.time = 'L’heure de fin doit être postérieure à l’heure de début'
     if (Object.keys(e).length) { setErrors(e); return }
-    const hasConflict = planifications.some(existing =>
+    const hasConflict = !!form.technicien?.trim() && planifications.some(existing =>
       existing.id !== form.id &&
       existing.date === form.date &&
       existing.technicien.trim().toLocaleLowerCase() === (form.technicien || '').trim().toLocaleLowerCase() &&
@@ -152,8 +152,21 @@ function PlanifModal({
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-600">Technicien</label>
             <select className={inputCls(errors.technicien) + ' bg-white'} value={form.technicien || ''} onChange={e => set('technicien', e.target.value)}>
-              <option value="">Sélectionner un technicien</option>
-              {technicians.map(technician => <option key={technician.id} value={technician.fullName}>{technician.fullName}</option>)}
+              <option value="">Non affectée — à attribuer plus tard</option>
+              {technicians.map(technician => {
+                const busy = planifications.some(existing =>
+                  existing.id !== form.id &&
+                  existing.date === (form.date || '') &&
+                  existing.technicien.trim().toLocaleLowerCase() === technician.fullName.trim().toLocaleLowerCase() &&
+                  !['terminée', 'annulée'].includes(existing.statut) &&
+                  !['terminée', 'annulée'].includes(form.statut || 'planifiée') &&
+                  (existing.startTime || '09:00') < (form.endTime || '10:00') &&
+                  (existing.endTime || '10:00') > (form.startTime || '09:00')
+                )
+                return <option key={technician.id} value={technician.fullName} disabled={busy}>
+                  {technician.fullName}{busy ? ' — déjà occupé sur ce créneau' : ' — disponible'}
+                </option>
+              })}
             </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
           </div>
