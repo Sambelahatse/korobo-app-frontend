@@ -51,6 +51,8 @@ export interface Planification {
   type: 'préventive' | 'corrective' | 'urgence'
   statut: 'planifiée' | 'en cours' | 'terminée' | 'annulée'
   date: string
+  startTime: string
+  endTime: string
   technicien: string
   description: string
   priorite: 'haute' | 'moyenne' | 'basse'

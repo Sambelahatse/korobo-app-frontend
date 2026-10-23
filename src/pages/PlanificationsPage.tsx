@@ -23,19 +23,20 @@ const prioStyle = { haute: 'text-red-500', moyenne: 'text-amber-500', basse: 'te
 const prioIcon  = { haute: '▲▲', moyenne: '▲', basse: '▼' } as const
 
 function PlanifModal({
-  planif, sites, technicians, onClose, onSave,
+  planif, sites, technicians, planifications, onClose, onSave,
 }: {
   planif: Partial<Planification>
   sites: Site[]
+  planifications: Planification[]
   technicians: Array<{ id: string; fullName: string }>
   onClose: () => void
   onSave: (p: Planification) => void
 }) {
   const isEdit = !!(planif as Planification)?.id
   const [form, setForm] = useState<Partial<Planification>>(
-    Object.keys(planif).length ? planif : {
+    Object.keys(planif).length ? { ...planif, startTime: planif.startTime || "09:00", endTime: planif.endTime || "10:00" } : {
       type: 'préventive', statut: 'planifiée', priorite: 'moyenne',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0], startTime: '09:00', endTime: '10:00',
       siteNom: '', technicien: '', description: '',
     }
   )
@@ -43,7 +44,7 @@ function PlanifModal({
 
   const set = (k: keyof Planification, v: string) => {
     setForm(f => ({ ...f, [k]: v }))
-    setErrors(e => ({ ...e, [k]: '' }))
+    setErrors(e => ({ ...e, [k]: '', conflict: '' }))
   }
 
   const handleSave = () => {
@@ -51,7 +52,22 @@ function PlanifModal({
     if (!form.siteNom?.trim())    e.siteNom   = 'Champ obligatoire'
     if (!form.date)               e.date       = 'Champ obligatoire'
     if (!form.technicien?.trim()) e.technicien = 'Champ obligatoire'
+    if (!form.startTime || !form.endTime) e.time = 'Les heures de début et de fin sont obligatoires'
+    else if (form.startTime >= form.endTime) e.time = 'L’heure de fin doit être postérieure à l’heure de début'
     if (Object.keys(e).length) { setErrors(e); return }
+    const hasConflict = planifications.some(existing =>
+      existing.id !== form.id &&
+      existing.date === form.date &&
+      existing.technicien.trim().toLocaleLowerCase() === (form.technicien || '').trim().toLocaleLowerCase() &&
+      !['terminée', 'annulée'].includes(existing.statut) &&
+      !['terminée', 'annulée'].includes(form.statut || 'planifiée') &&
+      (existing.startTime || '09:00') < (form.endTime || '10:00') &&
+      (existing.endTime || '10:00') > (form.startTime || '09:00')
+    )
+    if (hasConflict) {
+      setErrors({ conflict: 'Conflit détecté : ce technicien a déjà une intervention sur ce créneau.' })
+      return
+    }
     const selectedSite = sites.find(site => site.id === form.siteId || site.nom === form.siteNom)
     onSave({ ...form, siteId: selectedSite?.id || form.siteId || '', siteNom: selectedSite?.nom || form.siteNom?.trim() || '', id: (form as Planification).id || 'P' + Date.now() } as Planification)
   }
@@ -95,6 +111,18 @@ function PlanifModal({
               {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-600">Heure de début *</label>
+              <input type="time" className={inputCls(errors.time)} value={form.startTime || '09:00'} onChange={e => set('startTime', e.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-600">Heure de fin *</label>
+              <input type="time" className={inputCls(errors.time)} value={form.endTime || '10:00'} onChange={e => set('endTime', e.target.value)} required />
+            </div>
+            {errors.time && <p className="col-span-2 text-xs text-red-500">{errors.time}</p>}
+          </div>
+          {errors.conflict && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errors.conflict}</div>}
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-600">Type</label>
@@ -287,7 +315,7 @@ export default function PlanificationsPage() {
               <h3 className="font-sans font-bold text-sm text-gray-800 mb-1">{p.siteNom}</h3>
               <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>
               <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-50">
-                <span>📅 {new Date(p.date).toLocaleDateString('fr-FR')}</span>
+                <span>📅 {new Date(p.date + 'T12:00:00').toLocaleDateString('fr-FR')} · {p.startTime || '09:00'}–{p.endTime || '10:00'}</span>
                 <span className="truncate max-w-[120px]">👷 {p.technicien}</span>
               </div>
               <div className="flex gap-2 mt-3">
@@ -322,7 +350,7 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-semibold px-2 py-0.5 rounded-md ' + typeStyle[p.type]}>{p.type}</span></td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-bold ' + prioStyle[p.priorite]}>{p.priorite}</span></td>
-                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{new Date(p.date + 'T12:00:00').toLocaleDateString('fr-FR')}<span className="block text-[11px] text-gray-400">{p.startTime || '09:00'}–{p.endTime || '10:00'}</span></td>
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{p.technicien}</td>
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
@@ -340,7 +368,7 @@ export default function PlanificationsPage() {
       )}
 
       {(showModal || editItem) && (
-        <PlanifModal planif={editItem ?? {}} sites={sites} technicians={technicians} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
+        <PlanifModal planif={editItem ?? {}} sites={sites} technicians={technicians} planifications={items} onClose={() => { setShowModal(false); setEditItem(null) }} onSave={handleSave} />
       )}
       {deleteItem && (
         <ConfirmDialog title="Supprimer cette planification ?" danger

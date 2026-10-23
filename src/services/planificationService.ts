@@ -10,6 +10,8 @@ type ApiPlanification = {
   description: string | null
   maintenanceType: string | null
   scheduledAt: string
+  startTime?: string
+  endTime?: string
   durationMinutes: number | null
   status: 'planned' | 'in_progress' | 'completed' | 'cancelled'
   assignedToId: string | null
@@ -46,6 +48,8 @@ function fromApi(item: ApiPlanification): Planification {
     type: typeFromApi(item.maintenanceType),
     statut: statusFromApi(item.status),
     date: item.scheduledAt.slice(0, 10),
+    startTime: item.startTime?.slice(0, 5) ?? "09:00",
+    endTime: item.endTime?.slice(0, 5) ?? "10:00",
     technicien: item.assignedTo?.fullName ?? '',
     description: item.description ?? item.title,
     priorite: typeFromApi(item.maintenanceType) === 'urgence' ? 'haute' : typeFromApi(item.maintenanceType) === 'corrective' ? 'moyenne' : 'basse',
@@ -65,7 +69,10 @@ async function toApi(item: Planification) {
     title: item.description.trim() || `Intervention ${item.type}`,
     description: item.description.trim() || null,
     maintenanceType: item.type === 'urgence' ? 'emergency' : item.type === 'corrective' ? 'corrective' : 'preventive',
-    scheduledAt: new Date(`${item.date}T09:00:00`).toISOString(),
+    scheduledAt: new Date(`${item.date}T00:00:00.000Z`).toISOString(),
+    startTime: item.startTime || "09:00",
+    endTime: item.endTime || "10:00",
+    durationMinutes: Math.round((Date.parse(`2000-01-01T${item.endTime || "10:00"}:00Z`) - Date.parse(`2000-01-01T${item.startTime || "09:00"}:00Z`)) / 60000),
     status: statusToApi[item.statut],
     assignedToId,
   }
