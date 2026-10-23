@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import CompanySettingsCard from '../components/CompanySettingsCard'
 import PhoneNumberField from '../components/PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { showToast } from '../components/ToastViewport'
@@ -152,7 +153,9 @@ export default function SettingsPage() {
   if (!profile && error) return <div className="p-4 sm:p-8"><div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}<button onClick={() => void load()} className="ml-3 font-semibold underline">Réessayer</button></div></div>
 
   return <div className="p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-3xl space-y-5">
-    <div className="mb-2"><h2 className="text-xl font-bold text-gray-800">Paramètres du compte</h2><p className="mt-1 text-sm text-gray-500">Gérez vos informations, votre sécurité et vos préférences.</p></div>
+    <div className="mb-2"><h2 className="text-xl font-bold text-gray-800">Paramètres</h2><p className="mt-1 text-sm text-gray-500">Gérez les informations de votre entreprise, votre compte, votre sécurité et vos préférences.</p></div>
+
+    <CompanySettingsCard />
 
     <Card title="Informations personnelles" description="Ces informations sont enregistrées dans votre compte KOROBO.">
       <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-xs text-gray-500">{profile?.role}</p></div></div>
