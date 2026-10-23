@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { showToast } from './ToastViewport'
 import { getAccessToken } from '../services/authService'
+import PhoneNumberField from './PhoneNumberField'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 
 interface CompanyProfile {
   id: string
@@ -79,6 +81,7 @@ export default function CompanySettingsCard() {
     event.preventDefault()
     if (!canEdit) return
     if (draft.name.trim().length < 2) { setError('Le nom de l’entreprise doit contenir au moins 2 caractères.'); return }
+    if (draft.phone?.trim() && !isValidPhoneNumber(draft.phone.trim())) { setError('Veuillez saisir un numéro de téléphone professionnel valide.'); return }
     setSaving(true); setError('')
     try {
       const result = await request<{ data: CompanyProfile }>('/company', {
@@ -104,7 +107,7 @@ export default function CompanySettingsCard() {
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map(field => <label key={field.key} className={'block text-sm font-semibold text-gray-700 ' + (field.wide ? 'sm:col-span-2' : '')}>
           {field.label}
-          <input className={inputClass} type={field.type || 'text'} maxLength={field.key === 'description' ? 2000 : 500} value={draft[field.key] || ''} onChange={event => update(field.key, event.target.value)} readOnly={!canEdit} placeholder={field.placeholder} />
+          {field.key === 'phone' ? <div className="mt-1.5"><PhoneNumberField value={draft.phone || ''} onChange={value => update('phone', value)} disabled={!canEdit} placeholder="Téléphone professionnel" /></div> : <input className={inputClass} type={field.type || 'text'} maxLength={field.key === 'description' ? 2000 : 500} value={draft[field.key] || ''} onChange={event => update(field.key, event.target.value)} readOnly={!canEdit} placeholder={field.placeholder} />}
         </label>)}
         <label className="block text-sm font-semibold text-gray-700 sm:col-span-2">Description de l’entreprise
           <textarea className={inputClass} rows={3} maxLength={2000} value={draft.description || ''} onChange={event => update('description', event.target.value)} readOnly={!canEdit} placeholder="Présentez brièvement votre activité…" />
