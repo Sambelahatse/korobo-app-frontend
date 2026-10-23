@@ -1,5 +1,6 @@
 export interface AuthProfile {
   id: string
+  companyId: string
   fullName: string
   email: string
   role: 'admin' | 'manager' | 'technician' | 'viewer'
