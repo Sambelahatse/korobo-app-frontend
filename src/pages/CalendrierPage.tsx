@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import type { Planification } from '../types'
-import { listPlanifications } from '../services/planificationService'
+import { listPlanifications, updatePlanification } from '../services/planificationService'
 
 type EventItem = {
   id: string
@@ -41,6 +41,8 @@ export default function CalendrierPage() {
   const [technician, setTechnician] = useState('Tous')
   const [view, setView] = useState<'year' | 'month'>('year')
   const [year, setYear] = useState(() => new Date().getFullYear())
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dropError, setDropError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -114,6 +116,19 @@ export default function CalendrierPage() {
   }
   const formatDate = (value: string) => new Date(value + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
   const openForEdit = (id: string) => { window.location.hash = `#/planifications?edit=${encodeURIComponent(id)}` }
+  const handleDrop = async (date: string, eventId: string) => {
+    setDropError('')
+    setDraggingId(null)
+    const current = items.find(item => item.id === eventId)
+    if (!current || current.date === date || ['terminée', 'annulée'].includes(current.statut)) return
+    try {
+      const updated = await updatePlanification({ ...current, date })
+      setItems(previous => previous.map(item => item.id === updated.id ? updated : item))
+      setSelected(date)
+    } catch (error) {
+      setDropError(error instanceof Error ? error.message : 'Impossible de déplacer cette intervention.')
+    }
+  }
   const eventsForMonth = (monthIndex: number) => yearEvents.filter(event => Number(event.date.slice(5, 7)) === monthIndex + 1)
   const monthShortDate = (value: string) => new Date(value + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
@@ -131,7 +146,7 @@ export default function CalendrierPage() {
       </div>
     </div>
 
-    {loadError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError} <button className="ml-2 font-semibold underline" onClick={() => window.location.reload()}>Réessayer</button></div>}
+    {(loadError || dropError) && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError || dropError} <button className="ml-2 font-semibold underline" onClick={() => window.location.reload()}>Réessayer</button></div>}
     {loading && <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">Chargement du calendrier…</div>}
 
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -185,7 +200,7 @@ export default function CalendrierPage() {
       <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-500"><span className="font-semibold text-gray-700">Charge estimée</span><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gray-300" />Aucune</span><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />Faible</span><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-400" />Moyenne</span><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-400" />Élevée</span><span className="ml-auto text-gray-400">Basée sur le nombre d’interventions</span></div>
     </section> : <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.8fr)]">
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#5C8A42]">Planning mensuel</p><h2 className="text-xl font-bold text-gray-900">{monthNames[month.getMonth()]} {month.getFullYear()}</h2><p className="mt-1 text-xs text-gray-500">Sélectionnez une journée pour consulter ses interventions.</p></div><div className="flex gap-1"><button onClick={() => moveMonth(-1)} aria-label="Mois précédent" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50">←</button><button onClick={() => moveMonth(1)} aria-label="Mois suivant" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50">→</button></div></div>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#5C8A42]">Planning mensuel</p><h2 className="text-xl font-bold text-gray-900">{monthNames[month.getMonth()]} {month.getFullYear()}</h2><p className="mt-1 text-xs text-gray-500">Sélectionnez une journée. Glissez une intervention vers une autre date pour la replanifier.</p></div><div className="flex gap-1"><button onClick={() => moveMonth(-1)} aria-label="Mois précédent" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50">←</button><button onClick={() => moveMonth(1)} aria-label="Mois suivant" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50">→</button></div></div>
         <div className="grid grid-cols-7 gap-1">
           {weekdayNames.map(day => <div key={day} className="py-2 text-center text-[11px] font-bold uppercase text-gray-400 sm:text-xs">{day}</div>)}
           {cells.map((day, index) => {
@@ -194,7 +209,7 @@ export default function CalendrierPage() {
             const dayEvents = monthEvents.filter(event => event.date === key)
             const active = selected === key
             const today = dateKey(new Date()) === key
-            return <button key={key} onClick={() => setSelected(key)} aria-pressed={active} className={`min-h-[66px] rounded-lg border p-1.5 text-left transition sm:min-h-[92px] sm:p-2 ${active ? 'border-[#4A7A3B] bg-[#edf4e9] ring-1 ring-[#4A7A3B]/20' : 'border-gray-100 hover:border-gray-300 hover:bg-gray-50'}`}>
+            return <button key={key} onClick={() => setSelected(key)} onDragOver={event => { if (draggingId) event.preventDefault() }} onDrop={event => { event.preventDefault(); if (draggingId) void handleDrop(key, draggingId) }} aria-pressed={active} className={`min-h-[66px] rounded-lg border p-1.5 text-left transition sm:min-h-[92px] sm:p-2 ${active ? 'border-[#4A7A3B] bg-[#edf4e9] ring-1 ring-[#4A7A3B]/20' : 'border-gray-100 hover:border-gray-300 hover:bg-gray-50'}`}>
               <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${today ? 'bg-[#4A7A3B] text-white' : active ? 'text-[#3d672f]' : 'text-gray-700'}`}>{day.getDate()}</span>
               <div className="mt-1 space-y-1">{dayEvents.slice(0, 2).map(event => <div key={event.id} className={`truncate rounded px-1 py-0.5 text-[9px] font-semibold sm:text-[10px] ${event.kind === 'Urgence' ? 'bg-rose-100 text-rose-700' : event.kind === 'Corrective' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{event.title}</div>)}{dayEvents.length > 2 && <p className="text-[9px] text-gray-500">+{dayEvents.length - 2}</p>}</div>
               {dayEvents.length > 0 && <div className="mt-1 flex gap-0.5">{dayEvents.slice(0, 4).map(event => <span key={event.id} className={`h-1.5 w-1.5 rounded-full ${statusDot[event.status]}`} />)}</div>}
@@ -207,7 +222,7 @@ export default function CalendrierPage() {
       <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5"><p className="text-xs font-bold uppercase tracking-wide text-[#5C8A42]">Détail de la date</p><h2 className="mt-1 text-lg font-bold capitalize text-gray-900">{selected ? formatDate(selected) : 'Choisir une date'}</h2><p className="mt-1 text-xs text-gray-500">{selectedEvents.length} intervention{selectedEvents.length > 1 ? 's' : ''} pour cette date</p></div>
         <div className="space-y-3 p-4">
-          {selectedEvents.length ? selectedEvents.map(event => <article key={event.id} className="rounded-xl border border-gray-100 p-4">
+          {selectedEvents.length ? selectedEvents.map(event => <article key={event.id} draggable={!['Terminée', 'Annulée'].includes(event.status)} onDragStart={drag => { setDraggingId(event.id); drag.dataTransfer.effectAllowed = 'move'; drag.dataTransfer.setData('text/plain', event.id) }} onDragEnd={() => setDraggingId(null)} className={`rounded-xl border border-gray-100 p-4 ${!['Terminée', 'Annulée'].includes(event.status) ? 'cursor-grab active:cursor-grabbing' : ''}`}>
             <div className="flex items-start justify-between gap-2"><span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${colors[event.kind]}`}>{event.kind}</span><span className="text-[11px] text-gray-400">{event.status}</span></div>
             <h3 className="mt-3 text-sm font-bold text-gray-900">{event.title}</h3><p className="mt-1 text-xs font-semibold text-[#4A7A3B]">{event.startTime}–{event.endTime}</p><p className="mt-1 text-xs text-gray-500">{event.site}</p>
             <div className="mt-3 flex items-center gap-2 text-xs text-gray-600"><ModernIcon name="user-round" size={15} />{event.technician}</div>
