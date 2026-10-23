@@ -91,3 +91,8 @@ export async function deletePlanification(id: string): Promise<void> {
 export async function listPlanificationSites(): Promise<Site[]> {
   return listSites()
 }
+
+export async function listPlanificationTechnicians(): Promise<ApiUser[]> {
+  const result = await request<ApiResponse<{ sites: unknown[]; users: ApiUser[] }>>('/equipment/lookups')
+  return result.data.users
+}
