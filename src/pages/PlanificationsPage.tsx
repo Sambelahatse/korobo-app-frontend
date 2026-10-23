@@ -44,7 +44,7 @@ function PlanifModal({
 
   const set = (k: keyof Planification, v: string) => {
     setForm(f => ({ ...f, [k]: v }))
-    setErrors(e => ({ ...e, [k]: '' }))
+    setErrors(e => ({ ...e, [k]: '', conflict: '' }))
   }
 
   const handleSave = () => {
@@ -350,7 +350,7 @@ export default function PlanificationsPage() {
                     <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{p.siteNom}</td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-semibold px-2 py-0.5 rounded-md ' + typeStyle[p.type]}>{p.type}</span></td>
                     <td className="px-4 py-3"><span className={'text-[10px] font-bold ' + prioStyle[p.priorite]}>{p.priorite}</span></td>
-                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{new Date(p.date + 'T12:00:00').toLocaleDateString('fr-FR')}<span className="block text-[11px] text-gray-400">{p.startTime || '09:00'}–{p.endTime || '10:00'}</span></td>
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{p.technicien}</td>
                     <td className="px-4 py-3"><span className={'px-2 py-0.5 rounded-full text-[10px] font-semibold ' + statutStyle[p.statut]}>{p.statut}</span></td>
                     <td className="px-4 py-3">
