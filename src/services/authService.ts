@@ -5,6 +5,7 @@ export interface AuthProfile {
   role: 'admin' | 'manager' | 'technician' | 'viewer'
   phone: string | null
   isActive: boolean
+  organizationId: string
 }
 type AuthResponse = { data: AuthProfile; accessToken: string; tokenType: 'Bearer'; expiresIn: string }
 const TOKEN_KEY = 'korobo.access-token'
@@ -55,13 +56,17 @@ export async function signIn(email: string, password: string): Promise<AuthProfi
   const result = await apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
   return saveSession(result)
 }
-export async function bootstrapOwner(input: { fullName: string; email: string; password: string; phone?: string; setupToken: string }): Promise<AuthProfile> {
-  const result = await apiRequest<AuthResponse>('/auth/bootstrap-owner', {
+export async function registerCompany(input: { companyName: string; fullName: string; email: string; password: string; phone?: string }): Promise<void> {
+  await apiRequest('/register', {
     method: 'POST',
-    headers: { 'x-owner-bootstrap-token': input.setupToken },
-    body: JSON.stringify({ fullName: input.fullName, email: input.email, password: input.password, phone: input.phone })
+    body: JSON.stringify({
+      companyName: input.companyName.trim(),
+      fullName: input.fullName.trim(),
+      email: input.email.trim(),
+      password: input.password,
+      phone: input.phone
+    })
   })
-  return saveSession(result)
 }
 export async function requestPasswordReset(email: string): Promise<void> {
   if (!email.trim()) throw new Error('Saisissez votre adresse e-mail.')
