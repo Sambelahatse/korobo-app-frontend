@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import type { Planification } from '../types'
-import { mockPlanifications } from '../data/mockData'
+import { listPlanifications } from '../services/planificationService'
 
 type EventItem = {
   id: string
@@ -23,28 +23,31 @@ const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padS
 const kindLabel = (type: Planification['type']): EventItem['kind'] => type === 'urgence' ? 'Urgence' : type === 'corrective' ? 'Corrective' : 'Préventive'
 const statusLabel = (status: Planification['statut']): EventItem['status'] => status === 'en cours' ? 'En cours' : status === 'terminée' ? 'Terminée' : status === 'annulée' ? 'Annulée' : 'Planifiée'
 
-function readPlanifications(): Planification[] {
-  try {
-    const saved = localStorage.getItem('korobo.planifications.v1')
-    if (saved !== null) {
-      const parsed: unknown = JSON.parse(saved)
-      if (Array.isArray(parsed)) return parsed as Planification[]
-    }
-  } catch { /* Fall back to demo data when local storage is unavailable. */ }
-  return mockPlanifications
-}
 
 export default function CalendrierPage() {
-  const [items, setItems] = useState<Planification[]>(readPlanifications)
+  const [items, setItems] = useState<Planification[]>([]) 
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
   const [selected, setSelected] = useState(() => dateKey(new Date()))
   const [kind, setKind] = useState('Tous')
 
-  // Keep the calendar in sync with edits made on the planifications page in another tab.
   useEffect(() => {
-    const sync = () => setItems(readPlanifications())
-    window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      setLoadError('')
+      try {
+        const data = await listPlanifications()
+        if (active) setItems(data)
+      } catch (error) {
+        if (active) setLoadError(error instanceof Error ? error.message : 'Impossible de charger le calendrier.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => { active = false }
   }, [])
 
   const events = useMemo<EventItem[]>(() => items.map(item => ({
@@ -79,12 +82,14 @@ export default function CalendrierPage() {
 
   return <div className="min-h-full space-y-6 p-4 sm:p-6 lg:p-8">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#5C8A42]">Organisation</p><h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Calendrier des interventions</h1><p className="mt-2 text-sm text-gray-500">Les interventions affichées proviennent de vos planifications locales.</p></div>
+      <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#5C8A42]">Organisation</p><h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Calendrier des interventions</h1><p className="mt-2 text-sm text-gray-500">Les interventions proviennent des données enregistrées dans votre espace.</p></div>
       <div className="flex gap-2">
         <button onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setSelected(dateKey(now)) }} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-[#5C8A42]">Aujourd’hui</button>
         <button onClick={() => window.print()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3d672f]">Imprimer</button>
       </div>
     </div>
+    {loadError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError} <button className="ml-2 font-semibold underline" onClick={() => window.location.reload()}>Réessayer</button></div>}
+    {loading && <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">Chargement du calendrier…</div>}
     <div className="grid gap-3 sm:grid-cols-3">
       {[
         { label: 'Interventions du mois', value: monthEvents.length, icon: 'calendar-check' as const },
@@ -124,6 +129,6 @@ export default function CalendrierPage() {
         <div className="border-t border-gray-100 p-4"><h3 className="mb-3 text-sm font-bold text-gray-800">Prochaines interventions</h3><div className="space-y-3">{monthEvents.filter(e => e.date >= selected && e.status !== 'Annulée').slice(0, 4).map(e => <button key={e.id} onClick={() => setSelected(e.date)} className="flex w-full items-start gap-3 text-left"><span className="w-10 shrink-0 rounded-lg bg-gray-50 py-2 text-center"><span className="block text-sm font-bold text-gray-800">{new Date(e.date + 'T12:00:00').getDate()}</span><span className="text-[9px] uppercase text-gray-400">{monthNames[month.getMonth()].slice(0, 3)}</span></span><span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-gray-800">{e.title}</span><span className="mt-1 block truncate text-[11px] text-gray-500">{e.site}</span></span></button>)}</div></div>
       </section>
     </div>
-    <p className="text-xs text-gray-400">Données sauvegardées localement dans ce navigateur. Elles ne sont pas encore partagées avec les autres utilisateurs.</p>
+    <p className="text-xs text-gray-400">Les interventions affichées sont synchronisées avec l’API de Korobo.</p>
   </div>
 }
