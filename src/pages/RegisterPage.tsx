@@ -269,6 +269,7 @@ export default function RegisterPage({ onRegister, onGoLogin, onBack }: Props) {
                 )}
                 {errors.confirm && <p className="text-xs text-red-500">{errors.confirm}</p>}
               </div>
+              {submitError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{submitError}</div>}
               <label className="flex items-start gap-2.5 cursor-pointer mt-1">
                 <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#4A7A3B] flex-shrink-0" />
                 <span className="text-sm text-gray-600 leading-relaxed">
