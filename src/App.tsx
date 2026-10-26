@@ -108,10 +108,24 @@ export default function App() {
         if (!disposed) setAuthChecked(true)
       }).catch(() => { if (!disposed) { setVerifiedProfile(null); setAuthChecked(true) } })
     }
+    const onSessionInvalidated = () => {
+      void getMyProfile().catch(() => {
+        if (disposed) return
+        disconnectAuthSocket()
+        window.localStorage.removeItem('korobo.access-token')
+        window.localStorage.removeItem('korobo.auth-profile')
+        setVerifiedProfile(null)
+        setAuthChecked(true)
+        setCurrentPage('login')
+        updateUrl('login')
+      })
+    }
+    window.addEventListener('korobo:session-invalidated', onSessionInvalidated)
     window.addEventListener('korobo:auth-changed', onAuthChanged)
     window.addEventListener('korobo:logout', onLogout)
     return () => {
       disposed = true
+      window.removeEventListener('korobo:session-invalidated', onSessionInvalidated)
       window.removeEventListener('korobo:auth-changed', onAuthChanged)
       window.removeEventListener('korobo:logout', onLogout)
     }

@@ -1,9 +1,19 @@
 import { io, type Socket } from 'socket.io-client'
 import type { AuthProfile } from './authService'
 
+type CompanyChangedPayload = {
+  resource: 'site' | 'equipment' | 'planification' | 'rapport' | 'notification' | 'dashboard' | 'user'
+  action: 'created' | 'updated' | 'deleted'
+  entityId?: string
+  companyId: string
+  actorId: string
+  occurredAt: string
+}
+
 type ServerToClientEvents = {
   'auth:verified': (payload: { data: AuthProfile }) => void
   'auth:pong': (payload: { timestamp: string }) => void
+  'company:changed': (payload: CompanyChangedPayload) => void
 }
 
 type ClientToServerEvents = {
@@ -52,6 +62,16 @@ export function verifySessionWithSocket(accessToken: string): Promise<AuthProfil
       reject(new Error('Le serveur temps réel ne répond pas.'))
     }, 12000)
 
+    currentSocket.on('company:changed', (payload) => {
+      window.dispatchEvent(new CustomEvent<CompanyChangedPayload>('korobo:company-changed', { detail: payload }))
+    })
+
+    currentSocket.on('disconnect', (reason) => {
+      if (reason === 'io server disconnect') {
+        window.dispatchEvent(new CustomEvent('korobo:session-invalidated'))
+      }
+    })
+
     currentSocket.on('auth:verified', ({ data }) => {
       verifiedProfile = data
       if (!settled) {
@@ -69,10 +89,7 @@ export function verifySessionWithSocket(accessToken: string): Promise<AuthProfil
       }
     })
 
-    currentSocket.on('disconnect', () => {
-      // The API-issued token remains the source of truth if the realtime connection drops.
-      // Socket.IO will attempt to reconnect automatically.
-    })
+    // Transient network disconnects are handled by Socket.IO's automatic reconnection.
   })
 }
 

@@ -103,6 +103,15 @@ export default function UtilisateursPage() {
 
   useEffect(() => { void loadUsers() }, [loadUsers])
 
+  useEffect(() => {
+    const handleCompanyChanged = (event: Event) => {
+      const payload = (event as CustomEvent<{ resource?: string }>).detail
+      if (payload?.resource === 'user') void loadUsers()
+    }
+    window.addEventListener('korobo:company-changed', handleCompanyChanged)
+    return () => window.removeEventListener('korobo:company-changed', handleCompanyChanged)
+  }, [loadUsers])
+
   const filtered = useMemo(() => {
     const matching = users.filter(user =>
       (roleFilter === 'Tous' || user.role === roleFilter) &&
