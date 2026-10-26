@@ -7,6 +7,7 @@ import {
   defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
 import { applyTheme } from '../services/themeService'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const inputClass = 'mt-2 min-h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm leading-5 text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/20 disabled:cursor-not-allowed disabled:opacity-60'
 function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -88,6 +89,7 @@ export default function SettingsPage() {
     } finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
+  useCompanyRealtime(['user', 'settings'], () => { void load() })
   useEffect(() => { applyTheme(preferences.theme) }, [preferences.theme])
   useEffect(() => { if (message) showToast(message, 'success') }, [message])
   useEffect(() => { if (error) showToast(error, 'error') }, [error])
