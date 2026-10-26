@@ -10,6 +10,7 @@ import {
   type EquipmentDetails, type EquipmentInput, type EquipmentMaintenance, type EquipmentRecord,
   type EquipmentSite, type EquipmentUser, type EquipmentStatus, type TrackingMode,
 } from '../services/equipmentService'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const statusLabels: Record<EquipmentStatus, string> = {
   operational: 'Opérationnel', warning: 'À surveiller', faulty: 'En panne',
@@ -105,6 +106,8 @@ export default function EquipementsPage() {
     void load()
     return () => { active = false }
   }, [])
+
+  useCompanyRealtime(['equipment', 'site', 'planification', 'user'], () => { void refresh() })
 
   const filtered = useMemo(() => items.filter(item => {
     const q = query.trim().toLocaleLowerCase()
