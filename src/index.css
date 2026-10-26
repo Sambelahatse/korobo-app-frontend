@@ -243,3 +243,26 @@ html[data-theme="dark"] [class~="hover:bg-red-100"]:hover { background-color: #4
 html[data-theme="dark"] table thead { background-color: var(--korobo-raised) !important; }
 html[data-theme="dark"] table tbody tr:hover { background-color: #293629 !important; }
 html[data-theme="dark"] ::selection { background: #4A7A3B; color: #fff; }
+
+/* Badges du tableau de bord : garder les statuts lisibles en thème sombre. */
+html[data-theme="dark"] [class~="bg-blue-100"],
+html[data-theme="dark"] [class~="bg-blue-50"],
+html[data-theme="dark"] [class~="bg-sky-100"],
+html[data-theme="dark"] [class~="bg-sky-50"] {
+  background-color: #203a28 !important;
+}
+html[data-theme="dark"] [class~="text-blue-700"],
+html[data-theme="dark"] [class~="text-blue-800"],
+html[data-theme="dark"] [class~="text-sky-700"],
+html[data-theme="dark"] [class~="text-sky-800"] {
+  color: #b8d9a8 !important;
+}
+html[data-theme="dark"] [class~="bg-amber-100"],
+html[data-theme="dark"] [class~="bg-orange-50"] {
+  background-color: #40351f !important;
+}
+html[data-theme="dark"] [class~="text-amber-700"],
+html[data-theme="dark"] [class~="text-orange-300"] {
+  color: #f8d58b !important;
+}
+
