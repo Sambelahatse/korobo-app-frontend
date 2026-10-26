@@ -6,7 +6,6 @@ import SortableHeader from '../components/SortableHeader'
 import PhoneNumberField from '../components/PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { showToast } from '../components/ToastViewport'
-import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 type ApiRole = 'admin' | 'manager' | 'technician' | 'viewer'
 type UserStatus = 'Actif' | 'Invitation en attente' | 'Suspendu'
@@ -103,7 +102,6 @@ export default function UtilisateursPage() {
   }, [])
 
   useEffect(() => { void loadUsers() }, [loadUsers])
-  useCompanyRealtime(['user'], () => { void loadUsers() })
 
   useEffect(() => {
     const handleCompanyChanged = (event: Event) => {
