@@ -118,13 +118,22 @@ export default function App() {
   }, [setVerifiedProfile])
 
   useEffect(() => {
-    if (!profile) { applyTheme('Système'); return }
+    // Public landing and authentication pages keep their own fixed appearance.
+    // Account theme preferences apply only inside the authenticated application.
+    if (isPublicPage(currentPage)) {
+      applyTheme('Clair')
+      return
+    }
+    if (!profile) {
+      applyTheme('Clair')
+      return
+    }
     let active = true
     void settingsService.getAccount().then(account => {
       if (active) applyTheme(account.preferences?.theme || 'Système')
     }).catch(() => { if (active) applyTheme('Système') })
     return () => { active = false }
-  }, [profile])
+  }, [currentPage, profile])
 
   useEffect(() => {
     if (!authChecked || !profile || currentPage !== 'login') return
