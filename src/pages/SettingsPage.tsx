@@ -8,11 +8,11 @@ import {
 } from '../services/settingsService'
 import { applyTheme } from '../services/themeService'
 
-const inputClass = 'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10'
+const inputClass = 'mt-2 min-h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm leading-5 text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/20 disabled:cursor-not-allowed disabled:opacity-60'
 function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-    <div className="border-b border-gray-100 px-5 py-4 sm:px-6"><h3 className="text-sm font-bold text-gray-800">{title}</h3>{description && <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>}</div>
-    <div className="space-y-4 px-5 py-5 sm:px-6">{children}</div>
+  return <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="border-b border-gray-200 px-5 py-5 sm:px-7"><h3 className="text-sm font-bold text-gray-800">{title}</h3>{description && <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>}</div>
+    <div className="space-y-5 px-5 py-6 sm:px-7">{children}</div>
   </section>
 }
 function Switch({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (value: boolean) => void }) {
@@ -153,17 +153,17 @@ export default function SettingsPage() {
   if (loading) return <div className="p-8 text-sm text-gray-500">Chargement des paramètres du compte…</div>
   if (!profile && error) return <div className="p-4 sm:p-8"><div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}<button onClick={() => void load()} className="ml-3 font-semibold underline">Réessayer</button></div></div>
 
-  return <div className="p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-3xl space-y-5">
-    <div className="mb-2"><h2 className="text-xl font-bold text-gray-800">Paramètres</h2><p className="mt-1 text-sm text-gray-500">Gérez les informations de votre entreprise, votre compte, votre sécurité et vos préférences.</p></div>
+  return <div className="w-full p-4 sm:p-6 lg:p-8"><div className="mx-auto w-full max-w-5xl space-y-6">
+    <div className="mb-3"><h2 className="text-2xl font-bold tracking-tight text-gray-900">Paramètres</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Gérez les informations de votre entreprise, votre compte, votre sécurité et vos préférences.</p></div>
 
     <CompanySettingsCard />
 
     <Card title="Informations personnelles" description="Ces informations sont enregistrées dans votre compte KOROBO.">
-      <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-xs text-gray-500">{profile?.role}</p></div></div>
+      <div className="flex items-center gap-3"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4A7A3B] text-lg font-bold text-white">{initials}</div><div><p className="font-semibold text-gray-800">{profile?.fullName}</p><p className="text-sm text-gray-600">{profile?.role}</p></div></div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold text-gray-700">Nom complet<input className={inputClass} autoComplete="name" maxLength={160} value={draftName} onChange={e => setDraftName(e.target.value)} /></label>
         <label className="block text-sm font-semibold text-gray-700">Téléphone<div className="mt-1.5"><PhoneNumberField value={draftPhone} onChange={setDraftPhone} /></div></label>
-        <label className="block text-sm font-semibold text-gray-700 sm:col-span-2">Adresse e-mail<input className={inputClass + ' bg-gray-50 text-gray-500'} value={profile?.email || ''} readOnly /><span className="mt-1 block text-xs font-normal text-gray-400">L’adresse e-mail est protégée. Sa modification nécessite une procédure de vérification distincte.</span></label>
+        <label className="block text-sm font-semibold text-gray-700 sm:col-span-2">Adresse e-mail<input className={inputClass + ' bg-gray-50 text-gray-500'} value={profile?.email || ''} readOnly /><span className="mt-2 block text-sm font-normal leading-5 text-gray-600">L’adresse e-mail est protégée. Sa modification nécessite une procédure de vérification distincte.</span></label>
       </div>
       <button disabled={busy} onClick={() => void saveProfile()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer le profil</button>
     </Card>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
     </Card>
 
     <Card title="Compte Google" description="L’association permet d’utiliser Google pour se connecter à KOROBO.">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-gray-800">{googleLinked ? 'Un compte Google est associé' : 'Aucun compte Google associé'}</p><p className="mt-1 text-xs text-gray-500">{googleLinked ? (hasPassword ? 'Vous pouvez dissocier Google.' : 'Définissez un mot de passe KOROBO avant de dissocier Google.') : 'L’association nécessite une authentification Google vérifiée.'}</p></div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-gray-800">{googleLinked ? 'Un compte Google est associé' : 'Aucun compte Google associé'}</p><p className="mt-1 text-sm text-gray-600">{googleLinked ? (hasPassword ? 'Vous pouvez dissocier Google.' : 'Définissez un mot de passe KOROBO avant de dissocier Google.') : 'L’association nécessite une authentification Google vérifiée.'}</p></div>
         {googleLinked && hasPassword ? <button disabled={busy} onClick={() => void unlinkGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Dissocier Google</button> : googleLinked ? <span className="text-xs text-gray-500">Mot de passe requis pour dissocier</span> : <button disabled={busy} onClick={() => void connectGoogle()} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">Associer Google</button>}</div>
     </Card>
 
@@ -198,7 +198,7 @@ export default function SettingsPage() {
       ] as const).map(([key,label,desc]) => <Switch key={key} label={label} description={desc} checked={preferences.notifications[key]} onChange={value => setPreferences(p => ({ ...p, notifications: { ...p.notifications, [key]: value } }))} />)}</div>
       <Switch label="Déconnexion automatique" description="Préférence enregistrée pour la gestion future de l’inactivité." checked={preferences.security.sessionTimeout} onChange={value => setPreferences(p => ({ ...p, security: { ...p.security, sessionTimeout: value } }))} />
       <button disabled={busy} onClick={() => void savePreferences()} className="rounded-xl bg-[#4A7A3B] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer les préférences</button>
-      <p className="text-xs leading-relaxed text-gray-400">Ces réglages enregistrent les préférences. L’envoi réel des e-mails et notifications push dépend encore de l’activation des services de notification.</p>
+      <p className="text-sm leading-5 text-gray-600">Ces réglages enregistrent les préférences. L’envoi réel des e-mails et notifications push dépend encore de l’activation des services de notification.</p>
     </Card>
 
     <Card title="Sessions actives" description="Révoquez une session pour empêcher son jeton de continuer à être utilisé.">
