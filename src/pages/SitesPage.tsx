@@ -47,7 +47,7 @@ export default function SitesPage() {
     }
   }
   useEffect(() => { void refreshSites() }, [])
-  useCompanyRealtime(['site', 'equipment', 'planification', 'user', 'rapport', 'notification'], () => { void refreshSites() })
+  useCompanyRealtime(['site'], () => { void refreshSites() })
   const [search, setSearch]       = useState('')
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
