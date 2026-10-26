@@ -63,10 +63,11 @@ export default function CalendrierPage() {
     return () => { active = false }
   }, [])
 
-  const events = useMemo<EventItem[]>(() => items.map(item => ({
   useCompanyRealtime(['planification', 'site', 'equipment', 'user'], () => {
     void listPlanifications().then(setItems).catch(error => setLoadError(error instanceof Error ? error.message : 'Impossible de synchroniser le calendrier.'))
   })
+
+  const events = useMemo<EventItem[]>(() => items.map(item => ({
     id: item.id,
     date: item.date,
     startTime: item.startTime || "09:00",
