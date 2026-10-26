@@ -6,6 +6,7 @@ import { listSites } from '../services/siteService'
 import { listPlanifications } from '../services/planificationService'
 import { listNotifications } from '../services/notificationService'
 import { listEquipment } from '../services/equipmentService'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 type DashboardEquipment = { id: string; name: string; status: 'Opérationnel' | 'À surveiller' | 'En panne' }
 
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const [equipment, setEquipment] = useState<DashboardEquipment[]>([])
   const [loading, setLoading] = useState(true)
   const [loadErrors, setLoadErrors] = useState<string[]>([])
+  const [realtimeRevision, setRealtimeRevision] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -62,7 +64,9 @@ export default function DashboardPage() {
     }
     void loadDashboardData()
     return () => { active = false }
-  }, [])
+  }, [realtimeRevision])
+
+  useCompanyRealtime(['site', 'equipment', 'planification', 'rapport', 'notification', 'user', 'settings'], () => setRealtimeRevision(value => value + 1))
   const actifs      = sites.filter(s => s.statut === 'actif').length
   const maintenance = sites.filter(s => s.statut === 'maintenance').length
   const inactifs    = sites.filter(s => s.statut === 'inactif').length

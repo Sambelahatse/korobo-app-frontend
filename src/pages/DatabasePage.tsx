@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../services/authService'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 type DatabaseTable = { name: string; label: string; count: number | null; available: boolean }
 type DatabaseOverview = { status: string; checkedAt: string; totalRecords: number; tables: DatabaseTable[] }
@@ -49,6 +50,7 @@ export default function DatabasePage() {
   }, [])
 
   useEffect(() => { void loadOverview() }, [loadOverview, refreshKey])
+  useCompanyRealtime(['site', 'equipment', 'planification', 'rapport', 'notification', 'user', 'settings'], () => setRefreshKey(key => key + 1))
 
   const tableIcon = (name: string): ModernIconName => {
     if (name === 'sites' || name === 'companies') return 'building'

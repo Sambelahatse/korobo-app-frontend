@@ -4,6 +4,7 @@ import type { Planification, Rapport, Site } from '../types'
 type Technician = { id: string; fullName: string; email?: string; role?: string }
 import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastViewport'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 const DAYS_FULL  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
@@ -44,6 +45,7 @@ export default function RapportsPage() {
     finally { setLoading(false) }
   }
   useEffect(() => { void refresh() }, [])
+  useCompanyRealtime(['rapport', 'planification', 'site', 'equipment', 'user'], () => { void refresh() })
 
   // Calendar
   const firstDay    = new Date(year, month, 1)

@@ -2,7 +2,7 @@ import { io, type Socket } from 'socket.io-client'
 import type { AuthProfile } from './authService'
 
 type CompanyChangedPayload = {
-  resource: 'site' | 'equipment' | 'planification' | 'rapport' | 'notification' | 'dashboard' | 'user'
+  resource: 'site' | 'equipment' | 'planification' | 'rapport' | 'notification' | 'dashboard' | 'user' | 'settings'
   action: 'created' | 'updated' | 'deleted'
   entityId?: string
   companyId: string

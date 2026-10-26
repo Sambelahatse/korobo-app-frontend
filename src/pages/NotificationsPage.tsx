@@ -3,6 +3,7 @@ import { ModernIcon, type ModernIconName } from '../components/Icons'
 import type { Notification } from '../types'
 import { deleteNotification, listNotifications, markAllNotificationsRead, markNotificationRead } from '../services/notificationService'
 import { showToast } from '../components/ToastViewport'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const typeConfig = {
   alerte: { bg: 'bg-red-50 border-red-200', icon: 'alert-triangle' as ModernIconName, label: 'bg-red-100 text-red-700' },
@@ -24,6 +25,7 @@ export default function NotificationsPage() {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { void refresh() }, [refresh])
+  useCompanyRealtime(['notification', 'planification', 'equipment', 'rapport', 'user'], () => { void refresh() })
   const nonLues = notifs.filter(n => !n.lu).length
   const filtered = notifs.filter(n => filter === 'toutes' || n.type === filter || (filter === 'non-lues' && !n.lu))
   const markRead = async (id: string) => {

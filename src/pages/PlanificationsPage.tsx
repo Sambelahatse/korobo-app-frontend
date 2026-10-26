@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import SortableHeader from '../components/SortableHeader'
 import ActionsMenu from '../components/ActionsMenu'
 import { showToast } from '../components/ToastViewport'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const statutStyle = {
   planifiée:  'bg-blue-100 text-blue-700',
@@ -259,6 +260,7 @@ export default function PlanificationsPage() {
     }
   }
   useEffect(() => { void refresh() }, [])
+  useCompanyRealtime(['planification', 'site', 'equipment', 'user'], () => { void refresh() })
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterAffectation, setFilterAffectation] = useState<'tous' | 'a-affecter'>('tous')
   const [filterType,   setFilterType]   = useState('tous')
