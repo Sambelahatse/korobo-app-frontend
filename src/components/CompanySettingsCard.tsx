@@ -3,6 +3,7 @@ import { showToast } from './ToastViewport'
 import { getAccessToken } from '../services/authService'
 import PhoneNumberField from './PhoneNumberField'
 import { isValidPhoneNumber } from 'libphonenumber-js'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 interface CompanyProfile {
   id: string
@@ -76,6 +77,13 @@ export default function CompanySettingsCard() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
+  useCompanyRealtime(['settings'], () => {
+    void request<{ data: CompanyProfile }>('/company').then(result => {
+      const { id: _id, ...company } = result.data
+      setDraft({ ...emptyCompany, ...company })
+      setError('')
+    }).catch(err => setError(err instanceof Error ? err.message : 'Impossible de synchroniser les informations de l’entreprise.'))
+  })
   const update = (key: keyof CompanyDraft, value: string) => setDraft(current => ({ ...current, [key]: value }))
   const save = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
