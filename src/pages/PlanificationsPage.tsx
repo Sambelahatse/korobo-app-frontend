@@ -201,12 +201,12 @@ function PlanifModal({
             </select>
             {errors.technicien && <p className="text-xs text-red-500">{errors.technicien}</p>}
           </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+          <div className="rounded-xl border border-emerald-900/70 bg-[#17251b] p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-gray-800">Suggestions de créneaux disponibles</p>
-              <span className="text-xs text-gray-500">Selon la durée choisie</span>
+              <p className="text-sm font-semibold text-gray-100">Suggestions de créneaux disponibles</p>
+              <span className="text-xs text-gray-400">Selon la durée choisie</span>
             </div>
-            <p className="mt-1 text-xs text-gray-600">Choisissez une proposition pour affecter automatiquement le technicien et les horaires.</p>
+            <p className="mt-1 text-xs text-gray-300">Choisissez une proposition pour affecter automatiquement le technicien et les horaires.</p>
             {suggestedSlots.length ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {suggestedSlots.slice(0, 6).map((slot, index) => (
@@ -215,13 +215,13 @@ function PlanifModal({
                       setForm(f => ({ ...f, technicien: slot.technician, startTime: slot.start, endTime: slot.end }))
                       setErrors(e => ({ ...e, conflict: '', time: '', technicien: '' }))
                     }}
-                    className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-left text-xs hover:border-emerald-500 hover:bg-emerald-100">
-                    <span className="block font-semibold text-gray-800">{slot.start}–{slot.end}</span>
-                    <span className="block text-gray-600">{slot.technician}</span>
+                    className="rounded-lg border border-emerald-800 bg-[#202a22] px-3 py-2 text-left text-xs hover:border-emerald-500 hover:bg-[#293c2d]">
+                    <span className="block font-semibold text-gray-100">{slot.start}–{slot.end}</span>
+                    <span className="block text-gray-300">{slot.technician}</span>
                   </button>
                 ))}
               </div>
-            ) : <p className="mt-2 text-xs text-amber-700">Aucun créneau libre trouvé entre 08 h et 18 h pour cette durée. Essayez une autre date ou une durée plus courte.</p>}
+            ) : <p className="mt-2 text-xs text-amber-300">Aucun créneau libre trouvé entre 08 h et 18 h pour cette durée. Essayez une autre date ou une durée plus courte.</p>}
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-600">Description</label>
