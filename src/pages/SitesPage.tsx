@@ -8,6 +8,7 @@ import { showToast } from '../components/ToastViewport'
 import SortableHeader from '../components/SortableHeader'
 import ActionsMenu from '../components/ActionsMenu'
 import { createSite, deleteSite as deleteSiteFromApi, listSites, updateSite } from '../services/siteService'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 const ITEMS_PER_PAGE = 8
 const STORAGE_KEY = 'korobo.sites.v1'
@@ -46,6 +47,7 @@ export default function SitesPage() {
     }
   }
   useEffect(() => { void refreshSites() }, [])
+  useCompanyRealtime(['site', 'equipment', 'planification', 'user', 'rapport', 'notification'], () => { void refreshSites() })
   const [search, setSearch]       = useState('')
   const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType,   setFilterType]   = useState('tous')
