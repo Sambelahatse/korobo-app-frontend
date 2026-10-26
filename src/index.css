@@ -81,3 +81,26 @@
 .sav-contract-uploader .filepond--file {
   font-size: 13px;
 }
+
+
+/* Thèmes globaux KOROBO : le mode Système suit prefers-color-scheme. */
+html[data-theme="dark"] body { background-color: #111827; color: #e5e7eb; }
+html[data-theme="dark"] [class~="bg-white"] { background-color: #1f2937 !important; }
+html[data-theme="dark"] [class~="bg-gray-50"], html[data-theme="dark"] [class~="bg-gray-50/70"] { background-color: #111827 !important; }
+html[data-theme="dark"] [class~="bg-gray-100"] { background-color: #374151 !important; }
+html[data-theme="dark"] [class~="bg-green-50"], html[data-theme="dark"] [class~="bg-emerald-50"] { background-color: #064e3b !important; }
+html[data-theme="dark"] [class~="bg-amber-50"] { background-color: #78350f !important; }
+html[data-theme="dark"] [class~="bg-red-50"] { background-color: #7f1d1d !important; }
+html[data-theme="dark"] [class~="text-gray-900"], html[data-theme="dark"] [class~="text-gray-800"], html[data-theme="dark"] [class~="text-gray-700"] { color: #f3f4f6 !important; }
+html[data-theme="dark"] [class~="text-gray-600"], html[data-theme="dark"] [class~="text-gray-500"] { color: #d1d5db !important; }
+html[data-theme="dark"] [class~="text-gray-400"] { color: #9ca3af !important; }
+html[data-theme="dark"] [class~="border-gray-100"], html[data-theme="dark"] [class~="border-gray-200"], html[data-theme="dark"] [class~="border-gray-300"] { border-color: #374151 !important; }
+html[data-theme="dark"] [class~="divide-gray-100"] > :not([hidden]) ~ :not([hidden]) { border-color: #374151 !important; }
+html[data-theme="dark"] input:not([type="checkbox"]), html[data-theme="dark"] textarea, html[data-theme="dark"] select { background-color: #111827; color: #f3f4f6; border-color: #4b5563; }
+html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: #9ca3af; }
+html[data-theme="dark"] [class~="hover:bg-gray-50"]:hover { background-color: #374151 !important; }
+html[data-theme="dark"] [class~="bg-gray-50"] [class~="bg-white"] { background-color: #1f2937 !important; }
+html[data-theme="dark"] [class~="text-emerald-700"], html[data-theme="dark"] [class~="text-green-700"] { color: #6ee7b7 !important; }
+html[data-theme="dark"] [class~="text-red-800"], html[data-theme="dark"] [class~="text-red-700"] { color: #fecaca !important; }
+html[data-theme="dark"] [class~="text-amber-900"], html[data-theme="dark"] [class~="text-amber-800"] { color: #fde68a !important; }
+html[data-theme="dark"] [class~="bg-[#f3f6f1]"] { background-color: #111827 !important; }
