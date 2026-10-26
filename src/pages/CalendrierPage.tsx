@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ModernIcon } from '../components/Icons'
 import type { Planification } from '../types'
 import { listPlanifications, updatePlanification } from '../services/planificationService'
+import { useCompanyRealtime } from '../hooks/useCompanyRealtime'
 
 type EventItem = {
   id: string
@@ -63,6 +64,9 @@ export default function CalendrierPage() {
   }, [])
 
   const events = useMemo<EventItem[]>(() => items.map(item => ({
+  useCompanyRealtime(['planification', 'site', 'equipment', 'user'], () => {
+    void listPlanifications().then(setItems).catch(error => setLoadError(error instanceof Error ? error.message : 'Impossible de synchroniser le calendrier.'))
+  })
     id: item.id,
     date: item.date,
     startTime: item.startTime || "09:00",
