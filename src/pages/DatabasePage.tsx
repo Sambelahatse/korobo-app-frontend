@@ -45,7 +45,7 @@ export default function DatabasePage() {
     if (name === 'planifications') return 'calendar-check'
     if (name === 'rapports') return 'file-text'
     if (name === 'notifications') return 'bell'
-    if (name === 'app_users') return 'users'
+    if (name === 'app_users') return 'users-round'
     return 'database'
   }
 
@@ -61,7 +61,7 @@ export default function DatabasePage() {
         </div>
         <button type="button" onClick={() => setRefreshKey(value => value + 1)} disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50">
-          <ModernIcon name="refresh-cw" size={16} /> Actualiser
+          <ModernIcon name="database" size={16} /> Actualiser
         </button>
       </div>
 
@@ -86,12 +86,12 @@ export default function DatabasePage() {
               <p className="mt-1 text-xs text-gray-400">Neon PostgreSQL</p>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="layers" size={18} /> Tables attendues présentes</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="database" size={18} /> Tables attendues présentes</div>
               <p className="mt-2 text-xl font-bold text-gray-800">{availableTables.length} / {overview.tables.length}</p>
               <p className="mt-1 text-xs text-gray-400">Vérification du schéma public</p>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="rows-3" size={18} /> Enregistrements</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="database" size={18} /> Enregistrements</div>
               <p className="mt-2 text-xl font-bold text-gray-800">{overview.totalRecords.toLocaleString('fr-FR')}</p>
               <p className="mt-1 text-xs text-gray-400">Périmètre de votre entreprise</p>
             </div>
