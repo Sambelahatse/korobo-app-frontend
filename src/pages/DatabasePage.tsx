@@ -1,109 +1,134 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { getAccessToken } from '../services/authService'
 import { ModernIcon, type ModernIconName } from '../components/Icons'
-import SortableHeader from '../components/SortableHeader'
-import { mockSites, mockPlanifications, mockRapports, mockNotifications } from '../data/mockData'
 
-function TablePreview({ title, count, icon, headers, rows }: {
-  title: string; count: number; icon: ModernIconName
-  headers: string[]; rows: (string | number)[][]
-}) {
-  const [sortColumn, setSortColumn] = useState('0')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  const toggleSort = (key: string) => { if (sortColumn === key) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortColumn(key); setSortDirection('asc') } }
-  const sortedRows = useMemo(() => [...rows].sort((a, b) => {
-    const av = String(a[Number(sortColumn)] ?? ''), bv = String(b[Number(sortColumn)] ?? '')
-    const result = av.localeCompare(bv, 'fr', { numeric: true, sensitivity: 'base' })
-    return sortDirection === 'asc' ? result : -result
-  }), [rows, sortColumn, sortDirection])
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md overflow-hidden">
-      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-50 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="flex-shrink-0 text-[#4A7A3B]"><ModernIcon name={icon as ModernIconName} size={20} /></span>
-          <div className="min-w-0">
-            <h3 className="font-sans font-bold text-xs sm:text-sm text-gray-800 truncate">{title}</h3>
-            <p className="text-xs text-gray-400">{count} enreg.</p>
-          </div>
-        </div>
-        <span className="px-2 py-1 bg-[#e8f2e3] text-[#4A7A3B] text-xs font-bold rounded-full flex-shrink-0">{count}</span>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs min-w-[360px]">
-          <thead>
-            <tr className="bg-gray-50">
-              {headers.map((h, index) => (
-                <SortableHeader key={h} label={h} sortKey={String(index)} activeKey={sortColumn} direction={sortDirection} onSort={toggleSort} className="px-3 sm:px-4 py-2 sm:py-2.5 text-left text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap" />
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRows.slice(0,4).map((row, i) => (
-              <tr key={i} className={'border-t border-gray-50 ' + (i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40')}>
-                {row.map((cell, j) => (
-                  <td key={j} className="px-3 sm:px-4 py-2 sm:py-2.5 text-gray-700 truncate max-w-[140px]">{cell}</td>
-                ))}
-              </tr>
-            ))}
-            {rows.length > 4 && (
-              <tr className="border-t border-gray-50">
-                <td colSpan={headers.length} className="px-4 py-2.5 text-gray-400 italic text-center">
-                  + {rows.length - 4} autres…
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
+type DatabaseTable = { name: string; label: string; count: number | null; available: boolean }
+type DatabaseOverview = { status: string; checkedAt: string; totalRecords: number; tables: DatabaseTable[] }
+
+function apiUrl() {
+  return ((import.meta.env.VITE_API_URL as string | undefined) || 'https://korobo-app-api.onrender.com').replace(/\/$/, '')
 }
 
 export default function DatabasePage() {
-  const totalRecords = mockSites.length + mockPlanifications.length + mockRapports.length + mockNotifications.length
+  const [overview, setOverview] = useState<DatabaseOverview | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const loadOverview = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const token = getAccessToken()
+      if (!token) throw new Error('Votre session a expiré. Reconnectez-vous.')
+      const response = await fetch(`${apiUrl()}/database/overview`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      })
+      const payload = await response.json().catch(() => ({})) as { data?: DatabaseOverview; error?: { message?: string } }
+      if (!response.ok) throw new Error(payload.error?.message || 'Impossible de lire les informations de la base de données.')
+      if (!payload.data) throw new Error('La réponse du serveur est incomplète.')
+      setOverview(payload.data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Une erreur inattendue est survenue.')
+      setOverview(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { void loadOverview() }, [loadOverview, refreshKey])
+
+  const tableIcon = (name: string): ModernIconName => {
+    if (name === 'sites' || name === 'companies') return 'building'
+    if (name === 'equipment') return 'wrench'
+    if (name === 'planifications') return 'calendar-check'
+    if (name === 'rapports') return 'file-text'
+    if (name === 'notifications') return 'bell'
+    if (name === 'app_users') return 'users-round'
+    return 'database'
+  }
+
+  const availableTables = useMemo(() => overview?.tables.filter(table => table.available) ?? [], [overview])
+  const missingTables = useMemo(() => overview?.tables.filter(table => !table.available) ?? [], [overview])
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-5">
-        <h2 className="font-sans font-bold text-xl text-gray-800">Base de données</h2>
-        <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Vue des tables · {totalRecords} enregistrements</p>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-sans font-bold text-xl text-gray-800">Base de données</h2>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">État réel du schéma PostgreSQL Neon · données de votre entreprise uniquement</p>
+        </div>
+        <button type="button" onClick={() => setRefreshKey(value => value + 1)} disabled={loading}
+          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50">
+          <ModernIcon name="database" size={16} /> Actualiser
+        </button>
       </div>
 
-      {/* Stats — 2×2 mobile, 4 cols md+ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
-        {[
-          { label: 'Sites',          count: mockSites.length,          icon: 'building',       color: 'bg-[#e8f2e3] text-[#4A7A3B]' },
-          { label: 'Planifications', count: mockPlanifications.length, icon: 'calendar-check', color: 'bg-blue-50 text-blue-700'     },
-          { label: 'Rapports',       count: mockRapports.length,       icon: 'file-text',      color: 'bg-amber-50 text-amber-700'   },
-          { label: 'Notifications',  count: mockNotifications.length,  icon: 'bell',            color: 'bg-purple-50 text-purple-700' },
-        ].map(({ label, count, icon, color }) => (
-          <div key={label} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3">
-            <div className={'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ' + color}><ModernIcon name={icon as ModernIconName} size={20} /></div>
-            <div className="min-w-0">
-              <p className="font-sans font-bold text-lg sm:text-xl text-gray-800">{count}</p>
-              <p className="text-xs text-gray-400 truncate">{label}</p>
+      {loading && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-500 shadow-sm">Connexion à la base et lecture du schéma…</div>
+      )}
+
+      {!loading && error && (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5">
+          <p className="font-semibold text-red-800">Impossible de charger la base de données</p>
+          <p className="mt-1 text-sm text-red-700">{error}</p>
+          <button type="button" onClick={() => setRefreshKey(value => value + 1)} className="mt-3 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white">Réessayer</button>
+        </div>
+      )}
+
+      {!loading && !error && overview && (
+        <>
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="database" size={18} /> Connexion</div>
+              <p className="mt-2 text-xl font-bold text-emerald-700">Connectée</p>
+              <p className="mt-1 text-xs text-gray-400">Neon PostgreSQL</p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="database" size={18} /> Tables attendues présentes</div>
+              <p className="mt-2 text-xl font-bold text-gray-800">{availableTables.length} / {overview.tables.length}</p>
+              <p className="mt-1 text-xs text-gray-400">Vérification du schéma public</p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-gray-500"><ModernIcon name="database" size={18} /> Enregistrements</div>
+              <p className="mt-2 text-xl font-bold text-gray-800">{overview.totalRecords.toLocaleString('fr-FR')}</p>
+              <p className="mt-1 text-xs text-gray-400">Périmètre de votre entreprise</p>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Tables */}
-      <div className="space-y-4 sm:space-y-5">
-        <TablePreview title="TABLE: sites" count={mockSites.length} icon="building"
-          headers={['id','nom','localisation','statut','puissance','type']}
-          rows={mockSites.map(s => [s.id, s.nom, s.localisation, s.statut, s.puissance+' kW', s.typeInstallation])} />
+          <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
+              <h3 className="font-bold text-gray-800">Tables et volumes</h3>
+              <p className="mt-1 text-xs text-gray-500">Comptages issus de PostgreSQL, sans données fictives ni accès SQL libre.</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {overview.tables.map(table => (
+                <div key={table.name} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-[#4A7A3B]"><ModernIcon name={tableIcon(table.name)} size={18} /></span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-800">{table.label}</p>
+                      <p className="truncate text-xs text-gray-400">{table.name}</p>
+                    </div>
+                  </div>
+                  {table.available
+                    ? <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">{(table.count ?? 0).toLocaleString('fr-FR')}</span>
+                    : <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Table absente</span>}
+                </div>
+              ))}
+            </div>
+          </section>
 
-        <TablePreview title="TABLE: planifications" count={mockPlanifications.length} icon="calendar-check"
-          headers={['id','site','type','statut','date','technicien']}
-          rows={mockPlanifications.map(p => [p.id, p.siteNom, p.type, p.statut, p.date, p.technicien])} />
-
-        <TablePreview title="TABLE: rapports" count={mockRapports.length} icon="file-text"
-          headers={['id','site','type','statut','date','technicien']}
-          rows={mockRapports.map(r => [r.id, r.siteNom, r.type, r.statut, r.date, r.technicien])} />
-
-        <TablePreview title="TABLE: notifications" count={mockNotifications.length} icon="bell"
-          headers={['id','type','titre','lu','site','date']}
-          rows={mockNotifications.map(n => [n.id, n.type, n.titre, n.lu ? 'oui' : 'non', n.siteNom || '-', n.date.split('T')[0]])} />
-      </div>
+          {missingTables.length > 0 && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="font-semibold">Schéma incomplet détecté</p>
+              <p className="mt-1">Ces tables attendues n’existent pas encore dans Neon : {missingTables.map(table => table.name).join(', ')}. Il faudra appliquer une migration contrôlée avant d’activer les fonctions qui en dépendent.</p>
+            </div>
+          )}
+          <p className="mt-4 text-xs text-gray-400">Dernière vérification : {new Date(overview.checkedAt).toLocaleString('fr-FR')}</p>
+        </>
+      )}
     </div>
   )
 }
