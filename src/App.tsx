@@ -16,6 +16,8 @@ import UtilisateursPage from './pages/UtilisateursPage'
 import NotificationsPage from './pages/NotificationsPage'
 import DatabasePage from './pages/DatabasePage'
 import SettingsPage from './pages/SettingsPage'
+import { applyTheme } from './services/themeService'
+import { settingsService } from './services/settingsService'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
 type AppPage = Page | 'login' | 'register' | 'reset-password'
@@ -114,6 +116,15 @@ export default function App() {
       window.removeEventListener('korobo:logout', onLogout)
     }
   }, [setVerifiedProfile])
+
+  useEffect(() => {
+    if (!profile) { applyTheme('Système'); return }
+    let active = true
+    void settingsService.getAccount().then(account => {
+      if (active) applyTheme(account.preferences?.theme || 'Système')
+    }).catch(() => { if (active) applyTheme('Système') })
+    return () => { active = false }
+  }, [profile])
 
   useEffect(() => {
     if (!authChecked || !profile || currentPage !== 'login') return

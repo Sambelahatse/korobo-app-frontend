@@ -6,6 +6,7 @@ import { showToast } from '../components/ToastViewport'
 import {
   defaultPreferences, settingsService, type AccountPreferences, type AccountProfile, type AccountSession,
 } from '../services/settingsService'
+import { applyTheme } from '../services/themeService'
 
 const inputClass = 'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#4A7A3B] focus:ring-2 focus:ring-[#4A7A3B]/10'
 function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -87,7 +88,7 @@ export default function SettingsPage() {
     } finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
-  useEffect(() => { document.documentElement.dataset.theme = preferences.theme.toLowerCase() }, [preferences.theme])
+  useEffect(() => { applyTheme(preferences.theme) }, [preferences.theme])
   useEffect(() => { if (message) showToast(message, 'success') }, [message])
   useEffect(() => { if (error) showToast(error, 'error') }, [error])
 
@@ -106,7 +107,7 @@ export default function SettingsPage() {
   const savePreferences = () => run(async () => {
     const saved = await settingsService.savePreferences(preferences)
     setPreferences({ ...defaultPreferences, ...saved, notifications: { ...defaultPreferences.notifications, ...saved.notifications }, security: { ...defaultPreferences.security, ...saved.security } })
-    document.documentElement.dataset.theme = saved.theme.toLowerCase()
+    applyTheme(saved.theme)
   }, 'Les préférences et notifications ont été enregistrées.')
   const submitPassword = () => run(async () => {
     if (newPassword.length < 12) throw new Error('Le nouveau mot de passe doit contenir au moins 12 caractères.')
